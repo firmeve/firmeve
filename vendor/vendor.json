@@ -1,0 +1,11 @@
+{
+	"comment": "",
+	"ignore": "",
+	"package": [
+		{
+			"path": "github.com/go-redis/redis",
+			"revision": ""
+		}
+	],
+	"rootPath": "firmeve"
+}
