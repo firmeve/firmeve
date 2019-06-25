@@ -23,7 +23,14 @@ func TestCache_Add(t *testing.T) {
 	cache := NewRepository()
 	//z := make([]int,2)
 	//z := []int{1,2,3}
-	cache.Add("ADD1","fdsfds",time.Now().Add(time.Second * 15))
+	z := struct {
+		Z string
+		X int
+	}{
+		Z:"z",
+		X:10,
+	}
+	cache.Add("ADD1",z,time.Now().Add(time.Second * 15))
 	//now := time.Now()
 	//m, _ := time.ParseDuration("-1m")
 	//_ := time.Now().Add(time.Second)

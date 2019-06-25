@@ -1,9 +1,11 @@
 package redis
 
 import (
+	"encoding/json"
 	"firmeve/cache"
 	"fmt"
 	"github.com/go-redis/redis"
+	"reflect"
 	"sync"
 	"time"
 )
@@ -29,7 +31,6 @@ func NewRepository() *Repository {
 			Password: "",                   // no password set
 			DB:       0,                    // use default DB
 		})
-
 	})
 
 	return repository
@@ -39,10 +40,41 @@ func (this *Repository) Get(key string) error {
 	panic("implement me")
 }
 
-func (this *Repository) Add(key string, value interface{}, expire time.Time) {
+type Test struct {
+	Z string
+	X int
+}
 
-	z := this.redis.Do("SETEX", key, int(expire.Sub(time.Now()).Seconds()),value)
-	fmt.Println(z.String())
+func (this *Repository) Add(key string, value interface{}, expire time.Time) {
+	//z := 1.03
+	//fmt.Println(strconv.FormatFloat(z,'E', -1, 32))
+	fmt.Println(string(reflect.Int32))
+	fmt.Printf("%s\n",reflect.Int32)
+	fmt.Printf("%d\n",reflect.Int32)
+	//v := reflect.Int16//ValueOf(value)
+	//
+	//switch v.Kind() {
+	//	case reflect.String:
+	//	case reflect.Struct:
+	//case reflect.Int,reflect.Int8,reflect.Int16,reflect.Int32,reflect.Int64,reflect.Uint,reflect.Uint8,reflect.Uint16,reflect.Uint32,reflect.Uint64,reflect.Float32,reflect.Float64:
+	//	value := string(value)
+	//}
+	//
+	//s,err := json.Marshal(&Test{Z:"fdsaz",X:1})
+	//if err != nil {
+	//	fmt.Println(err.Error())
+	//}
+	//
+	//
+	//fmt.Printf("%s",s)
+	v,_ := json.Marshal(value)
+
+	test := &Test{}
+	json.Unmarshal(v,test)
+	fmt.Println(test)
+
+	//this.redis.Do("SETEX", key, int(expire.Sub(time.Now()).Seconds()),string(v))
+	//fmt.Println(z.String())
 	//v := reflect.ValueOf(value)
 	//switch v.Kind() {
 	//case reflect.String:
