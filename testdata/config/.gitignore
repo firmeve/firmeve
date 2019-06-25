@@ -1,0 +1,5 @@
+*
+!.gitignore
+!app.conf
+!new.conf
+!test.conf
