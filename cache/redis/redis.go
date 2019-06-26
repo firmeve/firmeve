@@ -2,128 +2,117 @@ package redis
 
 import (
 	"encoding/json"
+	"errors"
 	"firmeve/cache"
-	"fmt"
 	"github.com/go-redis/redis"
 	"reflect"
+	"strconv"
 	"sync"
 	"time"
 )
 
-type Repository struct {
-	redis *redis.Client
-}
-
 var repository *Repository
 var once sync.Once
 
-func NewRepository() *Repository {
+type Repository struct {
+	Prefix string
+	redis  *redis.Client
+}
+
+func NewRepository(client *redis.Client, prefix string) *Repository {
 
 	if repository != nil {
 		return repository
 	}
 
 	once.Do(func() {
-		repository = new(Repository)
-
-		repository.redis = redis.NewClient(&redis.Options{
-			Addr:     "192.168.1.107:6379", // use default Addr
-			Password: "",                   // no password set
-			DB:       0,                    // use default DB
-		})
+		repository = &Repository{
+			Prefix: prefix,
+			redis:  client,
+		}
 	})
 
 	return repository
 }
 
-func (this *Repository) Get(key string) error {
-	panic("implement me")
+func (this *Repository) Get(key string) (interface{}, error) {
+	return this.redis.Get(key).Result()
 }
 
-type Test struct {
-	Z string
-	X int
+func (this *Repository) Add(key string, value interface{}, expire time.Time) error {
+
+	if this.Has(key) {
+		return &cache.Error{RepositoryError: errors.New("exists error")}
+	}
+
+	return this.Put(key, value, expire)
 }
 
-func (this *Repository) Add(key string, value interface{}, expire time.Time) {
-	//z := 1.03
-	//fmt.Println(strconv.FormatFloat(z,'E', -1, 32))
-	fmt.Println(string(reflect.Int32))
-	fmt.Printf("%s\n",reflect.Int32)
-	fmt.Printf("%d\n",reflect.Int32)
-	//v := reflect.Int16//ValueOf(value)
-	//
-	//switch v.Kind() {
-	//	case reflect.String:
-	//	case reflect.Struct:
-	//case reflect.Int,reflect.Int8,reflect.Int16,reflect.Int32,reflect.Int64,reflect.Uint,reflect.Uint8,reflect.Uint16,reflect.Uint32,reflect.Uint64,reflect.Float32,reflect.Float64:
-	//	value := string(value)
-	//}
-	//
-	//s,err := json.Marshal(&Test{Z:"fdsaz",X:1})
-	//if err != nil {
-	//	fmt.Println(err.Error())
-	//}
-	//
-	//
-	//fmt.Printf("%s",s)
-	v,_ := json.Marshal(value)
+func (this *Repository) Put(key string, value interface{}, expire time.Time) error {
+	var err error
 
-	test := &Test{}
-	json.Unmarshal(v,test)
-	fmt.Println(test)
+	expireDuration := expire.Sub(time.Now())
+	// 永久
+	if expireDuration < 1 {
+		expireDuration = 0
+	}
 
-	//this.redis.Do("SETEX", key, int(expire.Sub(time.Now()).Seconds()),string(v))
-	//fmt.Println(z.String())
-	//v := reflect.ValueOf(value)
-	//switch v.Kind() {
-	//case reflect.String:
-	//	this.redis.String().
-	//}
-	//fmt.Println("==================")
-	//fmt.Println(v)
-	//fmt.Println("==================")
-	//switch v:= value.(type) {
-	//case string:
-	//	fmt.Println("=========================")
-	//	fmt.Println(v)
-	//	fmt.Println("=========================")
-	//	this.redis.Do("SETEX", key, expire.Sub(expire).Seconds(),expire.Unix())
-	//case :
-	//
-	//}
+	v := reflect.ValueOf(value)
 
+	switch v.Kind() {
+	case reflect.String:
+		this.redis.Set(key, value, expireDuration)
+	case reflect.Struct, reflect.Map:
+		js, err := json.Marshal(value)
+		if err != nil {
+			return err
+		}
+		_, err = this.redis.Set(key, string(js), expireDuration).Result()
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
+		_, err = this.redis.Set(key, strconv.Itoa(value.(int)), expireDuration).Result()
+	case reflect.Float64:
+		_, err = this.redis.Set(key, strconv.FormatFloat(value.(float64), 'G', 5, 64), expireDuration).Result()
+	case reflect.Float32:
+		_, err = this.redis.Set(key, strconv.FormatFloat(value.(float64), 'G', 5, 32), expireDuration).Result()
+	default:
+		return &cache.Error{RepositoryError: errors.New("type error")}
+	}
+
+	return err
 }
 
-func (this *Repository) Put(key string, value interface{}, expire time.Time) {
-	panic("implement me")
+func (this *Repository) Forget(key string) error {
+	_, err := this.redis.Del(key).Result()
+	return err
 }
 
-func (this *Repository) Forget(key string) {
-	panic("implement me")
+func (this *Repository) Increment(key string, steps ...int64) error {
+	_, err := this.redis.IncrBy(key, this.step(steps)).Result()
+	return err
 }
 
-func (this *Repository) Increment(key string) {
-	panic("implement me")
+func (this *Repository) Decrement(key string, steps ...int64) error {
+	_, err := this.redis.DecrBy(key, this.step(steps)).Result()
+	return err
 }
 
-func (this *Repository) Decrement(key string) {
-	panic("implement me")
-}
-
-func (this *Repository) Forever(key string, value interface{}, expire time.Time) {
-	panic("implement me")
+func (this *Repository) Forever(key string, value interface{}) error {
+	return this.Put(key, value, time.Now())
 }
 
 func (this *Repository) Flush() error {
-	panic("implement me")
+	_, err := this.redis.FlushDB().Result()
+	return err
 }
 
-func (this *Repository) Has(key string) (bool, error) {
-	exists, err := this.redis.Do("EXISTS", key).Bool()
-	if err != nil {
-		return exists, &cache.Error{RepositoryError:err}
-	}
+func (this *Repository) Has(key string) bool {
+	return this.redis.Exists(key).Val() > 0
+}
 
-	return exists, nil
+func (this *Repository) step(steps []int64) int64 {
+	if len(steps) == 0 {
+		return 1
+	} else {
+		return int64(steps[0])
+	}
 }

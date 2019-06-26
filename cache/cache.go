@@ -10,23 +10,22 @@ func (this *Error) Error() string {
 	return this.RepositoryError.Error()
 }
 
-
 type Cache interface {
-	Get(key string) error
+	Get(key string) (interface{}, error)
 
-	Add(key string, value interface{}, expire time.Time)
+	Add(key string, value interface{}, expire time.Time) error
 
-	Put(key string, value interface{}, expire time.Time)
+	Put(key string, value interface{}, expire time.Time) error
 
-	Forget(key string)
+	Forget(key string) error
 
-	Increment(key string)
+	Increment(key string, steps ...int64) error
 
-	Decrement(key string)
+	Decrement(key string, steps ...int64) error
 
-	Forever(key string, value interface{}, expire time.Time)
+	Forever(key string, value interface{}) error
 
-	Has(key string) (bool, error)
+	Has(key string) bool
 
 	Flush() error
 }
@@ -36,36 +35,4 @@ type Repository struct {
 
 func NewRepository() {
 
-}
-
-func (Repository) Get(key string) error {
-	panic("implement me")
-}
-
-func (Repository) Add(key string, value interface{}, expire time.Time) {
-	panic("implement me")
-}
-
-func (Repository) Put(key string, value interface{}, expire time.Time) {
-	panic("implement me")
-}
-
-func (Repository) Forget(key string) {
-	panic("implement me")
-}
-
-func (Repository) Increment(key string) {
-	panic("implement me")
-}
-
-func (Repository) Decrement(key string) {
-	panic("implement me")
-}
-
-func (Repository) Forever(key string, value interface{}, expire time.Time) {
-	panic("implement me")
-}
-
-func (Repository) Flush() error {
-	panic("implement me")
 }
