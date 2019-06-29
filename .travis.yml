@@ -11,3 +11,6 @@ script:
   - $GOPATH/bin/goveralls -service=travis-ci
   - go test ./config
   - go test ./cache/redis
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
