@@ -5,6 +5,7 @@ import (
 	"github.com/go-redis/redis"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
+	"os"
 	"strconv"
 	"sync"
 	"testing"
@@ -25,8 +26,13 @@ func randString(len int) string {
 }
 
 func client() *redis.Client {
+	addr := os.Getenv(`REDIS_HOST`)
+	if addr == "" {
+		addr = "192.168.1.107"
+	}
+
 	return redis.NewClient(&redis.Options{
-		Addr: "192.168.1.107:6379",
+		Addr: addr + ":6379",
 		DB:   0,
 	})
 }
