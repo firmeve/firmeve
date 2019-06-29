@@ -240,7 +240,7 @@ func TestRepository_Decrement(t *testing.T) {
 	cache := NewRepository(client(), "redis_")
 	key := randString(50)
 
-	err := cache.Put(key, 100, time.Now().Add(time.Second * 1000))
+	err := cache.Put(key, 100, time.Now().Add(time.Second*1000))
 	if err != nil {
 		t.Fail()
 	}
