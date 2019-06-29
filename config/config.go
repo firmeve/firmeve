@@ -45,27 +45,24 @@ func NewConfig(directory string) (*Config, error) {
 		return config, nil
 	}
 
-	directory, err := absPath(directory)
-	if err != nil {
-		return nil, err
-	}
-
+	var err error
 	// 单例加锁
 	//mu.Lock()
 	//defer mu.Unlock()
 
 	//直接使用once，其实就是调用mu.Lock和Unlock
 	once.Do(func() {
+		directory, err := absPath(directory)
+		if err != nil {
+			return
+		}
+
 		config = &Config{directory: directory, delimiter: `.`, extension: `.conf`}
+		// loadAll
+		err = config.loadAll()
 	})
 
-	// loadAll
-	err = config.loadAll()
-	if err != nil {
-		return nil, err
-	}
-
-	return config, nil
+	return config, err
 }
 
 // 获取指定目录的绝对路径
