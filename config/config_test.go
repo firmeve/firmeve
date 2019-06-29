@@ -34,6 +34,15 @@ func TestNewConfig(t *testing.T) {
 		t.Fatalf("Config create error. Detail :%s", err.Error())
 	}
 
+	for i := 0; i < 1000; i++ {
+		go func(directory string) {
+			_, err := NewConfig(directory)
+			if err != nil {
+				t.Fatalf("Config create error. Detail :%s", err.Error())
+			}
+		}(directory)
+	}
+
 	fmt.Println(config)
 	fmt.Println(config2)
 
@@ -229,7 +238,7 @@ func ExampleConfig_GetDefault() {
 	value1 := config.GetDefault("app.zzzz", `def`)
 	value2 := config.GetDefault("app.t_key", `def2`)
 
-	fmt.Println(value1,value2)
+	fmt.Println(value1, value2)
 
 	// Output:
 	// def t_value
@@ -243,7 +252,7 @@ func ExampleConfig_All() {
 
 	configs := config.All()
 
-	fmt.Printf("%T",configs)
+	fmt.Printf("%T", configs)
 
 	// Output:
 	// map[string]*ini.File
