@@ -48,17 +48,6 @@ func NewRepository(store Cache) *Repository {
 	return &Repository{
 		store: store,
 	}
-	//if repository != nil {
-	//	return repository
-	//}
-	//
-	//once.Do(func() {
-	//	repository = &Repository{
-	//		store,
-	//	}
-	//})
-	//
-	//return repository
 }
 
 func (this *Repository) Get(key string, defaultValue interface{}) (interface{}, error) {
