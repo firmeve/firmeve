@@ -1,7 +1,7 @@
 package cache
 
 import (
-	"./redis"
+	"firmeve/cache/redis"
 	config2 "firmeve/config"
 	"fmt"
 	goRedis "github.com/go-redis/redis"
