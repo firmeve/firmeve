@@ -1,13 +1,18 @@
 package cache
 
 import (
+	"errors"
+	"firmeve/cache/redis"
+	"firmeve/config"
+	goRedis "github.com/go-redis/redis"
 	"sync"
 	"time"
 )
 
 var (
-	//repository *Repository
-	once sync.Once
+	manager *Manager
+	once    sync.Once
+	drivers = map[string]string{"redis": "createRedisDriver"}
 )
 
 type Cache interface {
@@ -99,9 +104,55 @@ func (this *Repository) Pull(key string, defaultValue interface{}) (interface{},
 	return value, this.Forget(key)
 }
 
-//func (this *Repository) drive(driver string) *Repository {
-//
-//}
+// -------------------------- manager -----------------------
+
+type Manager struct {
+	config       *config.Config
+	repositories map[string]Cache
+}
+
+func NewManager(config *config.Config) *Manager {
+	if manager != nil {
+		return manager
+	}
+
+	once.Do(func() {
+		manager = &Manager{
+			config: config,
+		}
+	})
+
+	return manager
+}
+
+func (this *Manager) driver(driver string) (Cache, error) {
+	if repository, ok := this.repositories[driver]; ok {
+		return repository, nil
+	}
+
+	//var repositoryName string
+	//var ok bool
+	//if repositoryName, ok = drivers[driver]; !ok {
+	//	return nil, &Error{RepositoryError: errors.New("driver not found")}
+	//}
+
+	switch driver {
+	case `redis`:
+		return this.createRedisDriver(), nil
+	default:
+		return nil, &Error{RepositoryError: errors.New("driver not found")}
+	}
+
+	/*value := reflect.ValueOf(this).MethodByName(repositoryName).Call([]reflect.Value{})
+	fmt.Println(value[0])
+	//return (value[0]).(Cache), nil
+	return value[0].(Cache),nil*/
+}
+
+func (this *Manager) createRedisDriver() Cache {
+	return redis.NewRepository(goRedis.NewClient(&goRedis.Options{
+	}), this.config.GetDefault(`prefix`, `cache`).(string))
+}
 
 type Error struct {
 	RepositoryError error
