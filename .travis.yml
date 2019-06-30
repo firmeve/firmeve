@@ -10,16 +10,13 @@ go:
   - 1.12.1
 
 before_install:
-  - go get github.com/go-playground/overalls
-  - go get github.com/mattn/goveralls
-  - go get github.com/smartystreets/goconvey
   - go get github.com/mattn/goveralls
 
 script:
   - $GOPATH/bin/goveralls -service=travis-ci
-  - go test firmeve/config
-  - go test firmeve/cache
-  - go test firmeve/cache/redis
+  - go test ./config
+  - go test ./cache
+  - go test ./cache/redis
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
