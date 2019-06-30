@@ -37,6 +37,11 @@ type Config struct {
 	delimiter string
 	extension string
 }
+// 获取config
+// 前提是config必须已经存在
+func GetConfig() *Config {
+	return config
+}
 
 // 构造函数
 func NewConfig(directory string) (*Config, error) {
