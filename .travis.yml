@@ -1,5 +1,8 @@
 language: go
 
+env:
+  - REDIS_HOST=localhost
+
 services:
   - redis-server
 
@@ -7,12 +10,15 @@ go:
   - 1.12.1
 
 before_install:
+  - go get github.com/go-playground/overalls
+  - go get github.com/mattn/goveralls
+  - go get github.com/smartystreets/goconvey
   - go get github.com/mattn/goveralls
 
 script:
   - $GOPATH/bin/goveralls -service=travis-ci
-#  - go test ./config
-#  - go test ./cache/redis
+  - go test ./config
+  - go test ./cache/redis
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
