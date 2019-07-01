@@ -122,9 +122,9 @@ func (this *Config) Get(keys string) (interface{}, error) {
 }
 
 func (this *Config) GetDefault(keys string, defaults ...interface{}) interface{} {
-	defaultValue := ``
+	var defaultValue interface{}
 	if len(defaults) >= 1 {
-		defaultValue = defaults[0].(string)
+		defaultValue = defaults[0]
 	}
 
 	value, err := this.Get(keys)
