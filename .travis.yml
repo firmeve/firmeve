@@ -21,7 +21,9 @@ before_install:
   - go get github.com/go-playground/overalls
   - go get github.com/smartystreets/goconvey
 
-before_script: cd project
+before_script:
+  - cd project
+  - echo `pwd`
 
 script:
   - $GOPATH/bin/goveralls -service=travis-ci
