@@ -7,9 +7,12 @@ import (
 	goRedis "github.com/go-redis/redis"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
+	"sync"
 	"testing"
 	"time"
 )
+
+var wg sync.WaitGroup
 
 func TestNewRepository(t *testing.T) {
 
@@ -28,7 +31,7 @@ func TestRepository_Get(t *testing.T) {
 
 	key := randString(30)
 
-	value, err := redisRepository.Get(key, "abc")
+	value, err := redisRepository.GetDefault(key, "abc")
 	if err != nil {
 		t.Fail()
 	}
@@ -42,7 +45,7 @@ func TestRepository_Get(t *testing.T) {
 		t.Fail()
 	}
 
-	value, err = redisRepository.Get(key, "abc")
+	value, err = redisRepository.GetDefault(key, "abc")
 	if err != nil {
 		t.Fail()
 	}
@@ -132,25 +135,117 @@ func redisRepository() *Repository {
 	return NewRepository(redisStore)
 }
 
+type EncodeTest struct {
+	Name string `json:"name"`
+	Age int    `json:"age"`
+}
+
+func TestRepository_AddEncode(t *testing.T) {
+	test := &EncodeTest{"James", 10}
+	redisRepository := redisRepository()
+	key := randString(30)
+	err := redisRepository.AddEncode(key, test, time.Now().Add(time.Hour))
+	if err != nil{
+		fmt.Printf("%s\n",err.Error())
+		t.Fail()
+	}
+}
+
+func TestRepository_PutEncode(t *testing.T) {
+	test := &EncodeTest{"James", 10}
+	redisRepository := redisRepository()
+	key := randString(30)
+	err := redisRepository.PutEncode(key, test, time.Now().Add(time.Hour))
+	if err != nil{
+		fmt.Printf("%s\n",err.Error())
+		t.Fail()
+	}
+}
+
+func TestRepository_ForeverEncode(t *testing.T) {
+	test := &EncodeTest{"James", 10}
+	redisRepository := redisRepository()
+	key := randString(30)
+	err := redisRepository.ForeverEncode(key, test)
+	if err != nil{
+		fmt.Printf("%s\n",err.Error())
+		t.Fail()
+	}
+}
+
+
+func TestRepository_GetDecode(t *testing.T) {
+
+	test := &EncodeTest{"James", 10}
+	redisRepository := redisRepository()
+	key := randString(30)
+	err := redisRepository.AddEncode(key, test, time.Now().Add(time.Hour))
+	if err != nil{
+		fmt.Printf("%s\n",err.Error())
+		t.Fail()
+	}
+
+	value,err := redisRepository.GetDecode(key,&EncodeTest{})
+	if err != nil{
+		t.Fail()
+	}
+
+
+	assert.Equal(t,"James",value.(*EncodeTest).Name)
+	assert.Equal(t,10,value.(*EncodeTest).Age)
+}
+
 // -------------------- manager ---------------------------
 
 func TestNewManager(t *testing.T) {
-	config, err := config2.NewConfig("./testdata/conf")
+	config, err := config2.NewConfig("../testdata/conf")
 	if err != nil {
 		t.Fail()
 	}
 	var managern *Manager
 	manager := NewManager(config)
 
+	wg.Add(1000)
 	for i := 0; i < 1000; i++ {
-		go func(config *config2.Config) {
-			managern = NewManager(config)
-		}(config)
+		go func(config *config2.Config,i int) {
+			if i == 999 {
+				fmt.Println("zzzzzzzzzzz")
+				managern = NewManager(config)
+			} else {
+				NewManager(config)
+			}
+
+			wg.Done()
+
+		}(config,i)
 	}
 
-	if manager != managern{
+	wg.Wait()
+
+	if manager != managern {
 		t.Fail()
 	}
 	//fmt.Printf("%#v", manager)
 
+}
+
+func TestManager_Driver(t *testing.T) {
+	config, err := config2.NewConfig("../testdata/conf")
+	if err != nil {
+		t.Fail()
+	}
+
+	manager := NewManager(config)
+	driver,err := manager.Driver(`redis`)
+	if err != nil{
+		fmt.Println("error:",err.Error())
+		t.Fail()
+	}
+
+	fmt.Printf("%#v\n",driver)
+	fmt.Println("============")
+
+	cacheInterface := new(redis.Repository)
+
+	assert.IsType(t,cacheInterface,driver)
 }

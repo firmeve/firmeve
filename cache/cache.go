@@ -1,9 +1,12 @@
 package cache
 
 import (
+	"bytes"
+	"encoding/gob"
 	"errors"
 	"firmeve/cache/redis"
 	"firmeve/config"
+	"fmt"
 	"github.com/go-ini/ini"
 	goRedis "github.com/go-redis/redis"
 	"strings"
@@ -14,7 +17,7 @@ import (
 var (
 	manager *Manager
 	once    sync.Once
-	drivers = map[string]string{"redis": "createRedisDriver"}
+	rwmx      sync.RWMutex
 )
 
 type Cache interface {
@@ -38,11 +41,11 @@ type Cache interface {
 }
 
 type Serialization interface {
-	GetDecode(key string) (interface{}, error)
+	GetDecode(key string, to interface{}) (interface{}, error)
 
 	AddEncode(key string, value interface{}, expire time.Time) error
 
-	ForeverEncode(key string, value interface{}, expire time.Time) error
+	ForeverEncode(key string, value interface{}) error
 
 	PutEncode(key string, value interface{}, expire time.Time) error
 }
@@ -57,11 +60,15 @@ func NewRepository(store Cache) *Repository {
 	}
 }
 
-func (this *Repository) Get(key string, defaultValue interface{}) (interface{}, error) {
+func (this *Repository) GetDefault(key string, defaultValue interface{}) (interface{}, error) {
 	if !this.store.Has(key) {
 		return defaultValue, nil
 	}
 
+	return this.Get(key)
+}
+
+func (this *Repository) Get(key string) (interface{}, error) {
 	return this.store.Get(key)
 }
 
@@ -98,12 +105,67 @@ func (this *Repository) Flush() error {
 }
 
 func (this *Repository) Pull(key string, defaultValue interface{}) (interface{}, error) {
-	value, err := this.Get(key, defaultValue)
+	value, err := this.GetDefault(key, defaultValue)
 	if err != nil {
 		return nil, err
 	}
 
 	return value, this.Forget(key)
+}
+
+func (this *Repository) GetDecode(key string, to interface{}) (interface{}, error) {
+	value, err := this.Get(key)
+	if err != nil {
+		return nil, err
+	}
+
+	err = gobDecode([]byte(value.(string)), to)
+	if err != nil {
+		return nil, err
+	}
+
+	return to, nil
+}
+
+func (this *Repository) AddEncode(key string, value interface{}, expire time.Time) error {
+	valueBytes, err := gobEncode(value)
+	if err != nil {
+		return err
+	}
+
+	return this.Add(key, valueBytes, expire)
+}
+
+func (this *Repository) ForeverEncode(key string, value interface{}) error {
+	valueBytes, err := gobEncode(value)
+	if err != nil {
+		return err
+	}
+
+	return this.Forever(key, valueBytes)
+}
+
+func (this *Repository) PutEncode(key string, value interface{}, expire time.Time) error {
+	valueBytes, err := gobEncode(value)
+	if err != nil {
+		return err
+	}
+
+	return this.Put(key, valueBytes, expire)
+}
+
+func gobEncode(value interface{}) ([]byte, error) {
+	buffer := bytes.NewBuffer(nil)
+	err := gob.NewEncoder(buffer).Encode(value)
+	if err != nil {
+		return nil, err
+	}
+	return buffer.Bytes(), nil
+}
+
+func gobDecode(data []byte, value interface{}) error {
+	buffer := bytes.NewReader(data)
+	return gob.NewDecoder(buffer).Decode(value)
 }
 
 // -------------------------- manager -----------------------
@@ -127,23 +189,62 @@ func NewManager(config *config.Config) *Manager {
 	return manager
 }
 
-func (this *Manager) driver(driver string) (Cache, error) {
-	if repository, ok := this.repositories[driver]; ok {
-		return repository, nil
-	}
+func (this *Manager) Driver(driver string) (Cache, error) {
+	rwmx.Lock()
+	defer rwmx.Unlock()
 
-	//var repositoryName string
-	//var ok bool
-	//if repositoryName, ok = drivers[driver]; !ok {
-	//	return nil, &Error{RepositoryError: errors.New("driver not found")}
-	//}
+	var repository Cache
+	var err error
+	//once.Do(func() {
+		var ok bool
+		if repository, ok = this.repositories[driver]; ok {
+			return nil,err
+		}
 
-	switch driver {
-	case `redis`:
-		return this.createRedisDriver(), nil
-	default:
-		return nil, &Error{RepositoryError: errors.New("driver not found")}
-	}
+		switch driver {
+		case `redis`:
+			repository = this.createRedisDriver()
+			this.repositories[driver] = repository
+		default:
+			fmt.Println("drivffffffffffffffffer",driver)
+			err = &Error{RepositoryError: errors.New("driver not found")}
+		}
+
+		//this.repositories[driver] = repository
+	//})
+fmt.Printf("%#v\n====",this.createRedisDriver())
+	return this.repositories[driver],err
+//
+//	if repository, ok := this.repositories[driver]; ok {
+//		return repository, nil
+//	}
+//
+//	//var repositoryName string
+//	//var ok bool
+//	//if repositoryName, ok = drivers[driver]; !ok {
+//	//	return nil, &Error{RepositoryError: errors.New("driver not found")}
+//	//}
+//
+//
+//
+//	var repository Cache
+//	var err error
+//
+//
+//
+//
+//
+//		switch driver {
+//		case `redis`:
+//			fmt.Println("ggggggggggggggggg")
+//			repository = this.createRedisDriver()
+//		default:
+//			fmt.Println("drivffffffffffffffffer",driver)
+//			err = &Error{RepositoryError: errors.New("driver not found")}
+//		}
+//		this.repositories[driver] = repository
+//fmt.Printf("====%#v===\n",repository)
+//	return this.repositories[driver], err
 
 	/*value := reflect.ValueOf(this).MethodByName(repositoryName).Call([]reflect.Value{})
 	fmt.Println(value[0])
@@ -152,19 +253,19 @@ func (this *Manager) driver(driver string) (Cache, error) {
 }
 
 func (this *Manager) createRedisDriver() Cache {
-
+	fmt.Printf("%#v",this.config)
 	addr := []string{
-		this.config.GetDefault(`redis.host`, `localhost`).(*ini.Key).String(),
+		this.config.GetDefault(`cache.redis.host`, `localhost`).(*ini.Key).String(),
 		`:`,
-		this.config.GetDefault(`redis.port`, `6379`).(*ini.Key).String(),
+		this.config.GetDefault(`cache.redis.port`, `6379`).(*ini.Key).String(),
 	}
 
-	db, _ := this.config.GetDefault(`redis.host`, 0).(*ini.Key).Int()
+	db, _ := this.config.GetDefault(`cache.redis.host`, 0).(*ini.Key).Int()
 
 	return redis.NewRepository(goRedis.NewClient(&goRedis.Options{
 		Addr: strings.Join(addr, ``),
 		DB:   db,
-	}), this.config.GetDefault(`prefix`, `firmeve`).(*ini.Key).String())
+	}), this.config.GetDefault(`cache.prefix`, `firmeve`).(*ini.Key).String())
 }
 
 type Error struct {
