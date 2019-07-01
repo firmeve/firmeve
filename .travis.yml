@@ -2,7 +2,7 @@ language: go
 
 env:
   - REDIS_HOST=localhost
-  - GO_REPO_FULLNAME="github.com/firmeve/firmeve"
+  - GO_REPO_FULLNAME="firmeve/firmeve"
 
 services:
   - redis-server
