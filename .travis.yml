@@ -7,7 +7,14 @@ services:
   - redis-server
 
 go:
-  - 1.12.1
+  - 1.12.x
+
+git:
+  depth: 1
+
+# Don't email me the results of the test runs.
+notifications:
+  email: false
 
 before_install:
   - go get github.com/mattn/goveralls
@@ -18,9 +25,7 @@ before_install:
 
 script:
   - $GOPATH/bin/goveralls -service=travis-ci
-  - go test ./config
-  - go test ./cache/redis
-  - go test ./cache
+  - go test -v -race ./...
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
