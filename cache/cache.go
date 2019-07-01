@@ -4,7 +4,9 @@ import (
 	"errors"
 	"firmeve/cache/redis"
 	"firmeve/config"
+	"github.com/go-ini/ini"
 	goRedis "github.com/go-redis/redis"
+	"strings"
 	"sync"
 	"time"
 )
@@ -150,8 +152,19 @@ func (this *Manager) driver(driver string) (Cache, error) {
 }
 
 func (this *Manager) createRedisDriver() Cache {
+
+	addr := []string{
+		this.config.GetDefault(`redis.host`, `localhost`).(*ini.Key).String(),
+		`:`,
+		this.config.GetDefault(`redis.port`, `6379`).(*ini.Key).String(),
+	}
+
+	db, _ := this.config.GetDefault(`redis.host`, 0).(*ini.Key).Int()
+
 	return redis.NewRepository(goRedis.NewClient(&goRedis.Options{
-	}), this.config.GetDefault(`prefix`, `cache`).(string))
+		Addr: strings.Join(addr, ``),
+		DB:   db,
+	}), this.config.GetDefault(`prefix`, `firmeve`).(*ini.Key).String())
 }
 
 type Error struct {
