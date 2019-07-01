@@ -1,0 +1,6 @@
+prefix=firmeve
+
+[redis]
+host=192.168.1.107
+port=6379
+db=0
