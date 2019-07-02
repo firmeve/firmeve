@@ -43,16 +43,21 @@ func TestNewRepository(t *testing.T) {
 	var cacheN *Repository
 	wg.Add(1000)
 	for i := 0; i < 1000; i++ {
-		go func() {
-			cacheN = NewRepository(client(), "redis_")
+		go func(i int) {
+			if i == 800 {
+				cacheN = NewRepository(client(), "redis_")
+			} else {
+				NewRepository(client(), "redis_")
+			}
 			wg.Done()
-		}()
+		}(i)
 	}
-
+	wg.Wait()
 	if cache1 != cacheN {
 		t.Failed()
 	}
-	wg.Wait()
+	fmt.Println(cache1)
+
 }
 
 func TestRepository_Put_String(t *testing.T) {
