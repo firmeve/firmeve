@@ -28,7 +28,7 @@ before_install:
 
 script:
   - $GOPATH/bin/goveralls -service=travis-ci
-  - go vet
+  - go vet -atomic -asmdecl ./...
   - go test -v -race ./...
 
 after_success:
