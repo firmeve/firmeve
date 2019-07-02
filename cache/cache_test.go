@@ -237,23 +237,23 @@ func TestNewManager(t *testing.T) {
 
 }
 
-func TestManager_Driver(t *testing.T) {
-	config, err := config2.NewConfig("../testdata/conf")
-	if err != nil {
-		t.Fail()
-	}
-
-	manager := NewManager(config)
-	driver, err := manager.Driver(`redis`)
-	if err != nil {
-		fmt.Println("error:", err.Error())
-		t.Fail()
-	}
-
-	fmt.Printf("%#v\n", driver)
-	fmt.Println("============")
-
-	cacheInterface := new(redis.Repository)
-
-	assert.IsType(t, cacheInterface, driver)
-}
+//func TestManager_Driver(t *testing.T) {
+//	config, err := config2.NewConfig("../testdata/conf")
+//	if err != nil {
+//		t.Fail()
+//	}
+//
+//	manager := NewManager(config)
+//	driver, err := manager.Driver(`redis`)
+//	if err != nil {
+//		fmt.Println("error:", err.Error())
+//		t.Fail()
+//	}
+//
+//	fmt.Printf("%#v\n", driver)
+//	fmt.Println("============")
+//
+//	cacheInterface := new(redis.Repository)
+//
+//	assert.IsType(t, cacheInterface, driver)
+//}
