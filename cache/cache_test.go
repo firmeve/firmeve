@@ -16,9 +16,13 @@ import (
 var wg sync.WaitGroup
 
 func TestNewRepository(t *testing.T) {
+	addr := os.Getenv(`REDIS_HOST`)
+	if addr == "" {
+		addr = "192.168.1.107"
+	}
 
 	redisStore := redis.NewRepository(goRedis.NewClient(&goRedis.Options{
-		Addr: "192.168.1.107:6379",
+		Addr: addr + ":6379",
 		DB:   0,
 	}), "redis")
 
