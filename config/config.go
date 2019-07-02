@@ -37,6 +37,7 @@ type Config struct {
 	delimiter string
 	extension string
 }
+
 // 获取config
 // 前提是config必须已经存在
 func GetConfig() *Config {

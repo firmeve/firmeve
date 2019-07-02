@@ -1,8 +1,8 @@
 package cache
 
 import (
-	"firmeve/cache/redis"
-	config2 "firmeve/config"
+	"github.com/firmeve/firmeve/cache/redis"
+	config2 "github.com/firmeve/firmeve/config"
 	"fmt"
 	goRedis "github.com/go-redis/redis"
 	"github.com/stretchr/testify/assert"
@@ -137,7 +137,7 @@ func redisRepository() *Repository {
 
 type EncodeTest struct {
 	Name string `json:"name"`
-	Age int    `json:"age"`
+	Age  int    `json:"age"`
 }
 
 func TestRepository_AddEncode(t *testing.T) {
@@ -145,8 +145,8 @@ func TestRepository_AddEncode(t *testing.T) {
 	redisRepository := redisRepository()
 	key := randString(30)
 	err := redisRepository.AddEncode(key, test, time.Now().Add(time.Hour))
-	if err != nil{
-		fmt.Printf("%s\n",err.Error())
+	if err != nil {
+		fmt.Printf("%s\n", err.Error())
 		t.Fail()
 	}
 }
@@ -156,8 +156,8 @@ func TestRepository_PutEncode(t *testing.T) {
 	redisRepository := redisRepository()
 	key := randString(30)
 	err := redisRepository.PutEncode(key, test, time.Now().Add(time.Hour))
-	if err != nil{
-		fmt.Printf("%s\n",err.Error())
+	if err != nil {
+		fmt.Printf("%s\n", err.Error())
 		t.Fail()
 	}
 }
@@ -167,12 +167,11 @@ func TestRepository_ForeverEncode(t *testing.T) {
 	redisRepository := redisRepository()
 	key := randString(30)
 	err := redisRepository.ForeverEncode(key, test)
-	if err != nil{
-		fmt.Printf("%s\n",err.Error())
+	if err != nil {
+		fmt.Printf("%s\n", err.Error())
 		t.Fail()
 	}
 }
-
 
 func TestRepository_GetDecode(t *testing.T) {
 
@@ -180,19 +179,18 @@ func TestRepository_GetDecode(t *testing.T) {
 	redisRepository := redisRepository()
 	key := randString(30)
 	err := redisRepository.AddEncode(key, test, time.Now().Add(time.Hour))
-	if err != nil{
-		fmt.Printf("%s\n",err.Error())
+	if err != nil {
+		fmt.Printf("%s\n", err.Error())
 		t.Fail()
 	}
 
-	value,err := redisRepository.GetDecode(key,&EncodeTest{})
-	if err != nil{
+	value, err := redisRepository.GetDecode(key, &EncodeTest{})
+	if err != nil {
 		t.Fail()
 	}
 
-
-	assert.Equal(t,"James",value.(*EncodeTest).Name)
-	assert.Equal(t,10,value.(*EncodeTest).Age)
+	assert.Equal(t, "James", value.(*EncodeTest).Name)
+	assert.Equal(t, 10, value.(*EncodeTest).Age)
 }
 
 // -------------------- manager ---------------------------
@@ -207,7 +205,7 @@ func TestNewManager(t *testing.T) {
 
 	wg.Add(1000)
 	for i := 0; i < 1000; i++ {
-		go func(config *config2.Config,i int) {
+		go func(config *config2.Config, i int) {
 			if i == 999 {
 				fmt.Println("zzzzzzzzzzz")
 				managern = NewManager(config)
@@ -217,7 +215,7 @@ func TestNewManager(t *testing.T) {
 
 			wg.Done()
 
-		}(config,i)
+		}(config, i)
 	}
 
 	wg.Wait()
@@ -236,16 +234,16 @@ func TestManager_Driver(t *testing.T) {
 	}
 
 	manager := NewManager(config)
-	driver,err := manager.Driver(`redis`)
-	if err != nil{
-		fmt.Println("error:",err.Error())
+	driver, err := manager.Driver(`redis`)
+	if err != nil {
+		fmt.Println("error:", err.Error())
 		t.Fail()
 	}
 
-	fmt.Printf("%#v\n",driver)
+	fmt.Printf("%#v\n", driver)
 	fmt.Println("============")
 
 	cacheInterface := new(redis.Repository)
 
-	assert.IsType(t,cacheInterface,driver)
+	assert.IsType(t, cacheInterface, driver)
 }
