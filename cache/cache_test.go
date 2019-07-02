@@ -1,12 +1,13 @@
 package cache
 
 import (
+	"fmt"
 	"github.com/firmeve/firmeve/cache/redis"
 	config2 "github.com/firmeve/firmeve/config"
-	"fmt"
 	goRedis "github.com/go-redis/redis"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
+	"os"
 	"sync"
 	"testing"
 	"time"
@@ -128,8 +129,13 @@ func randString(len int) string {
 }
 
 func redisRepository() *Repository {
+	addr := os.Getenv(`REDIS_HOST`)
+	if addr == "" {
+		addr = "192.168.1.107"
+	}
+
 	redisStore := redis.NewRepository(goRedis.NewClient(&goRedis.Options{
-		Addr: "192.168.1.107:6379",
+		Addr: addr + ":6379",
 		DB:   0,
 	}), "redis")
 	return NewRepository(redisStore)
