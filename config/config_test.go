@@ -170,8 +170,8 @@ func TestConfig_GetDefault(t *testing.T) {
 
 	// 当一个值的时候，返回ini.File完整对象
 	res = config.GetDefault(`test.test`, 0)
-	resInt,_ := res.(*ini.Key).Int()
-	assert.Equal(t,2,resInt)
+	resInt, _ := res.(*ini.Key).Int()
+	assert.Equal(t, 2, resInt)
 }
 
 func TestConfig_All(t *testing.T) {
