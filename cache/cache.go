@@ -206,6 +206,7 @@ func (this *Manager) Driver(driver string) (Cache, error) {
 		repository = this.createRedisDriver()
 	default:
 		err = &Error{RepositoryError: errors.New("driver not found")}
+		return nil, err
 	}
 
 	this.repositories[driver] = repository
