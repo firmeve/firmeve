@@ -156,23 +156,23 @@ func TestConfig_Get(t *testing.T) {
 }
 
 // default 非正常数据测试
-func TestConfig_GetDefault(t *testing.T) {
-	config, err := NewConfig(directory)
-	if err != nil {
-		fmt.Printf("%s\n", err.Error())
-		t.Fail()
-	}
-
-	// 当一个值的时候，返回ini.File完整对象
-	res := config.GetDefault(`ssss`, `def`)
-
-	assert.Equal(t, `def`, res.(string))
-
-	// 当一个值的时候，返回ini.File完整对象
-	res = config.GetDefault(`test.test`, 0)
-	resInt, _ := res.(*ini.Key).Int()
-	assert.Equal(t, 2, resInt)
-}
+//func TestConfig_GetDefault(t *testing.T) {
+//	config, err := NewConfig(directory)
+//	if err != nil {
+//		fmt.Printf("%s\n", err.Error())
+//		t.Fail()
+//	}
+//
+//	// 当一个值的时候，返回ini.File完整对象
+//	res := config.GetDefault(`ssss`, `def`)
+//
+//	assert.Equal(t, `def`, res.(string))
+//
+//	// 当一个值的时候，返回ini.File完整对象
+//	res = config.GetDefault(`test.test`, 0)
+//	resInt, _ := res.(*ini.Key).Int()
+//	assert.Equal(t, 2, resInt)
+//}
 
 func TestConfig_All(t *testing.T) {
 	config, err := NewConfig(directory)

@@ -122,20 +122,6 @@ func (this *Config) Get(keys string) (interface{}, error) {
 	}
 }
 
-func (this *Config) GetDefault(keys string, defaults ...interface{}) interface{} {
-	var defaultValue interface{}
-	if len(defaults) >= 1 {
-		defaultValue = defaults[0]
-	}
-
-	value, err := this.Get(keys)
-	if err != nil {
-		return defaultValue
-	}
-
-	return value
-}
-
 // 设置配置
 func (this *Config) Set(keys string, value string) error {
 
