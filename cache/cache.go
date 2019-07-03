@@ -6,7 +6,6 @@ import (
 	"errors"
 	"github.com/firmeve/firmeve/cache/redis"
 	"github.com/firmeve/firmeve/config"
-	"fmt"
 	"github.com/go-ini/ini"
 	goRedis "github.com/go-redis/redis"
 	"strings"
@@ -17,7 +16,7 @@ import (
 var (
 	manager *Manager
 	once    sync.Once
-	rwmx    sync.RWMutex
+	mutex   sync.RWMutex
 )
 
 type Cache interface {
@@ -182,7 +181,8 @@ func NewManager(config *config.Config) *Manager {
 
 	once.Do(func() {
 		manager = &Manager{
-			config: config,
+			config:       config,
+			repositories: make(map[string]Cache),
 		}
 	})
 
@@ -190,70 +190,31 @@ func NewManager(config *config.Config) *Manager {
 }
 
 func (this *Manager) Driver(driver string) (Cache, error) {
-	rwmx.Lock()
-	defer rwmx.Unlock()
-
 	var repository Cache
 	var err error
-	//once.Do(func() {
 	var ok bool
+
+	mutex.Lock()
+	defer mutex.Unlock()
+
 	if repository, ok = this.repositories[driver]; ok {
-		return nil, err
+		return repository, err
 	}
 
 	switch driver {
 	case `redis`:
 		repository = this.createRedisDriver()
-		this.repositories[driver] = repository
 	default:
-		fmt.Println("drivffffffffffffffffer", driver)
 		err = &Error{RepositoryError: errors.New("driver not found")}
 	}
 
-	//this.repositories[driver] = repository
-	//})
-	fmt.Printf("%#v\n====", this.createRedisDriver())
-	return this.repositories[driver], err
-	//
-	//	if repository, ok := this.repositories[driver]; ok {
-	//		return repository, nil
-	//	}
-	//
-	//	//var repositoryName string
-	//	//var ok bool
-	//	//if repositoryName, ok = drivers[driver]; !ok {
-	//	//	return nil, &Error{RepositoryError: errors.New("driver not found")}
-	//	//}
-	//
-	//
-	//
-	//	var repository Cache
-	//	var err error
-	//
-	//
-	//
-	//
-	//
-	//		switch driver {
-	//		case `redis`:
-	//			fmt.Println("ggggggggggggggggg")
-	//			repository = this.createRedisDriver()
-	//		default:
-	//			fmt.Println("drivffffffffffffffffer",driver)
-	//			err = &Error{RepositoryError: errors.New("driver not found")}
-	//		}
-	//		this.repositories[driver] = repository
-	//fmt.Printf("====%#v===\n",repository)
-	//	return this.repositories[driver], err
+	this.repositories[driver] = repository
 
-	/*value := reflect.ValueOf(this).MethodByName(repositoryName).Call([]reflect.Value{})
-	fmt.Println(value[0])
-	//return (value[0]).(Cache), nil
-	return value[0].(Cache),nil*/
+	return this.repositories[driver], err
 }
 
 func (this *Manager) createRedisDriver() Cache {
-	fmt.Printf("%#v", this.config)
+
 	addr := []string{
 		this.config.GetDefault(`cache.redis.host`, `localhost`).(*ini.Key).String(),
 		`:`,

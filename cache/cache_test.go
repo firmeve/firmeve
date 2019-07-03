@@ -237,23 +237,39 @@ func TestNewManager(t *testing.T) {
 
 }
 
-//func TestManager_Driver(t *testing.T) {
-//	config, err := config2.NewConfig("../testdata/conf")
-//	if err != nil {
-//		t.Fail()
-//	}
-//
-//	manager := NewManager(config)
-//	driver, err := manager.Driver(`redis`)
-//	if err != nil {
-//		fmt.Println("error:", err.Error())
-//		t.Fail()
-//	}
-//
-//	fmt.Printf("%#v\n", driver)
-//	fmt.Println("============")
-//
-//	cacheInterface := new(redis.Repository)
-//
-//	assert.IsType(t, cacheInterface, driver)
-//}
+func TestManager_Driver(t *testing.T) {
+	config, err := config2.NewConfig("../testdata/conf")
+	if err != nil {
+		t.Fail()
+	}
+
+	var driver Cache
+
+	wg.Add(1000)
+	for i := 0; i < 1000; i++ {
+		go func(i int) {
+			defer wg.Done()
+			var err2 error
+			manager := NewManager(config)
+			if i == 800 {
+				driver, err2 = manager.Driver(`redis`)
+			} else {
+				_, err2 = manager.Driver(`redis`)
+
+			}
+			if err2 != nil {
+				fmt.Println("error:", err2.Error())
+				t.Fail()
+			}
+		}(i)
+	}
+
+	wg.Wait()
+
+	fmt.Println("==============")
+	fmt.Printf("%#v", driver)
+	fmt.Println("==============")
+
+	cacheInterface := new(redis.Repository)
+	assert.IsType(t, cacheInterface, driver)
+}
