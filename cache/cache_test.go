@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"os"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
@@ -60,7 +61,7 @@ func TestRepository_Get(t *testing.T) {
 	}
 }
 
-func TestRepository_Pull(t *testing.T) {
+func TestRepository_Pull_Default(t *testing.T) {
 	redisRepository := redisRepository()
 
 	key := randString(30)
@@ -70,22 +71,31 @@ func TestRepository_Pull(t *testing.T) {
 		t.Fail()
 	}
 
-	value, err := redisRepository.Pull(key, "abc")
+	value, err := redisRepository.PullDefault(key, "abc")
 	if value.(string) != "def" {
 		t.Fail()
 	}
 
-	value, err = redisRepository.Pull(key, "abc")
+	value, err = redisRepository.PullDefault(key, "abc")
 	fmt.Println(value.(string))
 	if value.(string) != "abc" {
 		t.Fail()
 	}
 
-	value, err = redisRepository.Pull(randString(20), "abc")
+	value, err = redisRepository.PullDefault(randString(20), "abc")
 	if value.(string) != "abc" {
 		t.Fail()
 	}
 }
+
+//func TestRepository_PullDefault_Error(t *testing.T) {
+//	redisRepository := redisRepository()
+//	_, err := redisRepository.PullDefault("!@!@!@!@!", "abc")
+//	fmt.Println("=================")
+//	fmt.Printf("%#v", err)
+//	fmt.Println("=================")
+//	assert.NotNil(t, err)
+//}
 
 func TestRepository_Forget(t *testing.T) {
 	redisRepository := redisRepository()
@@ -203,6 +213,137 @@ func TestRepository_GetDecode(t *testing.T) {
 	assert.Equal(t, 10, value.(*EncodeTest).Age)
 }
 
+func TestRepository_Increment(t *testing.T) {
+	cache := redisRepository()
+	key := randString(50)
+	err := cache.Increment(key)
+	if err != nil {
+		t.Fail()
+	}
+
+	value, err := cache.Get(key)
+	if err != nil {
+		t.Fail()
+	}
+
+	num, err := strconv.Atoi(value.(string))
+	assert.Equal(t, 1, num)
+
+	err = cache.Increment(key)
+	if err != nil {
+		t.Fail()
+	}
+
+	value, err = cache.Get(key)
+	if err != nil {
+		t.Fail()
+	}
+
+	num, err = strconv.Atoi(value.(string))
+	assert.Equal(t, 2, num)
+
+	err = cache.Increment(key, 2)
+	if err != nil {
+		t.Fail()
+	}
+
+	value, err = cache.Get(key)
+	if err != nil {
+		t.Fail()
+	}
+
+	num, err = strconv.Atoi(value.(string))
+	assert.Equal(t, 4, num)
+}
+
+func TestRepository_Decrement(t *testing.T) {
+	cache := redisRepository()
+	key := randString(50)
+
+	err := cache.Put(key, 100, time.Now().Add(time.Second*1000))
+	if err != nil {
+		t.Fail()
+	}
+
+	value, err := cache.Get(key)
+	if err != nil {
+		t.Fail()
+	}
+
+	fmt.Println(strconv.Atoi(value.(string)))
+
+	err = cache.Decrement(key)
+	if err != nil {
+		t.Fail()
+	}
+
+	value, err = cache.Get(key)
+	if err != nil {
+		t.Fail()
+	}
+
+	num, err := strconv.Atoi(value.(string))
+	fmt.Println("=============")
+	fmt.Println(num)
+	fmt.Println("=============")
+	assert.Equal(t, 99, num)
+
+	err = cache.Decrement(key)
+	if err != nil {
+		t.Fail()
+	}
+
+	value, err = cache.Get(key)
+	if err != nil {
+		t.Fail()
+	}
+
+	num, err = strconv.Atoi(value.(string))
+	assert.Equal(t, 98, num)
+
+	err = cache.Decrement(key, 2)
+	if err != nil {
+		t.Fail()
+	}
+
+	value, err = cache.Get(key)
+	if err != nil {
+		t.Fail()
+	}
+
+	num, err = strconv.Atoi(value.(string))
+	assert.Equal(t, 96, num)
+}
+
+func TestRepository_Pull(t *testing.T) {
+	redisRepository := redisRepository()
+
+	key := randString(30)
+
+	err := redisRepository.Put(key, "def", time.Now().Add(time.Second*50))
+	if err != nil {
+		t.Fail()
+	}
+
+	value, err := redisRepository.Pull(key)
+	assert.Nil(t, err)
+	assert.Equal(t, "def", value.(string))
+}
+
+func TestRepository_Pull_Error(t *testing.T) {
+	redisRepository := redisRepository()
+
+	//test := struct {
+	//	A string
+	//	B int
+	//}{
+	//	"A",10,
+	//}
+
+	_, err := redisRepository.Pull("fdasf!@#$%")
+	assert.NotNil(t, err)
+}
+
 // -------------------- manager ---------------------------
 
 func TestNewManager(t *testing.T) {
@@ -272,4 +413,13 @@ func TestManager_Driver(t *testing.T) {
 
 	cacheInterface := new(redis.Repository)
 	assert.IsType(t, cacheInterface, driver)
+}
+
+func TestManager_Driver_Error(t *testing.T) {
+	config, err := config2.NewConfig("../testdata/conf")
+	assert.Nil(t, err)
+
+	manager := NewManager(config)
+	_, err2 := manager.Driver(`redis2`)
+	assert.NotNil(t, err2)
 }

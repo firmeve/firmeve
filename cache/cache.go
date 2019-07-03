@@ -67,6 +67,15 @@ func (this *Repository) GetDefault(key string, defaultValue interface{}) (interf
 	return this.Get(key)
 }
 
+func (this *Repository) PullDefault(key string, defaultValue interface{}) (interface{}, error) {
+	value, err := this.GetDefault(key, defaultValue)
+	if err != nil {
+		return nil, err
+	}
+
+	return value, this.Forget(key)
+}
+
 func (this *Repository) Get(key string) (interface{}, error) {
 	return this.store.Get(key)
 }
@@ -103,8 +112,8 @@ func (this *Repository) Flush() error {
 	return this.store.Flush()
 }
 
-func (this *Repository) Pull(key string, defaultValue interface{}) (interface{}, error) {
-	value, err := this.GetDefault(key, defaultValue)
+func (this *Repository) Pull(key string) (interface{}, error) {
+	value, err := this.Get(key)
 	if err != nil {
 		return nil, err
 	}
