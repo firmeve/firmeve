@@ -233,21 +233,21 @@ func ExampleConfig_Get() {
 	// Output:
 	// x
 }
-
-func ExampleConfig_GetDefault() {
-	config, err := NewConfig(directory)
-	if err != nil {
-		panic(err.Error())
-	}
-
-	value1 := config.GetDefault("app.zzzz", `def`)
-	value2 := config.GetDefault("app.t_key", `def2`)
-
-	fmt.Println(value1, value2)
-
-	// Output:
-	// def t_value
-}
+//
+//func ExampleConfig_GetDefault() {
+//	config, err := NewConfig(directory)
+//	if err != nil {
+//		panic(err.Error())
+//	}
+//
+//	value1 := config.GetDefault("app.zzzz", `def`)
+//	value2 := config.GetDefault("app.t_key", `def2`)
+//
+//	fmt.Println(value1, value2)
+//
+//	// Output:
+//	// def t_value
+//}
 
 func ExampleConfig_All() {
 	config, err := NewConfig(directory)
