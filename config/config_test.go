@@ -6,51 +6,39 @@ import (
 	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"strconv"
+	"sync"
 	"testing"
 	"time"
 )
 
 var (
 	directory = "../testdata/config"
+	wg sync.WaitGroup
 )
+
+
 
 func TestNewConfig(t *testing.T) {
 
-	//_, err := NewConfig("-@#/$%")
-	//if err == nil {
-	//	t.Fatal("Error path")
-	//}
-	//
-	//fmt.Println(err.Error())
-
 	config, err := NewConfig(directory)
-	if err != nil {
-		t.Fatalf("Config create error. Detail :%s", err.Error())
-	}
+	assert.Nil(t, err)
 
-	// 单例测试
-	config2, err := NewConfig(directory)
-	if err != nil {
-		t.Fatalf("Config create error. Detail :%s", err.Error())
-	}
-
-	for i := 0; i < 1000; i++ {
+	wg.Add(1000)
+	for i := 0; i < 999; i++ {
 		go func(directory string) {
 			_, err := NewConfig(directory)
-			if err != nil {
-				t.Fatalf("Config create error. Detail :%s", err.Error())
-			}
+			assert.Nil(t,err)
+			wg.Done()
 		}(directory)
 	}
 
-	fmt.Println(config)
-	fmt.Println(config2)
+	wg.Wait()
 
-	if config != config2 {
-		t.Fatalf("Singleton error")
-	}
+	// 单例测试
+	config2, err := NewConfig(directory)
+	assert.Nil(t, err)
 
-	fmt.Printf("%T", config)
+	assert.Equal(t,config,config2)
 }
 
 func TestConfig_Set(t *testing.T) {
@@ -72,14 +60,27 @@ func TestConfig_Set(t *testing.T) {
 		t.Fail()
 	}
 
-	for _, test := range tests {
-		//fmt.Println(test.file,test.key,test.value,i)
-		err = config.Set(test.file+"."+test.key, test.value)
-		if err != nil {
-			fmt.Printf("%s\n", err.Error())
-			t.Fail()
-		}
+	wg.Add(1000)
+	for i := 0; i < 999; i++ {
+		go func(tests []struct {
+			file  string
+			key   string
+			value string
+		}, config *Config) {
+			for _, test := range tests {
+				//fmt.Println(test.file,test.key,test.value,i)
+				err = config.Set(test.file+"."+test.key, test.value)
+				if err != nil {
+					fmt.Printf("%s\n", err.Error())
+					t.Fail()
+				}
+			}
+
+			wg.Done()
+		}(tests, config)
 	}
+
+	wg.Wait()
 }
 
 // 正常数据测试
@@ -89,14 +90,6 @@ func TestConfig_Get(t *testing.T) {
 		fmt.Printf("%s\n", err.Error())
 		t.Fail()
 	}
-
-	//// 最后一个可能还不是key
-	//z, err := config.Get("app.ggg.z")
-	////fmt.Println(z.(*ini.Section))
-	//if _, ok := z.(*ini.Section); ok {
-	//	fmt.Println("SSSSSSSSSSSSSSS")
-	//}
-	//fmt.Printf("%#v", z.(*ini.Section))
 
 	tests := []struct {
 		file  string
@@ -233,6 +226,7 @@ func ExampleConfig_Get() {
 	// Output:
 	// x
 }
+
 //
 //func ExampleConfig_GetDefault() {
 //	config, err := NewConfig(directory)

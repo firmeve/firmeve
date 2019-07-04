@@ -9,28 +9,21 @@ import (
 	"sync"
 )
 
-//config format error
-type FormatError struct {
-	message string
-	//err error
-}
+// Package global variable
+var (
+	config *Config
+	mutex sync.Mutex
+	once sync.Once
+)
 
-func (this *FormatError) Error() string {
-	return this.message
-}
-
+// Configurator interface
 type Configurator interface {
 	Get(keys string) (interface{}, error)
 	Set(key string, value string) error
 	All() map[string]*ini.File
 }
 
-var (
-	config *Config
-	//mu sync.Mutex
-	once sync.Once
-)
-
+// Config struct
 type Config struct {
 	directory string
 	configs   map[string]*ini.File
@@ -38,13 +31,7 @@ type Config struct {
 	extension string
 }
 
-// 获取config
-// 前提是config必须已经存在
-func GetConfig() *Config {
-	return config
-}
-
-// 构造函数
+// Create a new config instance
 func NewConfig(directory string) (*Config, error) {
 	// singleton
 	if config != nil {
@@ -63,7 +50,11 @@ func NewConfig(directory string) (*Config, error) {
 			return
 		}
 
-		config = &Config{directory: directory, delimiter: `.`, extension: `.conf`}
+		config = &Config{
+			directory: directory,
+			delimiter: `.`, extension: `.conf`,
+			configs: make(map[string]*ini.File),
+		}
 		// loadAll
 		err = config.loadAll()
 	})
@@ -71,12 +62,12 @@ func NewConfig(directory string) (*Config, error) {
 	return config, err
 }
 
-// 获取指定目录的绝对路径
+// Get the absolute path of the specified directory
 func absPath(directory string) (string, error) {
 	return filepath.Abs(directory)
 }
 
-// 获取指定key配置
+// Get the specified key configuration
 func (this *Config) Get(keys string) (interface{}, error) {
 
 	keySlices := parseKey(keys, this.delimiter)
@@ -122,7 +113,7 @@ func (this *Config) Get(keys string) (interface{}, error) {
 	}
 }
 
-// 设置配置
+// Set configuration value
 func (this *Config) Set(keys string, value string) error {
 
 	keySlices := parseKey(keys, this.delimiter)
@@ -166,15 +157,17 @@ func (this *Config) Set(keys string, value string) error {
 	return nil
 }
 
-// 获取所有配置
+// Get all configurations
 func (this *Config) All() map[string]*ini.File {
 	return this.configs
 }
 
-// 一次加载所有配置文件
+// Load all configuration files at once
 func (this *Config) loadAll() error {
-	// init File map
-	this.configs = make(map[string]*ini.File)
+
+	// map加锁
+	mutex.Lock()
+	defer mutex.Unlock()
 
 	err := filepath.Walk(this.directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
@@ -204,12 +197,12 @@ func (this *Config) loadAll() error {
 	return nil
 }
 
-// 通过文件名（不包含扩展名），得到当前的完整路径
+// Get the current full path by filename (without extension)
 func (this *Config) fullPath(filename string) string {
 	return path.Clean(this.directory + "/" + filename + this.extension)
 }
 
-// 加载配置文件
+// Load configuration file
 func loadConf(filename string) (*ini.File, error) {
 
 	_, err := os.Stat(filename)
@@ -231,7 +224,19 @@ func loadConf(filename string) (*ini.File, error) {
 	return cfg, nil
 }
 
-// 解析数据key
+// Parsing data key
 func parseKey(key string, delimiter string) []string {
 	return strings.Split(key, delimiter)
+}
+
+// ------------------------- config error --------------------------------
+
+//config format error
+type FormatError struct {
+	message string
+	//err error
+}
+
+func (this *FormatError) Error() string {
+	return this.message
 }
