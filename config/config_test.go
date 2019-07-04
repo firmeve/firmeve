@@ -13,10 +13,8 @@ import (
 
 var (
 	directory = "../testdata/config"
-	wg sync.WaitGroup
+	wg        sync.WaitGroup
 )
-
-
 
 func TestNewConfig(t *testing.T) {
 
@@ -24,10 +22,10 @@ func TestNewConfig(t *testing.T) {
 	assert.Nil(t, err)
 
 	wg.Add(1000)
-	for i := 0; i < 999; i++ {
+	for i := 0; i < 1000; i++ {
 		go func(directory string) {
 			_, err := NewConfig(directory)
-			assert.Nil(t,err)
+			assert.Nil(t, err)
 			wg.Done()
 		}(directory)
 	}
@@ -38,21 +36,10 @@ func TestNewConfig(t *testing.T) {
 	config2, err := NewConfig(directory)
 	assert.Nil(t, err)
 
-	assert.Equal(t,config,config2)
+	assert.Equal(t, config, config2)
 }
 
 func TestConfig_Set(t *testing.T) {
-	tests := []struct {
-		file  string
-		key   string
-		value string
-	}{
-		{"app", "x", "x"},
-		{"app", "s1.x", "s1x"},
-		{"app", "s1.z.y", "s1xy"},
-		{"new", "x", "x"},
-		{strconv.Itoa(rand.New(rand.NewSource(time.Now().UnixNano())).Int()), "x", "x"},
-	}
 
 	config, err := NewConfig(directory)
 	if err != nil {
@@ -60,24 +47,43 @@ func TestConfig_Set(t *testing.T) {
 		t.Fail()
 	}
 
-	wg.Add(1000)
-	for i := 0; i < 999; i++ {
-		go func(tests []struct {
-			file  string
-			key   string
-			value string
-		}, config *Config) {
-			for _, test := range tests {
+	tests := []struct {
+		File  string
+		Key   string
+		Value string
+	}{
+		{"app", "x", "x"},
+		{"app", "s1.x", "s1x"},
+		{"app", "s1.z.y", "s1xy"},
+		{"new", "x", "x"},
+		{strconv.Itoa(rand.New(rand.NewSource(time.Now().UnixNano())).Int()), "x", "x"},
+	}
+	fmt.Printf("out,%p",config)
+
+	wg.Add(2)
+	for i := 0; i < 2; i++ {
+		go func(config *Config) {
+			testn := make([]struct {
+				File  string
+				Key   string
+				Value string
+			},5)
+			copy(testn,tests)
+
+			config, err := NewConfig(directory)
+			if err != nil {
+				fmt.Printf("%s\n", err.Error())
+				t.Fail()
+			}
+			fmt.Printf("in,%p\n",config)
+			for _, test := range testn {
 				//fmt.Println(test.file,test.key,test.value,i)
-				err = config.Set(test.file+"."+test.key, test.value)
-				if err != nil {
-					fmt.Printf("%s\n", err.Error())
-					t.Fail()
-				}
+				err = config.Set(test.File+"."+test.Key, test.Value)
+				assert.Nil(t, err)
 			}
 
 			wg.Done()
-		}(tests, config)
+		}(config)
 	}
 
 	wg.Wait()

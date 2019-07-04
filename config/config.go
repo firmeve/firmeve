@@ -12,8 +12,8 @@ import (
 // Package global variable
 var (
 	config *Config
-	mutex sync.Mutex
-	once sync.Once
+	mutex  sync.Mutex
+	once   sync.Once
 )
 
 // Configurator interface
@@ -115,6 +115,9 @@ func (this *Config) Get(keys string) (interface{}, error) {
 
 // Set configuration value
 func (this *Config) Set(keys string, value string) error {
+	// map加锁
+	mutex.Lock()
+	defer mutex.Unlock()
 
 	keySlices := parseKey(keys, this.delimiter)
 
@@ -138,7 +141,6 @@ func (this *Config) Set(keys string, value string) error {
 	} else {
 		_, err = this.configs[keySlices[0]].Section(strings.Join(keySlices[1:length-1], this.delimiter)).NewKey(keySlices[length-1], value)
 	}
-
 	if err != nil {
 		return err
 	}
@@ -164,10 +166,6 @@ func (this *Config) All() map[string]*ini.File {
 
 // Load all configuration files at once
 func (this *Config) loadAll() error {
-
-	// map加锁
-	mutex.Lock()
-	defer mutex.Unlock()
 
 	err := filepath.Walk(this.directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
