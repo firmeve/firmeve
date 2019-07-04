@@ -224,19 +224,23 @@ func (this *Manager) Driver(driver string) (Cache, error) {
 }
 
 func (this *Manager) createRedisDriver() Cache {
+	var (
+		host, _   = this.config.Get(`cache.redis.host`)
+		port, _   = this.config.Get(`cache.redis.port`)
+		db, _     = this.config.Get(`cache.redis.db`)
+		prefix, _ = this.config.Get(`cache.prefix`)
+	)
 
 	addr := []string{
-		this.config.GetDefault(`cache.redis.host`, `localhost`).(*ini.Key).String(),
+		host.(*ini.Key).MustString(`localhost`),
 		`:`,
-		this.config.GetDefault(`cache.redis.port`, `6379`).(*ini.Key).String(),
+		port.(*ini.Key).MustString(`6379`),
 	}
-
-	db, _ := this.config.GetDefault(`cache.redis.host`, 0).(*ini.Key).Int()
 
 	return redis.NewRepository(goRedis.NewClient(&goRedis.Options{
 		Addr: strings.Join(addr, ``),
-		DB:   db,
-	}), this.config.GetDefault(`cache.prefix`, `firmeve`).(*ini.Key).String())
+		DB:   db.(*ini.Key).MustInt(0),
+	}), prefix.(*ini.Key).MustString(`firmeve`))
 }
 
 type Error struct {
