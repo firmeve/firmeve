@@ -28,91 +28,108 @@ func TestNewRepository(t *testing.T) {
 	}), "redis")
 
 	repository := NewRepository(redisStore)
-	fmt.Println(repository)
-	//assert.IsType(t, Cache, repository)
+
+	assert.IsType(t, repository, &Repository{})
+	assert.Implements(t, new(Cache), repository)
+	assert.Implements(t, new(Serialization), repository)
+
+	//var repositoryN *Repository
+
+	//wg.Add(1000)
+	//for i := 0; i < 1000; i++ {
+	//	go func(i int) {
+	//		if i == 800 {
+	//			repositoryN = NewRepository(redisStore)
+	//		} else {
+	//			NewRepository(redisStore)
+	//		}
+	//		wg.Done()
+	//	}(i)
+	//}
+	//
+	////assert.Equal(t, repository, repositoryN)
+	//t.Logf("%p",repository)
+	//t.Logf("%p\n",repositoryN)
+	//t.Log("=================")
 }
 
 func TestRepository_Get(t *testing.T) {
+
 	redisRepository := redisRepository()
+	wg.Add(1000)
+	for i := 0; i < 1000; i++ {
+		go func(i int) {
 
-	key := randString(30)
+			key := randString(30) + strconv.Itoa(i)
 
-	value, err := redisRepository.GetDefault(key, "abc")
-	if err != nil {
-		t.Fail()
+			value, err := redisRepository.GetDefault(key, "abc")
+			assert.Nil(t, err)
+
+			assert.Equal(t, "abc", value.(string))
+
+			err = redisRepository.Put(key, "def", time.Now().Add(time.Second*50))
+			assert.Nil(t, err)
+
+			value, err = redisRepository.GetDefault(key, "abc")
+			assert.Nil(t, err)
+
+			assert.Equal(t, "def", value.(string))
+
+			wg.Done()
+		}(i)
 	}
-
-	if value.(string) != "abc" {
-		t.Fail()
-	}
-
-	err = redisRepository.Put(key, "def", time.Now().Add(time.Second*50))
-	if err != nil {
-		t.Fail()
-	}
-
-	value, err = redisRepository.GetDefault(key, "abc")
-	if err != nil {
-		t.Fail()
-	}
-
-	if value.(string) != "def" {
-		t.Fail()
-	}
+	wg.Wait()
 }
 
 func TestRepository_Pull_Default(t *testing.T) {
+
 	redisRepository := redisRepository()
 
-	key := randString(30)
+	wg.Add(1000)
+	for i := 0; i < 1000; i++ {
+		go func(i int) {
+			key := randString(30) + strconv.Itoa(i)
 
-	err := redisRepository.Put(key, "def", time.Now().Add(time.Second*50))
-	if err != nil {
-		t.Fail()
-	}
+			err := redisRepository.Put(key, "def", time.Now().Add(time.Second*50))
+			assert.Nil(t, err)
 
-	value, err := redisRepository.PullDefault(key, "abc")
-	if value.(string) != "def" {
-		t.Fail()
-	}
+			value, err := redisRepository.PullDefault(key, "abc")
+			assert.Equal(t, "def", value.(string))
 
-	value, err = redisRepository.PullDefault(key, "abc")
-	fmt.Println(value.(string))
-	if value.(string) != "abc" {
-		t.Fail()
-	}
+			value, err = redisRepository.PullDefault(key, "abc")
+			assert.Equal(t, "abc", value.(string))
 
-	value, err = redisRepository.PullDefault(randString(20), "abc")
-	if value.(string) != "abc" {
-		t.Fail()
+			value, err = redisRepository.PullDefault(randString(20), "abc")
+			assert.Equal(t, "abc", value.(string))
+
+			wg.Done()
+		}(i)
 	}
+	wg.Wait()
+
 }
-
-//func TestRepository_PullDefault_Error(t *testing.T) {
-//	redisRepository := redisRepository()
-//	_, err := redisRepository.PullDefault("!@!@!@!@!", "abc")
-//	fmt.Println("=================")
-//	fmt.Printf("%#v", err)
-//	fmt.Println("=================")
-//	assert.NotNil(t, err)
-//}
 
 func TestRepository_Forget(t *testing.T) {
 	redisRepository := redisRepository()
 	expire := time.Now().Add(time.Second * 10)
 
-	key := randString(50)
-	err := redisRepository.Add(key, "a", expire)
-	if err != nil {
-		t.Fail()
-	}
+	wg.Add(1000)
+	for i := 0; i < 1000; i++ {
+		go func(i int) {
+			key := randString(30) + strconv.Itoa(i)
 
-	err = redisRepository.Forget(key)
-	if err != nil {
-		t.Fail()
-	}
+			err := redisRepository.Add(key, "a", expire)
+			assert.Nil(t, err)
 
-	assert.Equal(t, false, redisRepository.Has(key))
+			err = redisRepository.Forget(key)
+			assert.Nil(t, err)
+
+			assert.Equal(t, false, redisRepository.Has(key))
+
+			wg.Done()
+		}(i)
+	}
+	wg.Wait()
 }
 
 func TestRepository_Flush(t *testing.T) {

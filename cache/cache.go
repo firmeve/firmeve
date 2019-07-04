@@ -16,7 +16,7 @@ import (
 var (
 	manager *Manager
 	once    sync.Once
-	mutex   sync.RWMutex
+	mutex   sync.Mutex
 )
 
 type Cache interface {
@@ -53,12 +53,23 @@ type Repository struct {
 	store Cache
 }
 
+type Manager struct {
+	config       *config.Config
+	repositories map[string]Cache
+}
+
+type Error struct {
+	RepositoryError error
+}
+
+// Create a new cache repository
 func NewRepository(store Cache) *Repository {
 	return &Repository{
 		store: store,
 	}
 }
 
+// Get the value of the specified key, or return the default value if the value does not exist
 func (this *Repository) GetDefault(key string, defaultValue interface{}) (interface{}, error) {
 	if !this.store.Has(key) {
 		return defaultValue, nil
@@ -67,6 +78,8 @@ func (this *Repository) GetDefault(key string, defaultValue interface{}) (interf
 	return this.Get(key)
 }
 
+// Get the value of the specified key, or return the default value if the value does not exist
+// Delete this key if it exists
 func (this *Repository) PullDefault(key string, defaultValue interface{}) (interface{}, error) {
 	value, err := this.GetDefault(key, defaultValue)
 	if err != nil {
@@ -76,42 +89,55 @@ func (this *Repository) PullDefault(key string, defaultValue interface{}) (inter
 	return value, this.Forget(key)
 }
 
+// Get the value of the specified key
 func (this *Repository) Get(key string) (interface{}, error) {
+
 	return this.store.Get(key)
 }
 
+// Add a cache value to the specified key
+// If the key already exists, it will not be updated
 func (this *Repository) Add(key string, value interface{}, expire time.Time) error {
 	return this.store.Add(key, value, expire)
 }
 
+// Put a cache value to the specified key
 func (this *Repository) Put(key string, value interface{}, expire time.Time) error {
 	return this.store.Put(key, value, expire)
 }
 
+// Permanent storage a cache value to the specified key
 func (this *Repository) Forever(key string, value interface{}) error {
 	return this.store.Forever(key, value)
 }
 
+// Delete the specified key
 func (this *Repository) Forget(key string) error {
 	return this.store.Forget(key)
 }
 
+// Auto increment by the specified step size
 func (this *Repository) Increment(key string, steps ...int64) error {
 	return this.store.Increment(key, steps...)
 }
 
+// Auto decrement by the specified step size
 func (this *Repository) Decrement(key string, steps ...int64) error {
 	return this.store.Decrement(key, steps...)
 }
 
+// Determine if the specified key value exists
 func (this *Repository) Has(key string) bool {
 	return this.store.Has(key)
 }
 
+// Empty the entire cache
 func (this *Repository) Flush() error {
 	return this.store.Flush()
 }
 
+// Get the value of the specified key
+// Delete this key if it exists
 func (this *Repository) Pull(key string) (interface{}, error) {
 	value, err := this.Get(key)
 	if err != nil {
@@ -121,6 +147,8 @@ func (this *Repository) Pull(key string) (interface{}, error) {
 	return value, this.Forget(key)
 }
 
+// Get a value that needs to be decoded
+// Often used for map, struct
 func (this *Repository) GetDecode(key string, to interface{}) (interface{}, error) {
 	value, err := this.Get(key)
 	if err != nil {
@@ -135,6 +163,9 @@ func (this *Repository) GetDecode(key string, to interface{}) (interface{}, erro
 	return to, nil
 }
 
+// Add a value that needs to be encode
+// Often used for map, struct
+// If the key already exists, it will not be updated
 func (this *Repository) AddEncode(key string, value interface{}, expire time.Time) error {
 	valueBytes, err := gobEncode(value)
 	if err != nil {
@@ -144,6 +175,9 @@ func (this *Repository) AddEncode(key string, value interface{}, expire time.Tim
 	return this.Add(key, valueBytes, expire)
 }
 
+// Permanent storage a value that needs to be encode
+// Often used for map, struct
+// If the key already exists, it will not be updated
 func (this *Repository) ForeverEncode(key string, value interface{}) error {
 	valueBytes, err := gobEncode(value)
 	if err != nil {
@@ -153,6 +187,9 @@ func (this *Repository) ForeverEncode(key string, value interface{}) error {
 	return this.Forever(key, valueBytes)
 }
 
+// Put a value that needs to be encode
+// Often used for map, struct
+// If the key already exists, it will not be updated
 func (this *Repository) PutEncode(key string, value interface{}, expire time.Time) error {
 	valueBytes, err := gobEncode(value)
 	if err != nil {
@@ -162,6 +199,7 @@ func (this *Repository) PutEncode(key string, value interface{}, expire time.Tim
 	return this.Put(key, valueBytes, expire)
 }
 
+// Use gob mode encode
 func gobEncode(value interface{}) ([]byte, error) {
 	buffer := bytes.NewBuffer(nil)
 	err := gob.NewEncoder(buffer).Encode(value)
@@ -171,6 +209,7 @@ func gobEncode(value interface{}) ([]byte, error) {
 	return buffer.Bytes(), nil
 }
 
+// Use gob mode decode
 func gobDecode(data []byte, value interface{}) error {
 	buffer := bytes.NewReader(data)
 	return gob.NewDecoder(buffer).Decode(value)
@@ -178,11 +217,7 @@ func gobDecode(data []byte, value interface{}) error {
 
 // -------------------------- manager -----------------------
 
-type Manager struct {
-	config       *config.Config
-	repositories map[string]Cache
-}
-
+// Create a cache manager
 func NewManager(config *config.Config) *Manager {
 	if manager != nil {
 		return manager
@@ -198,6 +233,7 @@ func NewManager(config *config.Config) *Manager {
 	return manager
 }
 
+// Get the cache driver of the finger
 func (this *Manager) Driver(driver string) (Cache, error) {
 	var repository Cache
 	var err error
@@ -223,6 +259,7 @@ func (this *Manager) Driver(driver string) (Cache, error) {
 	return this.repositories[driver], err
 }
 
+// Create a redis cache driver
 func (this *Manager) createRedisDriver() Cache {
 	var (
 		host, _   = this.config.Get(`cache.redis.host`)
@@ -243,10 +280,9 @@ func (this *Manager) createRedisDriver() Cache {
 	}), prefix.(*ini.Key).MustString(`firmeve`))
 }
 
-type Error struct {
-	RepositoryError error
-}
+// -------------------------- error -----------------------
 
+// error message
 func (this *Error) Error() string {
 	return this.RepositoryError.Error()
 }

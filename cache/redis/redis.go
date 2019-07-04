@@ -17,7 +17,6 @@ type Repository struct {
 
 // Initialize a new Repository
 func NewRepository(client *redis.Client, prefix string) *Repository {
-
 	if repository != nil {
 		return repository
 	}
