@@ -1,5 +1,10 @@
 package firmeve
 
+import (
+	cache2 "github.com/firmeve/firmeve/cache"
+	"testing"
+)
+
 //func TestFirmeve_Bind(t *testing.T) {
 //
 //	bak := demo.Test()
@@ -13,13 +18,13 @@ package firmeve
 //
 //}
 //
-//func TestRelectTest(t *testing.T) {
-//	//fmt.Println(demo.Test2())
-//	//var x string
-//	//RelectTest(x)
-//	//RelectTest(demo.Test)
-//	RelectTest(`github.com/firmeve/firmeve/demo;Test`)
-//}
+func TestRelectTest(t *testing.T) {
+	//fmt.Println(demo.Test2())
+	//var x string
+	//RelectTest(x)
+	//RelectTest(demo.Test)
+	RelectTest(cache2.NewRepository)
+}
 //
 ////func TestFirmeve_Bind_Resolve(t *testing.T) {
 ////	firmeve := NewFirmeve()

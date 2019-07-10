@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
+	"github.com/firmeve/firmeve"
 	"github.com/firmeve/firmeve/cache/redis"
 	"github.com/firmeve/firmeve/config"
 	"github.com/go-ini/ini"
@@ -11,12 +12,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-)
-
-var (
-	manager *Manager
-	once    sync.Once
-	mutex   sync.Mutex
 )
 
 type Cache interface {
@@ -38,6 +33,12 @@ type Cache interface {
 
 	Flush() error
 }
+
+var (
+	manager *Manager
+	once    sync.Once
+	mutex   sync.Mutex
+)
 
 type Serialization interface {
 	GetDecode(key string, to interface{}) (interface{}, error)
@@ -231,6 +232,14 @@ func NewManager(config *config.Config) *Manager {
 	})
 
 	return manager
+}
+
+
+func (this *Manager) register() {
+	firmeve.NewFirmeve().Bind(NewManager)
+}
+
+func (this *Manager) boot() {
 }
 
 // Get the cache driver of the finger
