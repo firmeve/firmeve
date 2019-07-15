@@ -1,34 +1,32 @@
 package firmeve
 
 import (
-	cache2 "github.com/firmeve/firmeve/cache"
+	"fmt"
 	"testing"
 )
 
-//func TestFirmeve_Bind(t *testing.T) {
-//
-//	bak := demo.Test()
-//
-//	firmeve := NewFirmeve()
-//
-//	firmeve.Bind(`bak`,bak)
-//
-//	firmeve.Bind(`bak2`,bak2.Bak{})
-//	firmeve.Bind(`bak3`,"string")
-//
-//}
-//
-func TestRelectTest(t *testing.T) {
-	//fmt.Println(demo.Test2())
-	//var x string
-	//RelectTest(x)
-	//RelectTest(demo.Test)
-	RelectTest(cache2.NewRepository)
+type T1 struct {
+	Name string
 }
-//
-////func TestFirmeve_Bind_Resolve(t *testing.T) {
-////	firmeve := NewFirmeve()
-////	firmeve.Bind("bak",&bak.Bak{Title:"abc",At:20})
-////
-////	t.Logf("%#v",firmeve.Resolve("bak").(*bak.Bak))
-////}
+
+func NewT1() *T1 {
+	return &T1{"Simon"}
+}
+
+type T2 struct {
+	t1 *T1
+	Age int
+}
+
+func NewT2(f *T1) T2  {
+	return T2{t1:f,Age:10}
+}
+
+
+func TestFirmeve_Bind(t *testing.T) {
+	firmeve := NewFirmeve()
+	t1 := NewT1()
+	firmeve.Bind(t1)
+
+	fmt.Printf("%#v",firmeve.Resolve(NewT2).(T2))
+}
