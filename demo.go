@@ -16,3 +16,11 @@ type T2 struct {
 func NewT2(f *T1) T2  {
 	return T2{t1:f,Age:10}
 }
+
+
+
+func main()  {
+	z := NewT1
+
+	z()
+}
