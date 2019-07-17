@@ -1,6 +1,8 @@
 package firmeve
 
 import (
+	"fmt"
+	"github.com/firmeve/firmeve/testdata"
 	"testing"
 )
 
@@ -12,6 +14,16 @@ type testReject struct {
 	Name string
 	Age int
 
+}
+
+func TestFirmeve_Bind_Struct_Prt(t *testing.T) {
+	t1 := testdata.NewT1()
+
+	f := NewFirmeve()
+	f.Bind(WithBindInterface(t1))
+
+	result := f.Resolve(testdata.T2Call)
+	fmt.Printf("%#v",result)
 }
 
 func TestFirmeve_Bind(t *testing.T) {
@@ -31,7 +43,9 @@ func TestFirmeve_Bind(t *testing.T) {
 	//}),WithBindName("abc"))
 
 	//firmeve.Bind(WithBindShare(true),WithBindInterface(testReject))
-	firmeve.Bind(WithBindShare(true),WithBindInterface(testReject{"simon",30}))
+	//firmeve.Bind(WithBindShare(true),WithBindInterface(testReject{"simon",30}))
+z:=[]string{"a","b"}
+	firmeve.Bind(WithBindName("abcd"),WithBindInterface(z))
 
 	//firmeve.Bind(func() interface{} {
 	//	return NewT1()

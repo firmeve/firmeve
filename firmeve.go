@@ -1,9 +1,8 @@
 package firmeve
 
 import (
-	"fmt"
 	"github.com/firmeve/firmeve/utils"
-	"go/importer"
+	"github.com/kataras/iris/core/errors"
 	"reflect"
 	"strings"
 	"sync"
@@ -12,7 +11,10 @@ import (
 var (
 	firmeve *Firmeve
 	once    sync.Once
+	mutex   sync.Mutex
 )
+
+type prototypeFunc func(container Container, params ...interface{}) interface{}
 
 type Container interface {
 	Get(id string) interface{}
@@ -21,9 +23,9 @@ type Container interface {
 }
 
 type binding struct {
-	shared    bool
+	share     bool
 	instance  interface{}
-	prototype func(app Container, params ...interface{}) interface{}
+	prototype prototypeFunc
 }
 
 type Firmeve struct {
@@ -57,100 +59,162 @@ func NewFirmeve() *Firmeve {
 // 3. 先实现这样的bind和resolve，后面增加struct tag 注入
 // 4. 名称怎样实现惟一呢？，完整路径太长(github.com/b/c) 不是完整路径可能会存在冲突
 
-type bindOption struct {
-	name   string
-	share  bool
-	object interface{}
+type bindingOption struct {
+	name      string
+	share     bool
+	prototype interface{}
 }
 
-//type bindOptionFunc func(option *bindOption)
+func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface{} {
+	reflectType := reflect.TypeOf(abstract)
+	kind := reflectType.Kind()
+	//var value interface{}
+
+	switch kind {
+	case reflect.String:
+		if v, ok := f.bindings[abstract.(string)]; ok {
+			return v
+		} else {
+			panic(`不存在`)
+		}
+	case reflect.Func:
+		// 反射参数
+		//params := reflectType.NumIn()
+		newParams := make([]reflect.Value,0)
+		for i := 0; i < reflectType.NumIn(); i++ {
+			reflectSubType := reflectType.In(0)
+			name, err := f.parseName(reflectSubType, "")
+			if err != nil {
+				panic(err)
+			}
+
+			result := f.bindings[name].prototype(f)
+			if reflectSubType.Kind() == reflect.Func {
+				// 参数暂时为空
+				result = reflect.ValueOf(result).Call([]reflect.Value{})
+			} else {
+
+			}
+
+			newParams = append(newParams,reflect.ValueOf(result))
+		}
+
+		return reflect.ValueOf(abstract).Call(newParams)[0].Interface()
+
+	default:
+		panic(`暂不支持`)
+	}
+
+	return nil
+}
 
 func WithBindShare(share bool) utils.OptionFunc {
 	return func(option interface{}) {
-		option.(*bindOption).share = share
+		option.(*bindingOption).share = share
 	}
 }
 
 func WithBindName(name string) utils.OptionFunc {
 	return func(option interface{}) {
-		option.(*bindOption).name = strings.ToLower(name)
+		option.(*bindingOption).name = strings.ToLower(name)
 	}
 }
 
 func WithBindInterface(object interface{}) utils.OptionFunc {
 	return func(option interface{}) {
-		option.(*bindOption).object = object
+		option.(*bindingOption).prototype = object
 	}
 }
 
 func (f *Firmeve) Bind(options ...utils.OptionFunc) { //, value interface{}
+	// default bindingOption
+	bindingOption := newBindingOption()
 
-	//_,ok := Container.(f)
-	//fmt.Println(ok)
-
-	var bindOption = &bindOption{
-		share: false,
-	}
 	// 参数解析
-	utils.ApplyOption(bindOption, options...)
+	utils.ApplyOption(bindingOption, options...)
 
-	// 处理对象
-	object := bindOption.object
-	reflectType := reflect.TypeOf(object)
-	binding := newBinding()
-	binding.shared = bindOption.share
+	// 反射对象类型
+	reflectType := reflect.TypeOf(bindingOption.prototype)
 
-	kind := reflectType.Kind()
-
-	if kind == reflect.Func {
-		if bindOption.name == "" {
-			panic("函数类型，Name必须存在")
-		}
-
-		// 并且函数必须要有返回值
-		//binding.
-		//if reflectType.NumOut() == 0 {
-		//	panic("函数类型，必须要有返回值")
-		//}
-
-		binding.prototype = func(app Container, params ...interface{}) interface{} {
-			return object
-		}
-
-		f.bindings[bindOption.name] = binding
-
-		func3 := f.bindings[bindOption.name].prototype(f)
-		result := reflect.ValueOf(func3).Call([]reflect.Value{})
-		fmt.Printf("%#v", result[1])
-	} else if kind == reflect.Ptr {
-		fmt.Println("============")
-		// get Name
-
-		name := strings.Join([]string{reflectType.Elem().PkgPath(),reflectType.Elem().Name()},`.`)
-		fmt.Println(name)
-		binding.prototype = func(container Container,params ...interface{}) interface{} {
-			return object
-		}
-
-		f.bindings[name] = binding
-
-		func3 := f.bindings[name].prototype(f)
-		fmt.Printf("%#v",func3)
-	} else if  kind == reflect.Struct  {
-		name := strings.Join([]string{reflectType.PkgPath(),reflectType.Name()},`.`)
-		fmt.Println(name,"==struct==")
-		binding.prototype = func(container Container,params ...interface{}) interface{} {
-			return object
-		}
-
-		f.bindings[name] = binding
-		func3 := f.bindings[name].prototype(f)
-		fmt.Printf("%#v",func3)
+	name, err := f.parseName(reflectType, bindingOption.name)
+	if err != nil {
+		panic(err)
 	}
 
+	mutex.Lock()
+	defer mutex.Unlock()
+	f.bindings[name] = newBinding(f.setPrototype(bindingOption.prototype), bindingOption.share)
+	//kind := reflectType.Kind()
+	//
+	//if kind == reflect.Ptr {
+	//
+	//}
+	//
+	//// 处理对象
+	//object := bindingOption.object
+	//
+	//binding := newBinding()
+	//binding.shared = bindingOption.share
+	//
+	//kind := reflectType.Kind()
+	//
+	//if kind == reflect.Func {
+	//	if bindingOption.name == "" {
+	//		panic("函数类型，Name必须存在")
+	//	}
+	//
+	//	// 并且函数必须要有返回值
+	//	//binding.
+	//	//if reflectType.NumOut() == 0 {
+	//	//	panic("函数类型，必须要有返回值")
+	//	//}
+	//
+	//	binding.prototype = func(app Container, params ...interface{}) interface{} {
+	//		return object
+	//	}
+	//
+	//	f.bindings[bindingOption.name] = binding
+	//
+	//	func3 := f.bindings[bindingOption.name].prototype(f)
+	//	result := reflect.ValueOf(func3).Call([]reflect.Value{})
+	//	fmt.Printf("%#v", result[1])
+	//} else if kind == reflect.Ptr {
+	//	fmt.Println("============")
+	//	// get Name
+	//
+	//	name := strings.Join([]string{reflectType.Elem().PkgPath(), reflectType.Elem().Name()}, `.`)
+	//	fmt.Println(name)
+	//	binding.prototype = func(container Container, params ...interface{}) interface{} {
+	//		return object
+	//	}
+	//
+	//	f.bindings[name] = binding
+	//
+	//	func3 := f.bindings[name].prototype(f)
+	//	fmt.Printf("%#v", func3)
+	//} else if kind == reflect.Struct {
+	//	name := strings.Join([]string{reflectType.PkgPath(), reflectType.Name()}, `.`)
+	//	fmt.Println(name, "==struct==")
+	//	binding.prototype = func(container Container, params ...interface{}) interface{} {
+	//		return object
+	//	}
+	//
+	//	f.bindings[name] = binding
+	//	func3 := f.bindings[name].prototype(f)
+	//	fmt.Printf("%#v", func3)
+	//} else if kind == reflect.Slice {
+	//	if bindingOption.name == "" {
+	//		panic("函数类型，Name必须存在")
+	//	}
+	//	binding.prototype = func(app Container, params ...interface{}) interface{} {
+	//		return object
+	//	}
+	//	func3 := binding.prototype(f).([]string)
+	//	func3 = append(func3, "d")
+	//	fmt.Printf("%#v", func3)
+	//}
 
-
-	//fmt.Println(f.bindings[bindOption.name].prototype(f.(*Container)))
+	//fmt.Println(f.bindings[bindingOption.name].prototype(f.(*Container)))
 	//fmt.Printf("%#v",f.bindings)
 	//fmt.Println(reflect.TypeOf(object).Kind().String())
 
@@ -206,6 +270,29 @@ func (f *Firmeve) Bind(options ...utils.OptionFunc) { //, value interface{}
 	//}
 }
 
+func (f *Firmeve) parseName(reflectType reflect.Type, name string) (string, error) {
+
+	if name == "" {
+		kind := reflectType.Kind()
+		switch kind {
+		case reflect.Ptr:
+			name = strings.Join([]string{reflectType.Elem().PkgPath(), reflectType.Elem().Name()}, `.`)
+		case reflect.Struct:
+			name = strings.Join([]string{reflectType.PkgPath(), reflectType.Name()}, `.`)
+		default:
+			return ``, errors.New(`不支持的类型`)
+		}
+	}
+
+	return strings.ToLower(name), nil
+}
+
+func (f *Firmeve) setPrototype(prototype interface{}) prototypeFunc {
+	return func(container Container, params ...interface{}) interface{} {
+		return prototype
+	}
+}
+
 func (f *Firmeve) Get(id string) interface{} {
 	//panic("implement me")
 	return "abc"
@@ -217,56 +304,17 @@ func (f *Firmeve) Has(id string) bool {
 
 }
 
-func (f *Firmeve) Resolve(id interface{}) interface{} {
-	reflectType := reflect.TypeOf(id)
+// ---------------------------- bindingOption ------------------------
 
-	if reflectType.Kind() == reflect.Func {
-
-		//params1Type := reflectType.In(0)//.Elem().Name()
-		//z := nil
-		////params1Value := &params1Type//reflect.NewAt(params1Type,unsafe.Pointer(params1Type.))
-		//fmt.Printf("%#v",reflect.ValueOf(z).Convert(params1Type))
-
-		// 重新设置一个新的struct对象，不过是nil
-		//newObjPtr := reflect.New(params1Type)
-		//newObj := reflect.Indirect(newObjPtr)
-
-		//importer.Default()
-		//fmt.Println(params1Type.Elem().PkgPath())
-		pkg, err := importer.Default().Import(`github.com/firmeve/firmeve/demo`)
-		if err != nil {
-			fmt.Println(err.Error())
-		}
-
-		for _, declName := range pkg.Scope().Names() {
-			fmt.Println(declName)
-		}
-
-		//println(params1Type,reflect.ValueOf(params1Value).Interface().(*T1))
-
-		//fullName := strings.Join([]string{reflectType.In(0).Elem().PkgPath(), reflectType.In(0).Elem().Name()}, ".")
-		//fmt.Println(fullName)
-		//fmt.Printf("%#v",reflectType.In(0).Field(0))
-		//stk := reflectType.In(0)
-		//stkValue := reflect.ValueOf(reflect.TypeOf(id).In(0))
-		////reflect.New(stk)
-		////fmt.Printf("%#v",stkValue.MethodByName("NewT1").Call(make([]reflect.Value,0))[0].Interface())
-		//fmt.Printf("%#v\n",stk.Elem().PkgPath())
-		////zx := reflect.ValueOf(NewT1())
-		//stkValue.Elem().Set(reflect.New(stk))
-		//reflect.NewAt(stk, unsafe.Pointer(stk.UnsafeAddr())).Elem()
-		//fmt.Printf("%#v",stkValue.Interface())
-		//fmt.Printf("%#v",stkValue.Call([]reflect.Value{reflect.ValueOf("NewT1")}))
-
-		//return reflect.ValueOf(id).Call([]reflect.Value{reflect.ValueOf(f.bindings[fullName].object)})[0].Interface()
-	}
-
-	return nil
+func newBindingOption() *bindingOption {
+	return &bindingOption{share: false,}
 }
 
 // ---------------------------- binding ------------------------
 
-func newBinding() *binding {
+func newBinding(prototype prototypeFunc, share bool) *binding {
 	return &binding{
+		prototype: prototype,
+		share:     share,
 	}
 }

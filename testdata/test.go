@@ -1,4 +1,4 @@
-package firmeve
+package testdata
 
 type T1 struct {
 	Name string
@@ -17,10 +17,7 @@ func NewT2(f *T1) T2  {
 	return T2{t1:f,Age:10}
 }
 
-
-
-func main()  {
-	z := NewT1
-
-	z()
+func T2Call(f *T1) *T1 {
+	//return T2{t1:f,Age:10}
+	return f
 }
