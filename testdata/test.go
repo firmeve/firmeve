@@ -8,6 +8,10 @@ func NewT1() *T1 {
 	return &T1{"Simon"}
 }
 
+func NewT1Sturct() T1 {
+	return T1{"Simon"}
+}
+
 type T2 struct {
 	t1 *T1
 	Age int

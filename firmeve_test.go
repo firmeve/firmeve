@@ -3,7 +3,9 @@ package firmeve
 import (
 	"fmt"
 	"github.com/firmeve/firmeve/testdata"
+	"reflect"
 	"testing"
+	"unsafe"
 )
 
 func b() int {
@@ -17,7 +19,21 @@ type testReject struct {
 }
 
 func TestFirmeve_Bind_Struct_Prt(t *testing.T) {
+	var i int8 = -1
+	fmt.Printf("%#v\n",*(*uint8)(unsafe.Pointer(&i)))
 	t1 := testdata.NewT1()
+	t2 := testdata.NewT1()
+	t3 := testdata.NewT1Sturct()
+	fmt.Printf("%p\n",t1)
+	fmt.Printf("%p\n",t2)
+	fmt.Printf("%p\n",reflect.TypeOf(t1))
+	fmt.Printf("%p\n",reflect.TypeOf(t2))
+	fmt.Printf("%p\n",reflect.TypeOf(t3))
+	fmt.Println("===================")
+	fmt.Println(reflect.TypeOf(t1) == reflect.TypeOf(t3))
+	fmt.Println("===================")
+	eface := (unsafe.Pointer(&t1))
+	fmt.Printf("%p",eface)
 
 	f := NewFirmeve()
 	f.Bind(WithBindInterface(t1),WithBindName("t1.prt"))

@@ -32,7 +32,8 @@ type binding struct {
 type Firmeve struct {
 	Container
 	bindings map[string]*binding
-	aliases  map[string]string
+	//aliases  map[string]string
+	typeAliases  map[reflect.Type]string
 	//bindingOptions
 	//resolveOptions
 }
@@ -46,7 +47,8 @@ func NewFirmeve() *Firmeve {
 	once.Do(func() {
 		firmeve = &Firmeve{
 			bindings: make(map[string]*binding),
-			aliases:  make(map[string]string),
+			typeAliases:  make(map[reflect.Type]string),
+			//aliases:  make(map[string]string),
 		}
 	})
 
@@ -66,7 +68,8 @@ type bindingOption struct {
 	name      string
 	share     bool
 	cover     bool
-	aliases   []string
+	//aliases   []string
+	//types   map[reflect.Type]string
 	prototype interface{}
 }
 
@@ -166,29 +169,56 @@ func (f *Firmeve) Bind(options ...utils.OptionFunc) { //, value interface{}
 	bindingOption := newBindingOption()
 	utils.ApplyOption(bindingOption, options...)
 
-	/* 反射对象类型，解析真实路径名称 */
-	pathName, err := f.parsePathName(reflect.TypeOf(bindingOption.prototype))
-	if err != nil && bindingOption.name == `` {
-		panic(err)
+	reflectType := reflect.TypeOf(bindingOption.prototype)
+
+	// 覆盖检测
+	if _, ok := f.typeAliases[reflectType]; ok && !bindingOption.cover {
+		return
+	}
+
+	// 默认字符串可调用名称
+	if bindingOption.name == `` {
+		pathName, err := f.parsePathName(reflectType)
+		if err != nil {
+			panic(err)
+		}
+
+		bindingOption.name = pathName
 	}
 
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	// 增加别名
-	if pathName != `` {
-		f.aliases[pathName] = bindingOption.name
-	}
-	if bindingOption.name == `` {
-		bindingOption.name = pathName
-	}
-
-	// 覆盖检测
-	if _, ok := f.bindings[bindingOption.name]; ok && !bindingOption.cover {
-		return
-	}
-
+	f.typeAliases[reflectType] = bindingOption.name
 	f.bindings[bindingOption.name] = newBinding(f.setPrototype(bindingOption.prototype), bindingOption.share)
+
+
+	/* 反射对象类型，解析真实路径名称 */
+	//pathName, err := f.parsePathName(reflect.TypeOf(bindingOption.prototype))
+	//if err != nil && bindingOption.name == `` {
+	//	panic(err)
+	//}
+	//
+	//mutex.Lock()
+	//defer mutex.Unlock()
+	//
+	//// 增加别名
+	//if pathName != `` {
+	//	f.aliases[pathName] = bindingOption.name
+	//}
+	//if bindingOption.name == `` {
+	//	bindingOption.name = pathName
+	//}
+	//
+	//// 覆盖检测
+	//if _, ok := f.bindings[bindingOption.name]; ok && !bindingOption.cover {
+	//	return
+	//}
+	//
+	//f.bindings[bindingOption.name] = newBinding(f.setPrototype(bindingOption.prototype), bindingOption.share)
+
+	//-----------------------------------------------------
+
 	//kind := reflectType.Kind()
 	//
 	//if kind == reflect.Ptr {
