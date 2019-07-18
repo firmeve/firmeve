@@ -1,6 +1,7 @@
 package firmeve
 
 import (
+	"fmt"
 	"github.com/firmeve/firmeve/utils"
 	"github.com/kataras/iris/core/errors"
 	"reflect"
@@ -31,6 +32,7 @@ type binding struct {
 type Firmeve struct {
 	Container
 	bindings map[string]*binding
+	aliases  map[string]string
 	//bindingOptions
 	//resolveOptions
 }
@@ -44,6 +46,7 @@ func NewFirmeve() *Firmeve {
 	once.Do(func() {
 		firmeve = &Firmeve{
 			bindings: make(map[string]*binding),
+			aliases:  make(map[string]string),
 		}
 	})
 
@@ -63,41 +66,66 @@ type bindingOption struct {
 	name      string
 	share     bool
 	cover     bool
+	aliases   []string
 	prototype interface{}
 }
 
 func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface{} {
-	reflectType := reflect.TypeOf(abstract)
+	var reflectType reflect.Type
+	if _, ok := abstract.(reflect.Type); ok {
+		reflectType = abstract.(reflect.Type)
+	} else {
+		reflectType = reflect.TypeOf(abstract)
+	}
+
 	kind := reflectType.Kind()
 	//var value interface{}
 
 	switch kind {
 	case reflect.String:
 		if v, ok := f.bindings[abstract.(string)]; ok {
-			return v
+			if v.share && v.instance != nil {
+				return v.instance
+			}
+
+			prototype := v.prototype(f)
+			if v.share {
+				v.instance = prototype
+			}
+			return prototype
 		} else {
 			panic(`不存在`)
 		}
+	case reflect.Ptr:
+		path,_ := f.parsePathName(reflectType)
+		return f.bindings[f.aliases[path]].prototype(f)
+
+
 	case reflect.Func:
 		// 反射参数
 		//params := reflectType.NumIn()
 		newParams := make([]reflect.Value, 0)
 		for i := 0; i < reflectType.NumIn(); i++ {
 			reflectSubType := reflectType.In(0)
-			name, err := f.parseName(reflectSubType, "")
-			if err != nil {
-				panic(err)
-			}
+			//name, err := f.parseName(reflectSubType, "")
+			//if err != nil {
+			//	panic(err)
+			//}
 
-			result := f.bindings[name].prototype(f)
-			if reflectSubType.Kind() == reflect.Func {
-				// 参数暂时为空
-				result = reflect.ValueOf(result).Call([]reflect.Value{})
-			} else {
-
-			}
-
-			newParams = append(newParams, reflect.ValueOf(result))
+			result := f.Resolve(reflectSubType)
+			newParams = append(newParams,reflect.ValueOf(result))
+			fmt.Println("====================")
+			fmt.Printf("%#v\n", result)
+			fmt.Println("====================")
+			//result := f.bindings[name].prototype(f)
+			//if reflectSubType.Kind() == reflect.Func {
+			//	// 参数暂时为空
+			//	result = reflect.ValueOf(result).Call([]reflect.Value{})
+			//} else {
+			//
+			//}
+			//
+			//newParams = append(newParams, reflect.ValueOf(result))
 		}
 
 		return reflect.ValueOf(abstract).Call(newParams)[0].Interface()
@@ -134,27 +162,33 @@ func WithBindCover(cover bool) utils.OptionFunc {
 }
 
 func (f *Firmeve) Bind(options ...utils.OptionFunc) { //, value interface{}
-	// default bindingOption
+	// 参数解析 default bindingOption
 	bindingOption := newBindingOption()
-
-	// 参数解析
 	utils.ApplyOption(bindingOption, options...)
 
-	// 反射对象类型
-	reflectType := reflect.TypeOf(bindingOption.prototype)
-
-	name, err := f.parseName(reflectType, bindingOption.name)
-	if err != nil {
+	/* 反射对象类型，解析真实路径名称 */
+	pathName, err := f.parsePathName(reflect.TypeOf(bindingOption.prototype))
+	if err != nil && bindingOption.name == `` {
 		panic(err)
-	}
-
-	if _, ok := f.bindings[name]; ok && !bindingOption.cover {
-		return
 	}
 
 	mutex.Lock()
 	defer mutex.Unlock()
-	f.bindings[name] = newBinding(f.setPrototype(bindingOption.prototype), bindingOption.share)
+
+	// 增加别名
+	if pathName != `` {
+		f.aliases[pathName] = bindingOption.name
+	}
+	if bindingOption.name == `` {
+		bindingOption.name = pathName
+	}
+
+	// 覆盖检测
+	if _, ok := f.bindings[bindingOption.name]; ok && !bindingOption.cover {
+		return
+	}
+
+	f.bindings[bindingOption.name] = newBinding(f.setPrototype(bindingOption.prototype), bindingOption.share)
 	//kind := reflectType.Kind()
 	//
 	//if kind == reflect.Ptr {
@@ -281,18 +315,17 @@ func (f *Firmeve) Bind(options ...utils.OptionFunc) { //, value interface{}
 	//}
 }
 
-func (f *Firmeve) parseName(reflectType reflect.Type, name string) (string, error) {
+func (f *Firmeve) parsePathName(reflectType reflect.Type) (string, error) {
+	var name string
 
-	if name == "" {
-		kind := reflectType.Kind()
-		switch kind {
-		case reflect.Ptr:
-			name = strings.Join([]string{reflectType.Elem().PkgPath(), reflectType.Elem().Name()}, `.`)
-		case reflect.Struct:
-			name = strings.Join([]string{reflectType.PkgPath(), reflectType.Name()}, `.`)
-		default:
-			return ``, errors.New(`不支持的类型`)
-		}
+	kind := reflectType.Kind()
+	switch kind {
+	case reflect.Ptr:
+		name = strings.Join([]string{reflectType.Elem().PkgPath(), reflectType.Elem().Name()}, `.`)
+	case reflect.Struct:
+		name = strings.Join([]string{reflectType.PkgPath(), reflectType.Name()}, `.`)
+	default:
+		return ``, errors.New(`不支持的类型`)
 	}
 
 	return strings.ToLower(name), nil
@@ -318,7 +351,7 @@ func (f *Firmeve) Has(id string) bool {
 // ---------------------------- bindingOption ------------------------
 
 func newBindingOption() *bindingOption {
-	return &bindingOption{share: false,}
+	return &bindingOption{share: false, cover: false,}
 }
 
 // ---------------------------- binding ------------------------
