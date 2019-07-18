@@ -189,6 +189,9 @@ func (f *Firmeve) Bind(options ...utils.OptionFunc) { //, value interface{}
 	mutex.Lock()
 	defer mutex.Unlock()
 
+	// @todo 这里还是有问题的，name可能是重复的，一个普通结构体，一个指针结构体，name是相同的
+	// @todo 要么直接判断名称不能重复，要么换重思路
+	// @todo reflectType 是惟一的
 	f.typeAliases[reflectType] = bindingOption.name
 	f.bindings[bindingOption.name] = newBinding(f.setPrototype(bindingOption.prototype), bindingOption.share)
 
