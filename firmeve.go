@@ -62,6 +62,7 @@ func NewFirmeve() *Firmeve {
 type bindingOption struct {
 	name      string
 	share     bool
+	cover     bool
 	prototype interface{}
 }
 
@@ -80,7 +81,7 @@ func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface
 	case reflect.Func:
 		// 反射参数
 		//params := reflectType.NumIn()
-		newParams := make([]reflect.Value,0)
+		newParams := make([]reflect.Value, 0)
 		for i := 0; i < reflectType.NumIn(); i++ {
 			reflectSubType := reflectType.In(0)
 			name, err := f.parseName(reflectSubType, "")
@@ -96,7 +97,7 @@ func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface
 
 			}
 
-			newParams = append(newParams,reflect.ValueOf(result))
+			newParams = append(newParams, reflect.ValueOf(result))
 		}
 
 		return reflect.ValueOf(abstract).Call(newParams)[0].Interface()
@@ -126,6 +127,12 @@ func WithBindInterface(object interface{}) utils.OptionFunc {
 	}
 }
 
+func WithBindCover(cover bool) utils.OptionFunc {
+	return func(option interface{}) {
+		option.(*bindingOption).cover = cover
+	}
+}
+
 func (f *Firmeve) Bind(options ...utils.OptionFunc) { //, value interface{}
 	// default bindingOption
 	bindingOption := newBindingOption()
@@ -139,6 +146,10 @@ func (f *Firmeve) Bind(options ...utils.OptionFunc) { //, value interface{}
 	name, err := f.parseName(reflectType, bindingOption.name)
 	if err != nil {
 		panic(err)
+	}
+
+	if _, ok := f.bindings[name]; ok && !bindingOption.cover {
+		return
 	}
 
 	mutex.Lock()
