@@ -76,12 +76,12 @@ type bindingOption struct {
 }
 
 func (f *Firmeve) Get(abstract interface{}, params ...interface{}) interface{} {
-	var reflectType reflect.Type
-	if _, ok := abstract.(reflect.Type); ok {
-		reflectType = abstract.(reflect.Type)
-	} else {
-		reflectType = reflect.TypeOf(abstract)
-	}
+	//var reflectType reflect.Type
+	//if _, ok := abstract.(reflect.Type); ok {
+	//	reflectType = abstract.(reflect.Type)
+	//} else {
+		reflectType := reflect.TypeOf(abstract)
+	//}
 
 	kind := reflectType.Kind()
 	//var value interface{}
@@ -122,13 +122,13 @@ func (f *Firmeve) Get(abstract interface{}, params ...interface{}) interface{} {
 		//params := reflectType.NumIn()
 		newParams := make([]reflect.Value, 0)
 		for i := 0; i < reflectType.NumIn(); i++ {
-			reflectSubType := reflectType.In(0)
+			//reflectSubType := reflectType.In(0)
 			//name, err := f.parseName(reflectSubType, "")
 			//if err != nil {
 			//	panic(err)
 			//}
 
-			result := f.Get(reflectSubType)
+			result := f.Get(reflect.ValueOf(reflectType.In(0).Kind()).Interface())
 			newParams = append(newParams, reflect.ValueOf(result))
 			fmt.Println("====================")
 			fmt.Printf("%#v\n", result)
@@ -184,11 +184,6 @@ func (f *Firmeve) Bind(options ...utils.OptionFunc) { //, value interface{}
 
 	reflectType := reflect.TypeOf(bindingOption.prototype)
 
-	// 覆盖检测
-	if _, ok := f.bindings[reflectType]; ok && !bindingOption.cover {
-		panic(`已经存在`)
-	}
-
 	// 默认字符串可调用名称
 	if bindingOption.name == `` {
 		pathName, err := f.parsePathName(reflectType)
@@ -199,6 +194,11 @@ func (f *Firmeve) Bind(options ...utils.OptionFunc) { //, value interface{}
 		bindingOption.name = pathName
 	}
 
+	// Name覆盖检测
+	if _, ok := f.aliases[bindingOption.name]; ok && !bindingOption.cover {
+		panic("binding alias type already exists")
+	}
+
 	mutex.Lock()
 	defer mutex.Unlock()
 
@@ -207,6 +207,7 @@ func (f *Firmeve) Bind(options ...utils.OptionFunc) { //, value interface{}
 	//}
 	// // 针对 struct和prt这种的，name相当于命名空间
 	//f.aliases[bindingOption.name][reflectType.Kind()] = reflectType
+
 	f.aliases[bindingOption.name] = reflectType
 	f.bindings[reflectType] = newBinding(f.setPrototype(bindingOption.prototype), bindingOption.share)
 
