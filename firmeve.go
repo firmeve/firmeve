@@ -20,6 +20,7 @@ type prototypeFunc func(container Container, params ...interface{}) interface{}
 type Container interface {
 	Get(abstract interface{}, params ...interface{}) interface{}
 	Has(id string) bool
+	Resolve(abstract interface{}) interface{}
 	//Bind(id interface{})
 }
 
@@ -49,7 +50,7 @@ func NewFirmeve() *Firmeve {
 		firmeve = &Firmeve{
 			bindings: make(map[reflect.Type]*binding),
 			//aliases:  make(map[string]map[reflect.Kind]reflect.Type),
-			aliases:  make(map[string]reflect.Type),
+			aliases: make(map[string]reflect.Type),
 			//aliases:  make(map[string]string),
 		}
 	})
@@ -75,82 +76,155 @@ type bindingOption struct {
 	prototype interface{}
 }
 
-func (f *Firmeve) Get(abstract interface{}, params ...interface{}) interface{} {
-	//var reflectType reflect.Type
-	//if _, ok := abstract.(reflect.Type); ok {
-	//	reflectType = abstract.(reflect.Type)
-	//} else {
-		reflectType := reflect.TypeOf(abstract)
-	//}
+func (f *Firmeve) Resolve(abstract interface{}) interface{} {
 
-	kind := reflectType.Kind()
-	//var value interface{}
+	reflectType := reflect.TypeOf(abstract)
 
-	switch kind {
-	case reflect.String:
-		abstractString := abstract.(string)
-		//var abstractSlices []string
-		//if strings.Contains(abstractString,`:`) {
-		//	abstractSlices = strings.Split(abstractString,`:`)
-		//} else {
-		//	abstractSlices = []string{abstractString,``}
-		//}
-		if abstractReflectType, ok := f.aliases[abstractString]; ok {
-
-			var abstractBinding *binding
-			if abstractBinding, ok = f.bindings[abstractReflectType]; !ok {
-				panic(`不存在`)
-			}
-			if abstractBinding.share && abstractBinding.instance != nil {
-				return abstractBinding.instance
-			}
-
-			prototype := abstractBinding.prototype(f)
-			if abstractBinding.share {
-				abstractBinding.instance = prototype
-			}
-			return prototype
-		} else {
-			panic(`不存在`)
-		}
-	case reflect.Ptr:
-		//path, _ := f.parsePathName(reflectType)
-		return f.bindings[reflectType].prototype(f)
-
-	case reflect.Func:
-		// 反射参数
-		//params := reflectType.NumIn()
-		newParams := make([]reflect.Value, 0)
-		for i := 0; i < reflectType.NumIn(); i++ {
-			//reflectSubType := reflectType.In(0)
-			//name, err := f.parseName(reflectSubType, "")
-			//if err != nil {
-			//	panic(err)
-			//}
-
-			result := f.Get(reflect.ValueOf(reflectType.In(0).Kind()).Interface())
-			newParams = append(newParams, reflect.ValueOf(result))
-			fmt.Println("====================")
-			fmt.Printf("%#v\n", result)
-			fmt.Println("====================")
-			//result := f.bindings[name].prototype(f)
-			//if reflectSubType.Kind() == reflect.Func {
-			//	// 参数暂时为空
-			//	result = reflect.ValueOf(result).Call([]reflect.Value{})
-			//} else {
-			//
-			//}
-			//
-			//newParams = append(newParams, reflect.ValueOf(result))
-		}
-
-		return reflect.ValueOf(abstract).Call(newParams)[0].Interface()
-
-	default:
-		panic(`暂不支持`)
+	if reflectType.Kind() == reflect.Func {
+		panic(`Func`)
 	}
 
+	if _, ok := f.bindings[reflectType]; !ok {
+		panic(`Error`)
+	}
+
+	binding := f.bindings[reflectType]
+	if binding.share && binding.instance != nil {
+		return binding.instance
+	}
+
+	prototype := binding.prototype(f)
+	if binding.share {
+		binding.instance = prototype
+	}
+
+	return prototype
+	//
+	//fmt.Printf("%#v",binding)
+	//fmt.Println("===========================")
+	//
+	//kind := reflectType.Kind()
+	//
+	//switch kind {
+	//// get name
+	//case reflect.String:
+	//	abstractString := abstract.(string)
+	//	if abstractReflectType, ok := f.aliases[abstractString]; ok {
+	//
+	//		abstractBinding := f.bindings[abstractReflectType]
+	//		if abstractBinding.share && abstractBinding.instance != nil {
+	//			return abstractBinding.instance
+	//		}
+	//
+	//		prototype := abstractBinding.prototype(f)
+	//		if abstractBinding.share {
+	//			abstractBinding.instance = prototype
+	//		}
+	//		return prototype
+	//	} else {
+	//		panic(`object that does not exist`)
+	//	}
+	//case reflect.Ptr:
+	//	fmt.Println("GGGGGGGGGGGGGGGG")
+	//	//path, _ := f.parsePathName(reflectType)
+	//	return f.bindings[reflectType].prototype(f)
+	//
+	//case reflect.Func:
+	//	// 反射参数
+	//	//params := reflectType.NumIn()
+	//	newParams := make([]reflect.Value, 0)
+	//	for i := 0; i < reflectType.NumIn(); i++ {
+	//		//reflectSubType := reflectType.In(0)
+	//		//name, err := f.parseName(reflectSubType, "")
+	//		//if err != nil {
+	//		//	panic(err)
+	//		//}
+	//
+	//		result := f.Get(reflect.ValueOf(reflectType.In(0).Kind()).Interface())
+	//		newParams = append(newParams, reflect.ValueOf(result))
+	//		fmt.Println("====================")
+	//		fmt.Printf("%#v\n", result)
+	//		fmt.Println("====================")
+	//		//result := f.bindings[name].prototype(f)
+	//		//if reflectSubType.Kind() == reflect.Func {
+	//		//	// 参数暂时为空
+	//		//	result = reflect.ValueOf(result).Call([]reflect.Value{})
+	//		//} else {
+	//		//
+	//		//}
+	//		//
+	//		//newParams = append(newParams, reflect.ValueOf(result))
+	//	}
+	//
+	//	return reflect.ValueOf(abstract).Call(newParams)[0].Interface()
+	//
+	//default:
+	//	panic(`暂不支持`)
+	//}
+
 	return nil
+}
+
+func (f *Firmeve) parseBindingPrototype(binding *binding) interface{} {
+
+	if binding.share && binding.instance != nil {
+		return binding.instance
+	}
+
+	prototype := binding.prototype(f)
+	if binding.share {
+		binding.instance = prototype
+	}
+
+	return prototype
+}
+
+func (f *Firmeve) Get(abstract interface{}, params ...interface{}) interface{} {
+
+	reflectType := reflect.TypeOf(abstract)
+
+	kind := reflectType.Kind()
+
+	if binding, ok := f.bindings[reflectType]; ok {
+		return f.parseBindingPrototype(binding)
+	}
+
+	// name 解析
+	if kind == reflect.String {
+		if abstractReflectType, ok := f.aliases[abstract.(string)]; ok {
+			return f.parseBindingPrototype(f.bindings[abstractReflectType])
+		} else {
+			panic(`object that does not exist`)
+		}
+	} else if kind == reflect.Func {
+		newParams := make([]reflect.Value, 0)
+		for i := 0; i < reflectType.NumIn(); i++ {
+			result := f.Get(reflect.ValueOf(reflectType.In(i)).Interface())
+			newParams = append(newParams, reflect.ValueOf(result))
+		}
+
+		if reflectType.NumOut() == 1 {
+			return reflect.ValueOf(abstract).Call(newParams)[0].Interface()
+		} else {
+			return reflect.ValueOf(abstract).Call(newParams)
+		}
+	} else if kind == reflect.Ptr {
+
+		fmt.Println(reflectType.Name())
+		fmt.Println("zzzzzzzzzzzzzzz")
+		//fmt.Printf("%#v",reflect.ValueOf(abstract).Interface())
+		for i := 0; i < reflectType.NumField(); i++ {
+			fmt.Println(reflectType.Field(i).Name)
+			//result := f.Get(reflect.ValueOf(reflectType.Field(i)).Interface())
+			//newParams = append(newParams, reflect.ValueOf(result))
+		}
+		fmt.Println("zzzzzzzzzzzzzzz")
+	} else if kind == reflect.Struct {
+
+		fmt.Printf("%#v",reflect.ValueOf(abstract).Interface())
+	}
+
+	panic(`unsupported type`)
 }
 
 func WithBindShare(share bool) utils.OptionFunc {
@@ -381,7 +455,9 @@ func (f *Firmeve) parsePathName(reflectType reflect.Type) (string, error) {
 
 func (f *Firmeve) setPrototype(prototype interface{}) prototypeFunc {
 	return func(container Container, params ...interface{}) interface{} {
-		return prototype//container.Get(prototype)
+		return prototype //container.Get(prototype)
+
+		//return container.Resolve(prototype)
 	}
 }
 
