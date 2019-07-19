@@ -1,7 +1,6 @@
 package firmeve
 
 import (
-	"fmt"
 	"github.com/firmeve/firmeve/utils"
 	"github.com/kataras/iris/core/errors"
 	"reflect"
@@ -179,6 +178,17 @@ func (f *Firmeve) parseBindingPrototype(binding *binding) interface{} {
 	return prototype
 }
 
+func (f *Firmeve) parseStruct(reflectType reflect.Type, reflectValue reflect.Value) reflect.Value {
+	for i := 0; i < reflectType.NumField(); i++ {
+		tag := reflectType.Field(i).Tag.Get("inject")
+		if tag != `` && reflectValue.Field(i).CanSet() {
+			reflectValue.Field(i).Set(reflect.ValueOf(f.Get(tag)))
+		}
+	}
+
+	return reflectValue
+}
+
 func (f *Firmeve) Get(abstract interface{}, params ...interface{}) interface{} {
 
 	reflectType := reflect.TypeOf(abstract)
@@ -209,20 +219,22 @@ func (f *Firmeve) Get(abstract interface{}, params ...interface{}) interface{} {
 			return reflect.ValueOf(abstract).Call(newParams)
 		}
 	} else if kind == reflect.Ptr {
-
-		fmt.Println(reflectType.Name())
-		fmt.Println("zzzzzzzzzzzzzzz")
-		//fmt.Printf("%#v",reflect.ValueOf(abstract).Interface())
-		for i := 0; i < reflectType.NumField(); i++ {
-			fmt.Println(reflectType.Field(i).Name)
-			//result := f.Get(reflect.ValueOf(reflectType.Field(i)).Interface())
-			//newParams = append(newParams, reflect.ValueOf(result))
+		newReflectType := reflectType.Elem()
+		if newReflectType.Kind() == reflect.Struct {
+			return f.parseStruct(newReflectType, reflect.ValueOf(abstract).Elem()).Addr().Interface()
 		}
-		fmt.Println("zzzzzzzzzzzzzzz")
-	} else if kind == reflect.Struct {
-
-		fmt.Printf("%#v",reflect.ValueOf(abstract).Interface())
 	}
+	//else if kind == reflect.Struct {
+	//	reflectValue := reflect.ValueOf(abstract)
+	//	for i := 0; i < reflectType.NumField(); i++ {
+	//		tag := reflectType.Field(i).Tag.Get("inject")
+	//		fmt.Println(tag,reflectValue.Field(i).CanSet())
+	//		if tag != `` && reflectValue.Field(i).CanSet() {
+	//			reflectValue.Field(i).Set(reflect.ValueOf(f.Get(tag)))
+	//		}
+	//	}
+	//	//return f.parseStruct(reflectType, reflect.ValueOf(abstract)).Interface()
+	//}
 
 	panic(`unsupported type`)
 }
@@ -276,165 +288,8 @@ func (f *Firmeve) Bind(options ...utils.OptionFunc) { //, value interface{}
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	//if _, ok := f.aliases[bindingOption.name]; !ok {
-	//	f.aliases[bindingOption.name] = make(map[reflect.Kind]reflect.Type)
-	//}
-	// // 针对 struct和prt这种的，name相当于命名空间
-	//f.aliases[bindingOption.name][reflectType.Kind()] = reflectType
-
 	f.aliases[bindingOption.name] = reflectType
 	f.bindings[reflectType] = newBinding(f.setPrototype(bindingOption.prototype), bindingOption.share)
-
-	/* 反射对象类型，解析真实路径名称 */
-	//pathName, err := f.parsePathName(reflect.TypeOf(bindingOption.prototype))
-	//if err != nil && bindingOption.name == `` {
-	//	panic(err)
-	//}
-	//
-	//mutex.Lock()
-	//defer mutex.Unlock()
-	//
-	//// 增加别名
-	//if pathName != `` {
-	//	f.aliases[pathName] = bindingOption.name
-	//}
-	//if bindingOption.name == `` {
-	//	bindingOption.name = pathName
-	//}
-	//
-	//// 覆盖检测
-	//if _, ok := f.bindings[bindingOption.name]; ok && !bindingOption.cover {
-	//	return
-	//}
-	//
-	//f.bindings[bindingOption.name] = newBinding(f.setPrototype(bindingOption.prototype), bindingOption.share)
-
-	//-----------------------------------------------------
-
-	//kind := reflectType.Kind()
-	//
-	//if kind == reflect.Ptr {
-	//
-	//}
-	//
-	//// 处理对象
-	//object := bindingOption.object
-	//
-	//binding := newBinding()
-	//binding.shared = bindingOption.share
-	//
-	//kind := reflectType.Kind()
-	//
-	//if kind == reflect.Func {
-	//	if bindingOption.name == "" {
-	//		panic("函数类型，Name必须存在")
-	//	}
-	//
-	//	// 并且函数必须要有返回值
-	//	//binding.
-	//	//if reflectType.NumOut() == 0 {
-	//	//	panic("函数类型，必须要有返回值")
-	//	//}
-	//
-	//	binding.prototype = func(app Container, params ...interface{}) interface{} {
-	//		return object
-	//	}
-	//
-	//	f.bindings[bindingOption.name] = binding
-	//
-	//	func3 := f.bindings[bindingOption.name].prototype(f)
-	//	result := reflect.ValueOf(func3).Call([]reflect.Value{})
-	//	fmt.Printf("%#v", result[1])
-	//} else if kind == reflect.Ptr {
-	//	fmt.Println("============")
-	//	// get Name
-	//
-	//	name := strings.Join([]string{reflectType.Elem().PkgPath(), reflectType.Elem().Name()}, `.`)
-	//	fmt.Println(name)
-	//	binding.prototype = func(container Container, params ...interface{}) interface{} {
-	//		return object
-	//	}
-	//
-	//	f.bindings[name] = binding
-	//
-	//	func3 := f.bindings[name].prototype(f)
-	//	fmt.Printf("%#v", func3)
-	//} else if kind == reflect.Struct {
-	//	name := strings.Join([]string{reflectType.PkgPath(), reflectType.Name()}, `.`)
-	//	fmt.Println(name, "==struct==")
-	//	binding.prototype = func(container Container, params ...interface{}) interface{} {
-	//		return object
-	//	}
-	//
-	//	f.bindings[name] = binding
-	//	func3 := f.bindings[name].prototype(f)
-	//	fmt.Printf("%#v", func3)
-	//} else if kind == reflect.Slice {
-	//	if bindingOption.name == "" {
-	//		panic("函数类型，Name必须存在")
-	//	}
-	//	binding.prototype = func(app Container, params ...interface{}) interface{} {
-	//		return object
-	//	}
-	//	func3 := binding.prototype(f).([]string)
-	//	func3 = append(func3, "d")
-	//	fmt.Printf("%#v", func3)
-	//}
-
-	//fmt.Println(f.bindings[bindingOption.name].prototype(f.(*Container)))
-	//fmt.Printf("%#v",f.bindings)
-	//fmt.Println(reflect.TypeOf(object).Kind().String())
-
-	//if bindDefaultOption.name == `` {
-	//
-	//}
-
-	//for _, opt := range options {
-	//	opt(bindDefaultOption)
-	//}
-
-	//fmt.Printf("%#v", bindDefaultOption)
-
-	//// 取得name和对象
-	//paramsLen := len(params)
-	//if paramsLen == 1 { //name需要自己反射，必须是结构体,share:false
-	//
-	//} else if paramsLen == 2 {
-	//	if isShare, ok := params[1].(bool); ok && isShare { // name需要自己反射，单例类型
-	//
-	//	} else {
-	//
-	//	}
-	//}
-	//
-	//fmt.Println(path.Base("a/b/c"))
-	////f.bindings[id] = newBinding(false, value)
-	//reflectType := reflect.TypeOf(object)
-	//fmt.Printf("%p", reflectType)
-	//reflectType.Elem()
-	//println(reflectType.Kind().String())
-	//if reflectType.Kind() == reflect.Ptr {
-	//	fullName := strings.Join([]string{reflectType.Elem().PkgPath(), reflectType.Elem().Name()}, ".")
-	//	f.bindings[fullName] = newBinding(share, object)
-	//}
-
-	//var method func(f *Firmeve) interface{}
-	//
-	//if reflectType.Kind() != reflect.Func {
-	//	method = func(f *Firmeve) interface{} {
-	//		return object
-	//	}
-	//} else {
-	//	method = func(f *Firmeve) interface{} {
-	//		reflect.ValueOf(object).Elem().Call()
-	//	}
-	//}
-
-	//if share {
-	//
-	//} else {
-	//
-	//}
 }
 
 func (f *Firmeve) parsePathName(reflectType reflect.Type) (string, error) {
@@ -455,16 +310,9 @@ func (f *Firmeve) parsePathName(reflectType reflect.Type) (string, error) {
 
 func (f *Firmeve) setPrototype(prototype interface{}) prototypeFunc {
 	return func(container Container, params ...interface{}) interface{} {
-		return prototype //container.Get(prototype)
-
-		//return container.Resolve(prototype)
+		return prototype
 	}
 }
-
-//func (f *Firmeve) Get(id string) interface{} {
-//	//panic("implement me")
-//	return "abc"
-//}
 
 func (f *Firmeve) Has(id string) bool {
 	//panic("implement me")

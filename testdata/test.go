@@ -14,7 +14,7 @@ func NewT1Sturct() T1 {
 
 type T2 struct {
 	t1 *T1
-	S1 *T1 `singleton:"t1"`
+	S1 *T1 `inject:"t1"`
 	Age int
 }
 

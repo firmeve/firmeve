@@ -116,9 +116,16 @@ func TestFirmeve_Bind_Struct_Prt2(t *testing.T) {
 	f := NewFirmeve()
 	f.Bind(WithBindInterface(t1), WithBindName("t1"))
 
-	//result := f.Get(testdata.T2Call)
-	result := f.Get(new(testdata.T2))
-	fmt.Printf("%#v", result)
+	//t2 := new(testdata.T2)
+	//fmt.Printf("%#v\n", t2)
+	//result := f.Get(t2)
+	//fmt.Printf("%#v\n", result.(*testdata.T2))
+	//result.(*testdata.T2).Age = 10
+	//fmt.Printf("%#v\n", t2)
+
+	//t4 := testdata.T2{}
+	//result2 := f.Get(t4)
+	//fmt.Printf("%#v\n", result2.(testdata.T2))
 }
 
 func TestFirmeve_Bind(t *testing.T) {
