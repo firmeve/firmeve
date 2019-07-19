@@ -38,8 +38,8 @@ func TestFirmeve_Bind_Struct_Prt(t *testing.T) {
 	f := NewFirmeve()
 	f.Bind(WithBindInterface(t1),WithBindName("t1.prt"))
 
-	result := f.Resolve(testdata.T2Call)
-	//result := f.Resolve("t1.prt")
+	//result := f.Get(testdata.T2Call)
+	result := f.Get("t1.prt")
 	fmt.Printf("%#v",result)
 }
 

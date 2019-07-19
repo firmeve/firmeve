@@ -18,7 +18,7 @@ var (
 type prototypeFunc func(container Container, params ...interface{}) interface{}
 
 type Container interface {
-	Get(id string) interface{}
+	Get(abstract interface{}, params ...interface{}) interface{}
 	Has(id string) bool
 	//Bind(id interface{})
 }
@@ -31,9 +31,10 @@ type binding struct {
 
 type Firmeve struct {
 	Container
-	bindings map[string]*binding
+	bindings map[reflect.Type]*binding
 	//aliases  map[string]string
-	typeAliases  map[reflect.Type]string
+	//aliases map[string]map[reflect.Kind]reflect.Type
+	aliases map[string]reflect.Type
 	//bindingOptions
 	//resolveOptions
 }
@@ -46,8 +47,9 @@ func NewFirmeve() *Firmeve {
 
 	once.Do(func() {
 		firmeve = &Firmeve{
-			bindings: make(map[string]*binding),
-			typeAliases:  make(map[reflect.Type]string),
+			bindings: make(map[reflect.Type]*binding),
+			//aliases:  make(map[string]map[reflect.Kind]reflect.Type),
+			aliases:  make(map[string]reflect.Type),
 			//aliases:  make(map[string]string),
 		}
 	})
@@ -65,15 +67,15 @@ func NewFirmeve() *Firmeve {
 // 4. 名称怎样实现惟一呢？，完整路径太长(github.com/b/c) 不是完整路径可能会存在冲突
 
 type bindingOption struct {
-	name      string
-	share     bool
-	cover     bool
+	name  string
+	share bool
+	cover bool
 	//aliases   []string
 	//types   map[reflect.Type]string
 	prototype interface{}
 }
 
-func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface{} {
+func (f *Firmeve) Get(abstract interface{}, params ...interface{}) interface{} {
 	var reflectType reflect.Type
 	if _, ok := abstract.(reflect.Type); ok {
 		reflectType = abstract.(reflect.Type)
@@ -86,23 +88,34 @@ func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface
 
 	switch kind {
 	case reflect.String:
-		if v, ok := f.bindings[abstract.(string)]; ok {
-			if v.share && v.instance != nil {
-				return v.instance
+		abstractString := abstract.(string)
+		//var abstractSlices []string
+		//if strings.Contains(abstractString,`:`) {
+		//	abstractSlices = strings.Split(abstractString,`:`)
+		//} else {
+		//	abstractSlices = []string{abstractString,``}
+		//}
+		if abstractReflectType, ok := f.aliases[abstractString]; ok {
+
+			var abstractBinding *binding
+			if abstractBinding, ok = f.bindings[abstractReflectType]; !ok {
+				panic(`不存在`)
+			}
+			if abstractBinding.share && abstractBinding.instance != nil {
+				return abstractBinding.instance
 			}
 
-			prototype := v.prototype(f)
-			if v.share {
-				v.instance = prototype
+			prototype := abstractBinding.prototype(f)
+			if abstractBinding.share {
+				abstractBinding.instance = prototype
 			}
 			return prototype
 		} else {
 			panic(`不存在`)
 		}
 	case reflect.Ptr:
-		path,_ := f.parsePathName(reflectType)
-		return f.bindings[f.aliases[path]].prototype(f)
-
+		//path, _ := f.parsePathName(reflectType)
+		return f.bindings[reflectType].prototype(f)
 
 	case reflect.Func:
 		// 反射参数
@@ -115,8 +128,8 @@ func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface
 			//	panic(err)
 			//}
 
-			result := f.Resolve(reflectSubType)
-			newParams = append(newParams,reflect.ValueOf(result))
+			result := f.Get(reflectSubType)
+			newParams = append(newParams, reflect.ValueOf(result))
 			fmt.Println("====================")
 			fmt.Printf("%#v\n", result)
 			fmt.Println("====================")
@@ -172,8 +185,8 @@ func (f *Firmeve) Bind(options ...utils.OptionFunc) { //, value interface{}
 	reflectType := reflect.TypeOf(bindingOption.prototype)
 
 	// 覆盖检测
-	if _, ok := f.typeAliases[reflectType]; ok && !bindingOption.cover {
-		return
+	if _, ok := f.bindings[reflectType]; ok && !bindingOption.cover {
+		panic(`已经存在`)
 	}
 
 	// 默认字符串可调用名称
@@ -189,12 +202,13 @@ func (f *Firmeve) Bind(options ...utils.OptionFunc) { //, value interface{}
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	// @todo 这里还是有问题的，name可能是重复的，一个普通结构体，一个指针结构体，name是相同的
-	// @todo 要么直接判断名称不能重复，要么换重思路
-	// @todo reflectType 是惟一的
-	f.typeAliases[reflectType] = bindingOption.name
-	f.bindings[bindingOption.name] = newBinding(f.setPrototype(bindingOption.prototype), bindingOption.share)
-
+	//if _, ok := f.aliases[bindingOption.name]; !ok {
+	//	f.aliases[bindingOption.name] = make(map[reflect.Kind]reflect.Type)
+	//}
+	// // 针对 struct和prt这种的，name相当于命名空间
+	//f.aliases[bindingOption.name][reflectType.Kind()] = reflectType
+	f.aliases[bindingOption.name] = reflectType
+	f.bindings[reflectType] = newBinding(f.setPrototype(bindingOption.prototype), bindingOption.share)
 
 	/* 反射对象类型，解析真实路径名称 */
 	//pathName, err := f.parsePathName(reflect.TypeOf(bindingOption.prototype))
@@ -366,14 +380,14 @@ func (f *Firmeve) parsePathName(reflectType reflect.Type) (string, error) {
 
 func (f *Firmeve) setPrototype(prototype interface{}) prototypeFunc {
 	return func(container Container, params ...interface{}) interface{} {
-		return prototype
+		return prototype//container.Get(prototype)
 	}
 }
 
-func (f *Firmeve) Get(id string) interface{} {
-	//panic("implement me")
-	return "abc"
-}
+//func (f *Firmeve) Get(id string) interface{} {
+//	//panic("implement me")
+//	return "abc"
+//}
 
 func (f *Firmeve) Has(id string) bool {
 	//panic("implement me")
