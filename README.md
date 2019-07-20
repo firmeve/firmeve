@@ -6,7 +6,7 @@
 [![GitHub license](https://img.shields.io/github/license/firmeve/firmeve.svg)](https://github.com/firmeve/firmeve/blob/master/LICENSE)
 
 ## Feature list
-- **Core**
+- **Application**
     - [ ] Ioc
     - [ ] Config
     - [ ] Events
