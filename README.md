@@ -6,15 +6,15 @@
 [![GitHub license](https://img.shields.io/github/license/firmeve/firmeve.svg)](https://github.com/firmeve/firmeve/blob/master/LICENSE)
 
 ## Feature list
-- Core
+- **Core**
     - [ ] Ioc
     - [ ] Config
     - [ ] Events
     - [ ] Log
-- Cache
+- **Cache**
     - [ ] Redis
     - [ ] File
-- Server
+- **Server**
     - [ ] Http
     - [ ] Websocket
     - [ ] Socket
