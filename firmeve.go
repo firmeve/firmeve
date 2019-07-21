@@ -16,14 +16,15 @@ var (
 type prototypeFunc func(container Container, params ...interface{}) interface{}
 
 type Container interface {
-	Resolve(abstract interface{}, params ...interface{}) interface{}
 	Has(name string) bool
 	Get(name string) interface{}
-	setPrtType(option *bindingOption)
-	Bind(name string, options ...utils.OptionFunc)
+	Bind(name string, prototype interface{}, options ...utils.OptionFunc)
+	Resolve(abstract interface{}, params ...interface{}) interface{}
+	Remove(name string)
 }
 
 type binding struct {
+	name        string
 	share       bool
 	instance    interface{}
 	prototype   prototypeFunc
@@ -33,7 +34,6 @@ type binding struct {
 type Firmeve struct {
 	Container
 	bindings map[string]*binding
-	aliases  map[string]reflect.Type
 	types    map[reflect.Type]string
 }
 
@@ -46,7 +46,6 @@ func NewFirmeve() *Firmeve {
 	once.Do(func() {
 		firmeve = &Firmeve{
 			bindings: make(map[string]*binding),
-			aliases:  make(map[string]reflect.Type),
 			types:    make(map[reflect.Type]string),
 		}
 	})
@@ -61,30 +60,58 @@ type bindingOption struct {
 	prototype interface{}
 }
 
+// Determine whether the specified name object is included in the container
+func (f *Firmeve) Has(name string) bool {
+	if _, ok := f.bindings[strings.ToLower(name)]; ok {
+		return true
+	}
+
+	return false
+}
+
+// Get a object from container
 func (f *Firmeve) Get(name string) interface{} {
 	if !f.Has(name) {
 		panic(`object that does not exist`)
 	}
 
-	return f.parseBindingPrototype(f.bindings[strings.ToLower(name)])
+	return f.bindings[strings.ToLower(name)].resolvePrototype(f)
 }
 
-// @todo 这里现在变成纯解析的方法
-// @todo 如果不保存reflectType 那么就找不到binding的对像
-// @todo 但reflectType 还需要测试，可能会出现重复，name必须是惟一的，但不同的Name可能会对应相同的reflectType
-// @todo 特别是在相同类型不同名称，强制覆盖时，肯定会发生
-// @todo 除非使用二维map，每次遍历，但可能也不会太准确,相同的map会有先后级，不一定先遍历到的就是的
-// @todo Resolve能通过，函数、name来找到对应的结果集，暂时只支持这两种
+// Bind method `share` param
+func WithBindShare(share bool) utils.OptionFunc {
+	return func(option interface{}) {
+		option.(*bindingOption).share = share
+	}
+}
+
+// Bind method `cover` param
+func WithBindCover(cover bool) utils.OptionFunc {
+	return func(option interface{}) {
+		option.(*bindingOption).cover = cover
+	}
+}
+
+// Bind a object to container
+func (f *Firmeve) Bind(name string, prototype interface{}, options ...utils.OptionFunc) { //, value interface{}
+	// Parameter analysis
+	bindingOption := newBindingOption(name, prototype)
+	utils.ApplyOption(bindingOption, options...)
+
+	// Coverage detection
+	if _, ok := f.bindings[bindingOption.name]; ok && !bindingOption.cover {
+		panic(`binding alias type already exists`)
+	}
+
+	// set binding item
+	f.setBindingItem(newBinding(bindingOption))
+}
+
+// Parsing various objects
 func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface{} {
-
 	reflectType := reflect.TypeOf(abstract)
-
 	kind := reflectType.Kind()
 
-	// name 解析
-	//if kind == reflect.String {
-	//	return f.parseBindingPrototype(f.bindings[abstract.(string)])
-	//} else
 	if kind == reflect.Func {
 		newParams := make([]reflect.Value, 0)
 		if len(params) != 0 {
@@ -93,16 +120,30 @@ func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface
 			}
 		} else {
 			for i := 0; i < reflectType.NumIn(); i++ {
-				name := f.types[reflectType.In(i)]
-				f.parseBindingPrototype(f.bindings[strings.ToLower(name)])
-				newParams = append(newParams, reflect.ValueOf(f.Get(name)))
+				if name, ok := f.types[reflectType.In(i)]; ok {
+					newParams = append(newParams, reflect.ValueOf(f.Get(name)))
+				} else {
+					panic(`unable to find reflection parameter`)
+				}
 			}
 		}
 
+		results := reflect.ValueOf(abstract).Call(newParams)
+
+		resultsInterface := make([]interface{}, 0)
+		for _, result := range results {
+			resultInterface := result.Interface()
+			if err, ok := resultInterface.(error); ok && err != nil {
+				panic(err.Error())
+			}
+
+			resultsInterface = append(resultsInterface, resultInterface)
+		}
+
 		if reflectType.NumOut() == 1 {
-			return reflect.ValueOf(abstract).Call(newParams)[0].Interface()
+			return resultsInterface[0]
 		} else {
-			return reflect.ValueOf(abstract).Call(newParams)
+			return resultsInterface
 		}
 	} else if kind == reflect.Ptr {
 		newReflectType := reflectType.Elem()
@@ -112,130 +153,46 @@ func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface
 			return f.parseStruct(newReflectType, reflect.ValueOf(abstract).Elem()).Addr().Interface()
 		}
 	}
-	//fmt.Println("======================")
-	//fmt.Printf("%#v", abstract)
-	//fmt.Println("======================")
-	//else {
-	//	if binding, ok := f.bindings[reflectType]; ok {
-	//		return f.parseBindingPrototype(binding)
-	//	}
-	//}
 
 	panic(`unsupported type`)
 }
 
-func WithBindShare(share bool) utils.OptionFunc {
-	return func(option interface{}) {
-		option.(*bindingOption).share = share
-	}
-}
-
-//func WithBindName(name string) utils.OptionFunc {
-//	return func(option interface{}) {
-//		option.(*bindingOption).name = strings.ToLower(name)
-//	}
-//}
-
-func WithBindInterface(object interface{}) utils.OptionFunc {
-	return func(option interface{}) {
-		option.(*bindingOption).prototype = object
-	}
-}
-
-func WithBindCover(cover bool) utils.OptionFunc {
-	return func(option interface{}) {
-		option.(*bindingOption).cover = cover
-	}
-}
-
-func (f *Firmeve) Bind(name string, options ...utils.OptionFunc) { //, value interface{}
-	// 参数解析 default bindingOption
-	bindingOption := newBindingOption(name)
-	utils.ApplyOption(bindingOption, options...)
-
-	//reflectType := reflect.TypeOf(bindingOption.prototype)
-
-	// 别名获取
-	//if bindingOption.name == `` {
-	//	bindingOption.name = f.parsePathName(reflectType)
-	//}
-
-	// 覆盖检测
-	//if _, ok := f.bindings[reflectType]; ok && !bindingOption.cover {
-	//	panic("binding alias type already exists")
-	//}
-	if _, ok := f.bindings[bindingOption.name]; ok && !bindingOption.cover {
-		panic(`binding alias type already exists`)
-	}
-
+func (f *Firmeve) Remove(name string) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	f.bindings[bindingOption.name] = newBinding(bindingOption)
-	// 如果有多个相同的类型，会覆盖使用最后一个
-	f.setPrtType(bindingOption)
-	//f.types[reflect.TypeOf(bindingOption.prototype)] = bindingOption.name
-	//f.bindings[reflectType] = newBinding(bindingOption)
-}
+	delete(f.bindings, name)
 
-func (f *Firmeve) Has(name string) bool {
-	if _, ok := f.bindings[strings.ToLower(name)]; ok {
-		return true
-	}
-
-	return false
-}
-
-//func (f *Firmeve) All() map[reflect.Type]*binding {
-//	return f.bindings
-//}
-//
-//func (f *Firmeve) Aliases() map[string]reflect.Type {
-//	return f.aliases
-//}
-
-//func (f *Firmeve) ReflectType(id string) reflect.Type {
-//	return f.aliases[id]
-//}
-func (f *Firmeve)setPrtType(option *bindingOption)  {
-	reflectType := reflect.TypeOf(option.prototype)
-	if reflectType.Kind() == reflect.Ptr || reflectType.Kind() == reflect.Struct{
-		f.types[reflectType] = option.name
-	}
-	if reflectType.Kind() == reflect.Func {
-		f.types[reflect.TypeOf(f.Resolve(option.prototype))] = option.name
+	for key, v := range f.types {
+		if v == name {
+			delete(f.types, key)
+			break
+		}
 	}
 }
 
-// parse binding object prototype
-func (f *Firmeve) parseBindingPrototype(binding *binding, params ...interface{}) interface{} {
-	if binding.share && binding.instance != nil {
-		return binding.instance
+// Set a item to types and bindings
+func (f *Firmeve) setBindingItem(b *binding) {
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	// Set binding
+	f.bindings[b.name] = b
+
+	// Set type
+	// Only support prt,struct and func type
+	// No support string,float,int... scalar type
+	originalKind := b.reflectType.Kind()
+	if originalKind == reflect.Ptr || originalKind == reflect.Struct {
+		f.types[b.reflectType] = b.name
+	} else if originalKind == reflect.Func {
+		// This is mainly used as a non-singleton type, using function execution, each time returning a different instance
+		// When it is a function, parse the function, get the current real type, only support one parameter, the function must have only one return value
+		f.types[reflect.TypeOf(b.resolvePrototype(f))] = b.name
 	}
-
-	prototype := binding.prototype(f, params...)
-
-	if binding.share {
-		binding.instance = prototype
-	}
-
-	return prototype
-	//prototype := binding.prototype(f, params...)
-	//var result interface{}
-	//if reflect.TypeOf(prototype).Kind() == reflect.Func {
-	//	result = f.Get(prototype)
-	//} else {
-	//	result = prototype
-	//}
-	//
-	//if binding.share {
-	//	binding.instance = result
-	//}
-	//
-	//return result
 }
 
-// parse struct fields and auto binding field
+// Parse struct fields and auto binding field
 func (f *Firmeve) parseStruct(reflectType reflect.Type, reflectValue reflect.Value) reflect.Value {
 	for i := 0; i < reflectType.NumField(); i++ {
 		tag := reflectType.Field(i).Tag.Get("inject")
@@ -249,44 +206,53 @@ func (f *Firmeve) parseStruct(reflectType reflect.Type, reflectValue reflect.Val
 	return reflectValue
 }
 
-// parse struct
-func (f *Firmeve) parsePathName(reflectType reflect.Type) string {
-	var name string
-
-	kind := reflectType.Kind()
-	switch kind {
-	case reflect.Ptr:
-		name = strings.Join([]string{reflectType.Elem().PkgPath(), reflectType.Elem().Name()}, `.`)
-	default:
-		name = reflectType.Name()
-	}
-
-	if name == `` {
-		panic(`the path name is empty`)
-	}
-
-	return strings.ToLower(name)
-}
-
 // ---------------------------- bindingOption ------------------------
 
-func newBindingOption(name string) *bindingOption {
-	return &bindingOption{share: false, cover: false, name: strings.ToLower(name)}
+// Create a new binding option struct
+func newBindingOption(name string, prototype interface{}) *bindingOption {
+	return &bindingOption{share: false, cover: false, name: strings.ToLower(name), prototype: prototype}
 }
 
 // ---------------------------- binding ------------------------
 
+// Create a new binding struct
 func newBinding(option *bindingOption) *binding {
-	return &binding{
-		prototype: func(container Container, params ...interface{}) interface{} {
-			if reflect.TypeOf(option.prototype).Kind() == reflect.Func {
-				return container.Resolve(option.prototype)
-				// 这里也要设置类型
-				//container.setPrtType(reflect.TypeOf(result))
-				//container.Bind("ZZZZZ",WithBindInterface(result))
-			}
-			return option.prototype
-		},
-		share: option.share,
+	binding := &binding{
+		name:        option.name,
+		share:       option.share,
+		reflectType: reflect.TypeOf(option.prototype),
 	}
+	binding.prototype = binding.getPrototypeFunc(option.prototype)
+	return binding
+}
+
+// Parse package prototypeFunc type
+func (b *binding) getPrototypeFunc(prototype interface{}) prototypeFunc {
+	var prototypeFunction prototypeFunc
+
+	if b.reflectType.Kind() == reflect.Func {
+		prototypeFunction = func(container Container, params ...interface{}) interface{} {
+			return container.Resolve(prototype)
+		}
+	} else {
+		prototypeFunction = func(container Container, params ...interface{}) interface{} {
+			return prototype
+		}
+	}
+
+	return prototypeFunction
+}
+
+// Parse binding object prototype
+func (b *binding) resolvePrototype(container Container, params ...interface{}) interface{} {
+	if b.share && b.instance != nil {
+		return b.instance
+	}
+
+	prototype := b.prototype(container, params...)
+	if b.share {
+		b.instance = prototype
+	}
+
+	return prototype
 }

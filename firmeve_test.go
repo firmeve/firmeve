@@ -19,8 +19,8 @@ type message string
 func TestFirmeve_Resolve_String_Alias_Type(t *testing.T) {
 	f := NewFirmeve()
 
-	f.Bind("message", WithBindInterface(message("message bar")))
-	f.Bind("string", WithBindInterface("string value"))
+	f.Bind("message", message("message bar"))
+	f.Bind("string", "string value")
 
 	//assert.IsType(t,message(""),f.Get("message"))
 	z := f.Get("message").(message)
@@ -39,9 +39,9 @@ func TestFirmeve_Resolve_Number(t *testing.T) {
 	IntAliasNum = 80
 
 	f := NewFirmeve()
-	f.Bind(t.Name()+"num", WithBindInterface(num), )
-	f.Bind(t.Name()+"fnum", WithBindInterface(fnum), )
-	f.Bind(t.Name()+"IntAliasNum", WithBindInterface(IntAliasNum), )
+	f.Bind(t.Name()+"num", num, )
+	f.Bind(t.Name()+"fnum", fnum, )
+	f.Bind(t.Name()+"IntAliasNum", IntAliasNum, )
 
 	assert.Equal(t, num, f.Get(t.Name() + "num").(int32))
 	assert.Equal(t, fnum, f.Get(t.Name() + "fnum").(float32))
@@ -50,7 +50,7 @@ func TestFirmeve_Resolve_Number(t *testing.T) {
 
 func TestFirmeve_Resolve_Bool(t *testing.T) {
 	f := NewFirmeve()
-	f.Bind("bool", WithBindInterface(false))
+	f.Bind("bool", (false))
 
 	assert.Equal(t, false, f.Get("bool").(bool))
 }
@@ -59,7 +59,7 @@ func TestFirmeve_Resolve_Struct_Prt(t *testing.T) {
 	t1 := testdata.NewT1()
 
 	f := NewFirmeve()
-	f.Bind(t.Name()+"t1", WithBindInterface(t1))
+	f.Bind(t.Name()+"t1", (t1))
 	assert.Equal(t, t1, f.Get(t.Name()+"t1"))
 }
 
@@ -77,7 +77,7 @@ func TestFirmeve_Resolve_Func_Simple(t *testing.T) {
 	fmt.Println(z())
 	fmt.Println(z())
 	//t1 := testdata.NewT1()
-	f.Bind(t.Name()+"z", WithBindInterface(z))
+	f.Bind(t.Name()+"z", (z))
 	//assert.IsType(t, z, f.Get(t.Name()+"z"))
 
 	result := f.Get(t.Name() + "z").(int64)
@@ -90,14 +90,14 @@ func TestFirmeve_Resolve_Cover(t *testing.T) {
 	//t3 := testdata.NewT1Sturct()
 
 	f := NewFirmeve()
-	f.Bind(t.Name()+"t1", WithBindInterface(t1), )
+	f.Bind(t.Name()+"t1", (t1), )
 	assert.Equal(t, t1, f.Get(t.Name()+"t1"))
 
-	f.Bind(t.Name()+"t1", WithBindInterface(t1), WithBindCover(true))
+	f.Bind(t.Name()+"t1", (t1), WithBindCover(true))
 	assert.Equal(t, t1, f.Get(t.Name()+"t1"))
 
 	assert.Panics(t, func() {
-		f.Bind(t.Name()+"t1", WithBindInterface(t1), WithBindCover(false))
+		f.Bind(t.Name()+"t1", (t1), WithBindCover(false))
 	}, "binding alias type already exists")
 }
 
@@ -106,10 +106,10 @@ func TestFirmeve_Singleton(t *testing.T) {
 	//t1 := testdata.NewT1
 	//t3 := testdata.NewT1Sturct()
 	f := NewFirmeve()
-	f.Bind(t.Name()+"t1.singleton", WithBindInterface(testdata.NewT1), WithBindShare(true))
+	f.Bind(t.Name()+"t1.singleton", (testdata.NewT1), WithBindShare(true))
 	assert.Equal(t, fmt.Sprintf("%p", f.Get(t.Name()+"t1.singleton")), fmt.Sprintf("%p", f.Get(t.Name()+"t1.singleton")))
 
-	f.Bind(t.Name()+"t2.prototype", WithBindInterface(testdata.NewT1), WithBindShare(false))
+	f.Bind(t.Name()+"t2.prototype", (testdata.NewT1), WithBindShare(false))
 	assert.NotEqual(t, fmt.Sprintf("%p", f.Get(t.Name()+"t2.prototype")), fmt.Sprintf("%p", f.Get(t.Name()+"t2.prototype")))
 }
 
@@ -149,24 +149,26 @@ func TestReflectType(t *testing.T)  {
 func TestFirmeve_Resolve_Struct_Field(t *testing.T) {
 	f := NewFirmeve()
 	t1 := testdata.NewT1()
-	f.Bind("t1", WithBindInterface(t1))
+	f.Bind("t1", (t1))
 
 	fmt.Printf("%#v\n",f.Resolve(testdata.NewT2))
 
 	t1struct := testdata.NewT1Sturct()
-	f.Bind("t1struct", WithBindInterface(t1struct))
+	f.Bind("t1struct", (t1struct))
 	fmt.Printf("%#v",f.Resolve(testdata.NewTStruct))
 }
 
 // 测试非单例注入
 func TestFirmeve_Resolve_Prototype(t *testing.T) {
 	f := NewFirmeve()
-	f.Bind("t1", WithBindInterface(testdata.NewT1))
-
-	fmt.Printf("%#v\n",f.Resolve(testdata.NewT2))
+	f.Bind("t1", (testdata.NewT1),WithBindCover(true))
+	//f.Bind("t1", (testdata.NewT1Error))
+	//testdata.NewT2ErrorInterface(testdata.NewT1Error())
+	log.Printf("%#v\n",f.Resolve(testdata.NewT2))
+	assert.IsType(t,testdata.NewT2(f.Get("t1").(*testdata.T1)),f.Resolve(testdata.NewT2))
 
 	//t1struct := testdata.NewT1Sturct()
-	//f.Bind("t1struct", WithBindInterface(t1struct))
+	//f.Bind("t1struct", (t1struct))
 	//fmt.Printf("%#v",f.Resolve(testdata.NewTStruct))
 }
 
@@ -189,7 +191,7 @@ func TestFirmeve_Resolve_Prototype(t *testing.T) {
 //	fmt.Printf("%p", eface)
 //
 //	f := NewFirmeve()
-//	f.Bind(WithBindInterface(t1), WithBindName("t1.prt"))
+//	f.Bind((t1), WithBindName("t1.prt"))
 //
 //	//result := f.Get(testdata.T2Call)
 //	result := f.Get("t1.prt")
@@ -202,7 +204,7 @@ func TestFirmeve_Bind_Struct_Prt2(t *testing.T) {
 	//t2 := testdata.NewT2(t1)
 
 	f := NewFirmeve()
-	f.Bind(t.Name() + "t1",WithBindInterface(t1))
+	f.Bind(t.Name() + "t1",(t1))
 
 	t2 := new(testdata.T2)
 	//fmt.Printf("%#v\n", t2)
@@ -229,14 +231,14 @@ func TestFirmeve_Bind_Struct_Prt2(t *testing.T) {
 //	//t1 := NewT1()
 //	//firmeve.Bind(t1)
 //
-//	//firmeve.Bind(WithBindShare(true),WithBindInterface(func() (string,int) {
+//	//firmeve.Bind(WithBindShare(true),(func() (string,int) {
 //	//	return `abc`,10
 //	//}),WithBindName("abc"))
 //
-//	//firmeve.Bind(WithBindShare(true),WithBindInterface(testReject))
-//	//firmeve.Bind(WithBindShare(true),WithBindInterface(testReject{"simon",30}))
+//	//firmeve.Bind(WithBindShare(true),(testReject))
+//	//firmeve.Bind(WithBindShare(true),(testReject{"simon",30}))
 //	z := []string{"a", "b"}
-//	firmeve.Bind(WithBindName("abcd"), WithBindInterface(z))
+//	firmeve.Bind(WithBindName("abcd"), (z))
 //
 //	//firmeve.Bind(func() interface{} {
 //	//	return NewT1()

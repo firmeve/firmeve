@@ -8,6 +8,10 @@ func NewT1() *T1 {
 	return &T1{"Simon"}
 }
 
+func NewT1Error() (*T1,error) {
+	return &T1{"Simon"},nil
+}
+
 func NewT1Sturct() T1 {
 	return T1{"Simon"}
 }
@@ -21,6 +25,19 @@ type T2 struct {
 
 func NewT2(f *T1) T2  {
 	return T2{t1:f,Age:10}
+}
+func NewT2Error(f *T1,err error) (T2,error)  {
+	return T2{t1:f,Age:10},err
+}
+
+func NewT2ErrorInterface(f *T1,err error) (T2,error)  {
+	//var err error
+	//if len(params) == 1 {
+	//	err = nil
+	//} else {
+	//	err = params[1].(error)
+	//}
+	return T2{t1:f,Age:10},err
 }
 
 func NewT22() *T2  {
