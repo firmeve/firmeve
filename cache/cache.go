@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
-	"github.com/firmeve/firmeve"
 	"github.com/firmeve/firmeve/cache/redis"
 	"github.com/firmeve/firmeve/config"
 	"github.com/go-ini/ini"
@@ -235,9 +234,9 @@ func NewManager(config *config.Config) *Manager {
 }
 
 
-func (this *Manager) register() {
-	firmeve.NewFirmeve().Bind(NewManager)
-}
+//func (this *Manager) register() {
+//	firmeve.NewFirmeve().Bind(NewManager)
+//}
 
 func (this *Manager) boot() {
 }
