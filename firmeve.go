@@ -219,11 +219,21 @@ func newBindingOption(name string, prototype interface{}) *bindingOption {
 func newBinding(option *bindingOption) *binding {
 	binding := &binding{
 		name:        option.name,
-		share:       option.share,
 		reflectType: reflect.TypeOf(option.prototype),
 	}
+	binding.share = binding.getShare(option.share)
 	binding.prototype = binding.getPrototypeFunc(option.prototype)
+
 	return binding
+}
+
+// Get share, If type kind is not func type
+func (b *binding) getShare(share bool) bool {
+	if b.reflectType.Kind() != reflect.Func {
+		b.share = true
+	}
+
+	return share
 }
 
 // Parse package prototypeFunc type
