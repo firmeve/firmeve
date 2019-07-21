@@ -158,6 +158,18 @@ func TestFirmeve_Resolve_Struct_Field(t *testing.T) {
 	fmt.Printf("%#v",f.Resolve(testdata.NewTStruct))
 }
 
+// 测试非单例注入
+func TestFirmeve_Resolve_Prototype(t *testing.T) {
+	f := NewFirmeve()
+	f.Bind("t1", WithBindInterface(testdata.NewT1))
+
+	fmt.Printf("%#v\n",f.Resolve(testdata.NewT2))
+
+	//t1struct := testdata.NewT1Sturct()
+	//f.Bind("t1struct", WithBindInterface(t1struct))
+	//fmt.Printf("%#v",f.Resolve(testdata.NewTStruct))
+}
+
 //
 //func TestFirmeve_Bind_Struct_Prt(t *testing.T) {
 //	var i int8 = -1

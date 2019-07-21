@@ -19,6 +19,8 @@ type Container interface {
 	Resolve(abstract interface{}, params ...interface{}) interface{}
 	Has(name string) bool
 	Get(name string) interface{}
+	setPrtType(option *bindingOption)
+	Bind(name string, options ...utils.OptionFunc)
 }
 
 type binding struct {
@@ -72,6 +74,7 @@ func (f *Firmeve) Get(name string) interface{} {
 // @todo 但reflectType 还需要测试，可能会出现重复，name必须是惟一的，但不同的Name可能会对应相同的reflectType
 // @todo 特别是在相同类型不同名称，强制覆盖时，肯定会发生
 // @todo 除非使用二维map，每次遍历，但可能也不会太准确,相同的map会有先后级，不一定先遍历到的就是的
+// @todo Resolve能通过，函数、name来找到对应的结果集，暂时只支持这两种
 func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface{} {
 
 	reflectType := reflect.TypeOf(abstract)
@@ -91,6 +94,7 @@ func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface
 		} else {
 			for i := 0; i < reflectType.NumIn(); i++ {
 				name := f.types[reflectType.In(i)]
+				f.parseBindingPrototype(f.bindings[strings.ToLower(name)])
 				newParams = append(newParams, reflect.ValueOf(f.Get(name)))
 			}
 		}
@@ -169,7 +173,8 @@ func (f *Firmeve) Bind(name string, options ...utils.OptionFunc) { //, value int
 
 	f.bindings[bindingOption.name] = newBinding(bindingOption)
 	// 如果有多个相同的类型，会覆盖使用最后一个
-	f.types[reflect.TypeOf(bindingOption.prototype)] = bindingOption.name
+	f.setPrtType(bindingOption)
+	//f.types[reflect.TypeOf(bindingOption.prototype)] = bindingOption.name
 	//f.bindings[reflectType] = newBinding(bindingOption)
 }
 
@@ -192,6 +197,15 @@ func (f *Firmeve) Has(name string) bool {
 //func (f *Firmeve) ReflectType(id string) reflect.Type {
 //	return f.aliases[id]
 //}
+func (f *Firmeve)setPrtType(option *bindingOption)  {
+	reflectType := reflect.TypeOf(option.prototype)
+	if reflectType.Kind() == reflect.Ptr || reflectType.Kind() == reflect.Struct{
+		f.types[reflectType] = option.name
+	}
+	if reflectType.Kind() == reflect.Func {
+		f.types[reflect.TypeOf(f.Resolve(option.prototype))] = option.name
+	}
+}
 
 // parse binding object prototype
 func (f *Firmeve) parseBindingPrototype(binding *binding, params ...interface{}) interface{} {
@@ -267,6 +281,9 @@ func newBinding(option *bindingOption) *binding {
 		prototype: func(container Container, params ...interface{}) interface{} {
 			if reflect.TypeOf(option.prototype).Kind() == reflect.Func {
 				return container.Resolve(option.prototype)
+				// 这里也要设置类型
+				//container.setPrtType(reflect.TypeOf(result))
+				//container.Bind("ZZZZZ",WithBindInterface(result))
 			}
 			return option.prototype
 		},
