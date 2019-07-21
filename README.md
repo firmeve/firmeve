@@ -7,7 +7,7 @@
 
 ## Feature list
 - **Application**
-    - [ ] Ioc
+    - [x] [Ioc](./docs/zh-CN/ioc.md)
     - [ ] Config
     - [ ] Events
     - [ ] Log
