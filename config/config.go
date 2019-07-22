@@ -1,13 +1,13 @@
 package config
 
 import (
-	"github.com/go-ini/ini"
+	"fmt"
 	"github.com/spf13/viper"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
+	"time"
 )
 
 // Package global variable
@@ -19,171 +19,148 @@ var (
 
 // Configurator interface
 type Configurator interface {
-	Get(keys string) (interface{}, error)
-	Set(key string, value string) error
-	All() map[string]*viper.Viper
+	Get(key string) interface{}
+	Set(key string, value interface{})
+	Exists(key string) bool
 }
 
 // Config struct
 type Config struct {
 	directory string
-	configs   map[string]*viper.Viper
+	items     map[string]*viper.Viper
+	current   *viper.Viper
 	delimiter string
 	extension string
 }
 
-// Create a new config instance
-func NewConfig(directory string) (*Config, error) {
-	// singleton
-	if config != nil {
-		return config, nil
-	}
+//func init()  {
+//	firmeve.GetFirmeve().Register()
+//}
 
-	var err error
-	// 单例加锁
-	//mu.Lock()
-	//defer mu.Unlock()
+// Create a new config instance
+func NewConfig(directory string) *Config {
 
 	//直接使用once，其实就是调用mu.Lock和Unlock
 	once.Do(func() {
-		directory, err := absPath(directory)
+		directory, err := filepath.Abs(directory)
 		if err != nil {
-			return
+			panic(err.Error())
 		}
 
 		config = &Config{
 			directory: directory,
+			current:   nil,
 			delimiter: `.`, extension: `.yaml`,
-			configs: make(map[string]*viper.Viper),
+			items: make(map[string]*viper.Viper),
 		}
+
 		// loadAll
 		err = config.loadAll()
+		if err != nil {
+			panic(err.Error())
+		}
 	})
 
-	return config, err
+	return config
 }
 
-// Get the absolute path of the specified directory
-func absPath(directory string) (string, error) {
-	return filepath.Abs(directory)
+func GetConfig() *Config {
+	// singleton
+	if config != nil {
+		return config
+	}
+
+	panic(`config instance not exists`)
+}
+
+//---------------------- config ------------------------
+
+func (c *Config) Item(item string) *Config {
+	if itemConfig, ok := c.items[item]; ok {
+		c.current = itemConfig
+		return c
+	}
+
+	panic(fmt.Sprintf(`the config %s not exists`, item))
 }
 
 // Get the specified key configuration
-func (this *Config) Get(keys string) (interface{}, error) {
+func (c *Config) Get(key string) interface{} {
+	return c.current.Get(key)
+}
 
-	keySlices := parseKey(keys, this.delimiter)
+func (c *Config) GetBool(key string) bool {
+	return c.current.GetBool(key)
+}
 
-	length := len(keySlices)
+func (c *Config) GetFloat64(key string) float64 {
+	return c.current.GetFloat64(key)
+}
 
-	var cfg *ini.File
-	if _, ok := this.configs[keySlices[0]]; !ok {
-		return nil, &FormatError{message: `index error`}
-	} else {
-		cfg = this.configs[keySlices[0]]
-	}
+func (c *Config) GetInt(key string) int {
+	return c.current.GetInt(key)
+}
 
-	if length == 1 {
-		return cfg, nil
-	} else if length == 2 {
-		if !cfg.Section(ini.DefaultSection).HasKey(keySlices[1]) {
-			return nil, &FormatError{message: `value not found`}
-		}
-		return cfg.Section(ini.DefaultSection).GetKey(keySlices[1])
-	} else {
-		// 取得可能是section的slice拼接
-		sectionName := strings.Join(keySlices[1:length-1], this.delimiter)
-		section, err := cfg.GetSection(sectionName)
-		// 如果section不存在拼接全部的
-		if err != nil {
-			sectionName = sectionName + `.` + keySlices[length-1:][0]
-			section, err = cfg.GetSection(sectionName)
-			if err != nil {
-				return nil, err
-			}
+func (c *Config) GetIntSlice(key string) []int {
+	return c.current.GetIntSlice(key)
+}
 
-			return section, nil
-		}
+func (c *Config) GetString(key string) string {
+	return c.current.GetString(key)
+}
 
-		// 否则最后一位肯定是key
-		key := keySlices[length-1:][0]
-		if section.HasKey(key) {
-			return section.GetKey(key)
-		}
+func (c *Config) GetStringMap(key string) map[string]interface{} {
+	return c.current.GetStringMap(key)
+}
 
-		return nil, &FormatError{message: `value not found`}
-	}
+func (c *Config) GetStringMapString(key string) map[string]string {
+	return c.current.GetStringMapString(key)
+}
+
+func (c *Config) GetStringSlice(key string) []string {
+	return c.current.GetStringSlice(key)
+}
+
+func (c *Config) GetTime(key string) time.Time {
+	return c.current.GetTime(key)
+}
+
+func (c *Config) GetDuration(key string) time.Duration {
+	return c.current.GetDuration(key)
+}
+
+//
+func (c *Config) Exists(key string) bool {
+	return c.current.IsSet(key)
 }
 
 // Set configuration value
-func (this *Config) Set(keys string, value string) error {
+func (c *Config) Set(key string, value interface{}) {
 	// map加锁
 	mutex.Lock()
 	defer mutex.Unlock()
 
-	keySlices := parseKey(keys, this.delimiter)
-
-	length := len(keySlices)
-
-	if length == 1 {
-		return &FormatError{message: "incorrect parameter format"}
-	}
-
-	var err error
-
-	if _, ok := this.configs[keySlices[0]]; !ok {
-		this.configs[keySlices[0]], err = loadConf(this.fullPath(keySlices[0]))
-		if err != nil {
-			return err
-		}
-	}
-
-	if length == 2 {
-		_, err = this.configs[keySlices[0]].Section(ini.DefaultSection).NewKey(keySlices[1], value)
-	} else {
-		_, err = this.configs[keySlices[0]].Section(strings.Join(keySlices[1:length-1], this.delimiter)).NewKey(keySlices[length-1], value)
-	}
-	if err != nil {
-		return err
-	}
-
-	file, err := os.OpenFile(this.fullPath(keySlices[0]), os.O_WRONLY, 0666)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	_, err = this.configs[keySlices[0]].WriteTo(file)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	c.current.Set(key, value)
 }
 
-// Get all configurations
-func (this *Config) All() map[string]*viper.Viper {
-	return this.configs
+// Set item default value if not exists
+func (c *Config) SetDefault(key string, value interface{}) {
+	// map加锁
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	c.current.SetDefault(key, value)
 }
 
 // Load all configuration files at once
-func (this *Config) loadAll() error {
-
-	err := filepath.Walk(this.directory, func(path string, info os.FileInfo, err error) error {
+func (c *Config) loadAll() error {
+	err := filepath.Walk(c.directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
-		filename := filepath.Base(path)
-
-		if strings.Contains(filename, this.extension) && !info.IsDir() {
-			fileKey := strings.Replace(filename, this.extension, "", 1)
-
-			cfg, err := loadConf(path)
-			if err != nil {
-				return err
-			}
-
-			this.configs[fileKey] = cfg
+		if strings.Contains(filepath.Base(path), c.extension) && !info.IsDir() {
+			c.Load(path)
 		}
 
 		return nil
@@ -196,44 +173,16 @@ func (this *Config) loadAll() error {
 	return nil
 }
 
-// Get the current full path by filename (without extension)
-func (this *Config) fullPath(filename string) string {
-	return path.Clean(this.directory + "/" + filename + this.extension)
-}
-
-// Load configuration file
-func loadConf(filename string) (*viper.Viper, error) {
-
-	_, err := os.Stat(filename)
-	if err != nil {
-		if os.IsNotExist(err) {
-			file, err := os.Create(filename)
-			if err != nil {
-				return nil, err
-			}
-			defer file.Close()
-		}
-	}
+func (c *Config) Load(file string) {
+	mutex.Lock()
+	defer mutex.Unlock()
 
 	conf := viper.New()
-	conf.SetConfigFile(filename)
-	err = conf.ReadInConfig()
-	return conf, err
-}
+	conf.SetConfigFile(file)
+	err := conf.ReadInConfig()
+	if err != nil {
+		panic(err.Error())
+	}
 
-// Parsing data key
-func parseKey(key string, delimiter string) []string {
-	return strings.Split(key, delimiter)
-}
-
-// ------------------------- config error --------------------------------
-
-//config format error
-type FormatError struct {
-	message string
-	//err error
-}
-
-func (this *FormatError) Error() string {
-	return this.message
+	c.items[strings.Replace(filepath.Base(file), c.extension, "", 1)] = conf
 }

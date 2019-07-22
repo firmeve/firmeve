@@ -12,16 +12,20 @@ var (
 	wg        sync.WaitGroup
 )
 
+func TestGetConfig(t *testing.T) {
+	assert.Panics(t, func() {
+		GetConfig()
+	},"config instance")
+}
+
 func TestNewConfig(t *testing.T) {
 
-	config, err := NewConfig(directory)
-	assert.Nil(t, err)
+	config := NewConfig(directory)
 
 	wg.Add(1000)
 	for i := 0; i < 1000; i++ {
 		go func(directory string) {
-			_, err := NewConfig(directory)
-			assert.Nil(t, err)
+			NewConfig(directory)
 			wg.Done()
 		}(directory)
 	}
@@ -29,69 +33,79 @@ func TestNewConfig(t *testing.T) {
 	wg.Wait()
 
 	// 单例测试
-	config2, err := NewConfig(directory)
-	assert.Nil(t, err)
+	config2 := NewConfig(directory)
 
 	assert.Equal(t, config, config2)
 }
-func TestConfig_Get(t *testing.T) {
-	config, err := NewConfig(directory)
-	if err != nil {
-		fmt.Printf("%s\n", err.Error())
-		t.Fail()
-	}
-	fmt.Printf("%#v",config.Get("abc"))
-}
+
 func TestConfig_Set(t *testing.T) {
 
-	config, err := NewConfig(directory)
-	if err != nil {
-		fmt.Printf("%s\n", err.Error())
-		t.Fail()
+	config := NewConfig(directory)
+
+	config.Item("app").Set("abc","def")
+
+	tests := []struct {
+		File  string
+		Key   string
+		Value string
+	}{
+		{"app", "x", "x"},
+		{"app", "s1.x", "s1x"},
+		{"app", "s1.z.y", "s1xy"},
+		{"app", "x", "x"},
+	}
+	fmt.Printf("out,%p",config)
+
+	wg.Add(2)
+	for i := 0; i < 2; i++ {
+		go func(config *Config) {
+			testn := make([]struct {
+				File  string
+				Key   string
+				Value string
+			},4)
+			copy(testn,tests)
+
+			config1 := NewConfig(directory)
+			fmt.Printf("in,%p\n",config1)
+			for _, test := range testn {
+				config1.Item(test.File).Set(test.Key, test.Value)
+			}
+
+			wg.Done()
+		}(config)
 	}
 
-	config.Set("abc","def")
-	//
-	//tests := []struct {
-	//	File  string
-	//	Key   string
-	//	Value string
-	//}{
-	//	{"app", "x", "x"},
-	//	{"app", "s1.x", "s1x"},
-	//	{"app", "s1.z.y", "s1xy"},
-	//	{"new", "x", "x"},
-	//	{strconv.Itoa(rand.New(rand.NewSource(time.Now().UnixNano())).Int()), "x", "x"},
-	//}
-	//fmt.Printf("out,%p",config)
-	//
-	//wg.Add(2)
-	//for i := 0; i < 2; i++ {
-	//	go func(config *Config) {
-	//		testn := make([]struct {
-	//			File  string
-	//			Key   string
-	//			Value string
-	//		},5)
-	//		copy(testn,tests)
-	//
-	//		config, err := NewConfig(directory)
-	//		if err != nil {
-	//			fmt.Printf("%s\n", err.Error())
-	//			t.Fail()
-	//		}
-	//		fmt.Printf("in,%p\n",config)
-	//		for _, test := range testn {
-	//			//fmt.Println(test.file,test.key,test.value,i)
-	//			config.Set(test.File+"."+test.Key, test.Value)
-	//		}
-	//
-	//		wg.Done()
-	//	}(config)
-	//}
-	//
-	//wg.Wait()
+	wg.Wait()
 }
+
+func TestConfig_Get(t *testing.T) {
+	NewConfig(directory)
+
+	value := GetConfig().Item("app").Get("def").(int)
+	assert.Equal(t,123,value)
+
+	GetConfig().Item("app").SetDefault("abcdef","def")
+
+	value1 := GetConfig().Item("app").Get("abcdef").(string)
+	assert.Equal(t,"def",value1)
+}
+
+func TestConfig_Load(t *testing.T) {
+	NewConfig(directory)
+	assert.Panics(t, func() {
+		GetConfig().Load("abc.yaml")
+	},"open yaml")
+}
+
+func TestConfig_Item(t *testing.T) {
+	NewConfig(directory)
+	assert.Panics(t, func() {
+		GetConfig().Item("def").Load("abc.yaml")
+	},"open yaml")
+}
+
+
 //
 //// 正常数据测试
 //func TestConfig_Get(t *testing.T) {
