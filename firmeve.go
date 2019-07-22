@@ -24,6 +24,11 @@ type Container interface {
 	Remove(name string)
 }
 
+type ServiceProvider interface {
+	Register(f *Firmeve)
+	Boot(f *Firmeve)
+}
+
 type binding struct {
 	name        string
 	share       bool
@@ -37,6 +42,14 @@ type Firmeve struct {
 	bashPath string
 	bindings map[string]*binding
 	types    map[reflect.Type]string
+	//modules
+}
+
+type bindingOption struct {
+	name      string
+	share     bool
+	cover     bool
+	prototype interface{}
 }
 
 // Create a new firmeve container
@@ -59,11 +72,21 @@ func NewFirmeve(basePath string) *Firmeve {
 	return firmeve
 }
 
-type bindingOption struct {
-	name      string
-	share     bool
-	cover     bool
-	prototype interface{}
+// Get a existing instance
+func GetFirmeve() *Firmeve {
+	if firmeve != nil {
+		return firmeve
+	}
+
+	panic(`firmeve not exists`)
+}
+
+func (f *Firmeve) Boot() {
+
+}
+
+func (f *Firmeve) Register() {
+
 }
 
 // Determine whether the specified name object is included in the container
