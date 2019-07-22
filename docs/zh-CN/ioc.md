@@ -147,7 +147,7 @@ fmt.Printf("%#v", f.Resolve(NewPerson))
 ```go
 type Person struct {
 	name PersonName `inject:"PersonAge"`
-	age *PersonAge `inject:"PersonAge"`
+	Age *PersonAge `inject:"PersonAge"`
 }
 ```
 然后我们使用`new`函数直接创建一个新的结构体指针
