@@ -16,8 +16,10 @@ import (
 
 type message string
 
+var basePath = "./"
+
 func TestFirmeve_Resolve_String_Alias_Type(t *testing.T) {
-	f := NewFirmeve()
+	f := NewFirmeve(basePath)
 
 	f.Bind("message", message("message bar"))
 	f.Bind("string", "string value")
@@ -38,7 +40,7 @@ func TestFirmeve_Resolve_Number(t *testing.T) {
 	var IntAliasNum IntAlias
 	IntAliasNum = 80
 
-	f := NewFirmeve()
+	f := NewFirmeve(basePath)
 	f.Bind(t.Name()+"num", num, )
 	f.Bind(t.Name()+"fnum", fnum, )
 	f.Bind(t.Name()+"IntAliasNum", IntAliasNum, )
@@ -49,7 +51,7 @@ func TestFirmeve_Resolve_Number(t *testing.T) {
 }
 
 func TestFirmeve_Resolve_Bool(t *testing.T) {
-	f := NewFirmeve()
+	f := NewFirmeve(basePath)
 	f.Bind("bool", (false))
 
 	assert.Equal(t, false, f.Get("bool").(bool))
@@ -58,7 +60,7 @@ func TestFirmeve_Resolve_Bool(t *testing.T) {
 func TestFirmeve_Resolve_Struct_Prt(t *testing.T) {
 	t1 := testdata.NewT1()
 
-	f := NewFirmeve()
+	f := NewFirmeve(basePath)
 	f.Bind(t.Name()+"t1", (t1))
 	assert.Equal(t, t1, f.Get(t.Name()+"t1"))
 }
@@ -66,7 +68,7 @@ func TestFirmeve_Resolve_Struct_Prt(t *testing.T) {
 type FuncType func() int64
 
 func TestFirmeve_Resolve_Func_Simple(t *testing.T) {
-	f := NewFirmeve()
+	f := NewFirmeve(basePath)
 
 	var z FuncType
 	z = func() int64 {
@@ -89,7 +91,7 @@ func TestFirmeve_Resolve_Cover(t *testing.T) {
 	t1 := testdata.NewT1()
 	//t3 := testdata.NewT1Sturct()
 
-	f := NewFirmeve()
+	f := NewFirmeve(basePath)
 	f.Bind(t.Name()+"t1", (t1), )
 	assert.Equal(t, t1, f.Get(t.Name()+"t1"))
 
@@ -105,7 +107,7 @@ func TestFirmeve_Resolve_Cover(t *testing.T) {
 func TestFirmeve_Singleton(t *testing.T) {
 	//t1 := testdata.NewT1
 	//t3 := testdata.NewT1Sturct()
-	f := NewFirmeve()
+	f := NewFirmeve(basePath)
 	f.Bind(t.Name()+"t1.singleton", (testdata.NewT1), WithBindShare(true))
 	assert.Equal(t, fmt.Sprintf("%p", f.Get(t.Name()+"t1.singleton")), fmt.Sprintf("%p", f.Get(t.Name()+"t1.singleton")))
 
@@ -147,7 +149,7 @@ func TestReflectType(t *testing.T)  {
 
 // 测试struct字段反射
 func TestFirmeve_Resolve_Struct_Field(t *testing.T) {
-	f := NewFirmeve()
+	f := NewFirmeve(basePath)
 	t1 := testdata.NewT1()
 	f.Bind("t1", (t1))
 
@@ -160,7 +162,7 @@ func TestFirmeve_Resolve_Struct_Field(t *testing.T) {
 
 // 测试非单例注入
 func TestFirmeve_Resolve_Prototype(t *testing.T) {
-	f := NewFirmeve()
+	f := NewFirmeve(basePath)
 	f.Bind("t1", (testdata.NewT1),WithBindCover(true))
 	//f.Bind("t1", (testdata.NewT1Error))
 	//testdata.NewT2ErrorInterface(testdata.NewT1Error())
@@ -203,7 +205,7 @@ func TestFirmeve_Bind_Struct_Prt2(t *testing.T) {
 	t1 := testdata.NewT1()
 	//t2 := testdata.NewT2(t1)
 
-	f := NewFirmeve()
+	f := NewFirmeve(basePath)
 	f.Bind(t.Name() + "t1",(t1))
 
 	t2 := new(testdata.T2)

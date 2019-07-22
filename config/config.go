@@ -2,6 +2,7 @@ package config
 
 import (
 	"github.com/go-ini/ini"
+	"github.com/spf13/viper"
 	"os"
 	"path"
 	"path/filepath"
@@ -20,13 +21,13 @@ var (
 type Configurator interface {
 	Get(keys string) (interface{}, error)
 	Set(key string, value string) error
-	All() map[string]*ini.File
+	All() map[string]*viper.Viper
 }
 
 // Config struct
 type Config struct {
 	directory string
-	configs   map[string]*ini.File
+	configs   map[string]*viper.Viper
 	delimiter string
 	extension string
 }
@@ -52,8 +53,8 @@ func NewConfig(directory string) (*Config, error) {
 
 		config = &Config{
 			directory: directory,
-			delimiter: `.`, extension: `.conf`,
-			configs: make(map[string]*ini.File),
+			delimiter: `.`, extension: `.yaml`,
+			configs: make(map[string]*viper.Viper),
 		}
 		// loadAll
 		err = config.loadAll()
@@ -160,7 +161,7 @@ func (this *Config) Set(keys string, value string) error {
 }
 
 // Get all configurations
-func (this *Config) All() map[string]*ini.File {
+func (this *Config) All() map[string]*viper.Viper {
 	return this.configs
 }
 
@@ -201,7 +202,7 @@ func (this *Config) fullPath(filename string) string {
 }
 
 // Load configuration file
-func loadConf(filename string) (*ini.File, error) {
+func loadConf(filename string) (*viper.Viper, error) {
 
 	_, err := os.Stat(filename)
 	if err != nil {
@@ -214,12 +215,10 @@ func loadConf(filename string) (*ini.File, error) {
 		}
 	}
 
-	cfg, err := ini.Load(filename)
-	if err != nil {
-		return nil, err
-	}
-
-	return cfg, nil
+	conf := viper.New()
+	conf.SetConfigFile(filename)
+	err = conf.ReadInConfig()
+	return conf, err
 }
 
 // Parsing data key

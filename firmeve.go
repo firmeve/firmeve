@@ -2,6 +2,7 @@ package firmeve
 
 import (
 	"github.com/firmeve/firmeve/utils"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"sync"
@@ -33,18 +34,23 @@ type binding struct {
 
 type Firmeve struct {
 	Container
+	bashPath string
 	bindings map[string]*binding
 	types    map[reflect.Type]string
 }
 
 // Create a new firmeve container
-func NewFirmeve() *Firmeve {
+func NewFirmeve(basePath string) *Firmeve {
 	if firmeve != nil {
 		return firmeve
 	}
-
+	basePath, err := filepath.Abs(basePath)
+	if err != nil {
+		panic(err.Error())
+	}
 	once.Do(func() {
 		firmeve = &Firmeve{
+			bashPath: basePath,
 			bindings: make(map[string]*binding),
 			types:    make(map[reflect.Type]string),
 		}
