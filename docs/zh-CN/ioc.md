@@ -146,7 +146,7 @@ fmt.Printf("%#v", f.Resolve(NewPerson))
 现在，让我们修改下上面的`Person`
 ```go
 type Person struct {
-	name PersonName `inject:"PersonAge"`
+	name PersonName `inject:"PersonName"`
 	Age *PersonAge `inject:"PersonAge"`
 }
 ```
