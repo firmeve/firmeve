@@ -39,10 +39,11 @@ type binding struct {
 
 type Firmeve struct {
 	Container
-	bashPath string
-	bindings map[string]*binding
-	types    map[reflect.Type]string
-	//modules
+	bashPath  string
+	bindings  map[string]*binding
+	types     map[reflect.Type]string
+	providers []ServiceProvider
+	booted    bool
 }
 
 type bindingOption struct {
@@ -63,9 +64,11 @@ func NewFirmeve(basePath string) *Firmeve {
 	}
 	once.Do(func() {
 		firmeve = &Firmeve{
-			bashPath: basePath,
-			bindings: make(map[string]*binding),
-			types:    make(map[reflect.Type]string),
+			bashPath:  basePath,
+			bindings:  make(map[string]*binding),
+			types:     make(map[reflect.Type]string),
+			providers: make([]ServiceProvider, 0),
+			booted:    false,
 		}
 	})
 
@@ -81,12 +84,33 @@ func GetFirmeve() *Firmeve {
 	panic(`firmeve not exists`)
 }
 
-func (f *Firmeve) Boot() {
+func (f *Firmeve) Boot(provider ServiceProvider) {
+	if f.booted {
+		return
+	}
 
+	for _, currentProvider := range f.providers {
+		currentProvider.Boot(f)
+	}
+
+	f.booted = true
 }
 
-func (f *Firmeve) Register() {
+func (f *Firmeve) Register(provider ServiceProvider) {
+	for _, currentProvider := range f.providers {
+		if provider == currentProvider {
+			return
+		}
+	}
 
+	provider.Register(f)
+
+	f.providers = append(f.providers, provider)
+}
+
+// Get application base path
+func (f *Firmeve) GetBasePath() string {
+	return f.bashPath
 }
 
 // Determine whether the specified name object is included in the container

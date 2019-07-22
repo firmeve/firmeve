@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/firmeve/firmeve"
 	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
@@ -74,6 +75,14 @@ func GetConfig() *Config {
 }
 
 //---------------------- config ------------------------
+
+func (c *Config) Register(f *firmeve.Firmeve) {
+
+}
+
+func (c *Config) Boot(f *firmeve.Firmeve) {
+
+}
 
 func (c *Config) Item(item string) *Config {
 	if itemConfig, ok := c.items[item]; ok {

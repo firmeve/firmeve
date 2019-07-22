@@ -248,3 +248,10 @@ func TestFirmeve_Bind_Struct_Prt2(t *testing.T) {
 //
 //	//fmt.Printf("%#v",firmeve.Resolve(demo.NewT2).(T2))
 //}
+
+//func TestFirmeve_Register(t *testing.T) {
+	// mock对象
+	//f := NewFirmeve(basePath)
+	//config := config2.NewConfig(strings.Join([]string{f.GetBasePath(),`testdata/conf`},`/`))
+	//f.Register(config)
+//}
