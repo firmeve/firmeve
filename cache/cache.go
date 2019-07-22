@@ -6,7 +6,6 @@ import (
 	"errors"
 	"github.com/firmeve/firmeve/cache/redis"
 	"github.com/firmeve/firmeve/config"
-	"github.com/go-ini/ini"
 	goRedis "github.com/go-redis/redis"
 	"strings"
 	"sync"
@@ -270,22 +269,22 @@ func (this *Manager) Driver(driver string) (Cache, error) {
 // Create a redis cache driver
 func (this *Manager) createRedisDriver() Cache {
 	var (
-		host, _   = this.config.Get(`cache.redis.host`)
-		port, _   = this.config.Get(`cache.redis.port`)
-		db, _     = this.config.Get(`cache.redis.db`)
-		prefix, _ = this.config.Get(`cache.prefix`)
+		host   = this.config.Item("cache").GetString(`redis.host`)
+		port   = this.config.Item("cache").GetString(`redis.port`)
+		db     = this.config.Item("cache").GetInt(`redis.db`)
+		prefix = this.config.Item("cache").GetString(`prefix`)
 	)
 
 	addr := []string{
-		host.(*ini.Key).MustString(`localhost`),
+		host,
 		`:`,
-		port.(*ini.Key).MustString(`6379`),
+		port,
 	}
 
 	return redis.NewRepository(goRedis.NewClient(&goRedis.Options{
 		Addr: strings.Join(addr, ``),
-		DB:   db.(*ini.Key).MustInt(0),
-	}), prefix.(*ini.Key).MustString(`firmeve`))
+		DB:   db,
+	}), prefix)
 }
 
 // -------------------------- error -----------------------
