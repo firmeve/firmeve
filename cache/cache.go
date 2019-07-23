@@ -245,13 +245,6 @@ func NewManager(config *config.Config) *Manager {
 	return manager
 }
 
-//func (this *Manager) register() {
-//	firmeve.NewFirmeve().Bind(NewManager)
-//}
-
-func (this *Manager) boot() {
-}
-
 // Get the cache driver of the finger
 func (this *Manager) Driver(driver string) (Cache, error) {
 	var repository Cache
