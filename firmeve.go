@@ -1,6 +1,8 @@
 package firmeve
 
 import (
+	"fmt"
+	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/utils"
 	"path/filepath"
 	"reflect"
@@ -25,8 +27,8 @@ type Container interface {
 }
 
 type ServiceProvider interface {
-	Register(f *Firmeve)
-	Boot(f *Firmeve)
+	Register()
+	Boot()
 }
 
 type binding struct {
@@ -39,11 +41,11 @@ type binding struct {
 
 type Firmeve struct {
 	Container
-	bashPath  string
-	bindings  map[string]*binding
-	types     map[reflect.Type]string
-	providers []ServiceProvider
-	booted    bool
+	bashPath         string
+	bindings         map[string]*binding
+	types            map[reflect.Type]string
+	serviceProviders map[string]ServiceProvider
+	booted           bool
 }
 
 type bindingOption struct {
@@ -51,6 +53,14 @@ type bindingOption struct {
 	share     bool
 	cover     bool
 	prototype interface{}
+}
+
+type firmeveOption struct {
+	force bool
+}
+
+type FirmeveServiceProvider struct {
+	Firmeve *Firmeve `inject:"firmeve"`
 }
 
 // Create a new firmeve container
@@ -64,12 +74,15 @@ func NewFirmeve(basePath string) *Firmeve {
 	}
 	once.Do(func() {
 		firmeve = &Firmeve{
-			bashPath:  basePath,
-			bindings:  make(map[string]*binding),
-			types:     make(map[reflect.Type]string),
-			providers: make([]ServiceProvider, 0),
-			booted:    false,
+			bashPath:         basePath,
+			bindings:         make(map[string]*binding),
+			types:            make(map[reflect.Type]string),
+			serviceProviders: make(map[string]ServiceProvider),
+			booted:           false,
 		}
+
+		firmeve.Bind(`firmeve`, firmeve, WithBindShare(true))
+		firmeve.Bind(`config`, config.NewConfig(strings.Join([]string{basePath, `config`}, `/`)))
 	})
 
 	return firmeve
@@ -84,28 +97,69 @@ func GetFirmeve() *Firmeve {
 	panic(`firmeve not exists`)
 }
 
-func (f *Firmeve) Boot(provider ServiceProvider) {
+// Start all service providers at once
+func (f *Firmeve) Boot() {
 	if f.booted {
 		return
 	}
 
-	for _, currentProvider := range f.providers {
-		currentProvider.Boot(f)
+	for _, provider := range f.serviceProviders {
+		provider.Boot()
 	}
 
 	f.booted = true
 }
 
-func (f *Firmeve) Register(provider ServiceProvider) {
-	for _, currentProvider := range f.providers {
-		if provider == currentProvider {
-			return
-		}
+// Register force param
+func WithRegisterForce(force bool) utils.OptionFunc {
+	return func(option interface{}) {
+		option.(*firmeveOption).force = force
+	}
+}
+
+// Register a service provider
+func (f *Firmeve) Register(name string, provider ServiceProvider, options ...utils.OptionFunc) {
+	// Parameter analysis
+	firmeveOption := newFirmeveOption()
+	utils.ApplyOption(firmeveOption, options...)
+
+	if f.HasProvider(name) && !firmeveOption.force {
+		return
 	}
 
-	provider.Register(f)
+	f.registerProvider(name, provider)
 
-	f.providers = append(f.providers, provider)
+	provider.Register()
+
+	if f.booted {
+		provider.Boot()
+	}
+}
+
+// Add a service provider to serviceProviders map
+func (f *Firmeve) registerProvider(name string, provider ServiceProvider) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	f.serviceProviders[name] = provider
+}
+
+// Determine if the provider exists
+func (f *Firmeve) HasProvider(name string) bool {
+	if _, ok := f.serviceProviders[name]; ok {
+		return ok
+	}
+
+	return false
+}
+
+// Get a if the provider exists
+// If not found then panic
+func (f *Firmeve) getProvider(name string) ServiceProvider {
+	if !f.HasProvider(name) {
+		panic(fmt.Sprintf("the %s service provider not exists", name))
+	}
+
+	return f.serviceProviders[name]
 }
 
 // Get application base path
@@ -257,6 +311,12 @@ func (f *Firmeve) parseStruct(reflectType reflect.Type, reflectValue reflect.Val
 	}
 
 	return reflectValue
+}
+
+// ---------------------------- firmeveOption ------------------------
+
+func newFirmeveOption() *firmeveOption {
+	return &firmeveOption{force: false}
 }
 
 // ---------------------------- bindingOption ------------------------

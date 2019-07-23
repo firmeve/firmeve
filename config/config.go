@@ -2,7 +2,6 @@ package config
 
 import (
 	"fmt"
-	"github.com/firmeve/firmeve"
 	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
@@ -34,10 +33,6 @@ type Config struct {
 	extension string
 }
 
-//func init()  {
-//	firmeve.GetFirmeve().Register()
-//}
-
 // Create a new config instance
 func NewConfig(directory string) *Config {
 
@@ -51,8 +46,9 @@ func NewConfig(directory string) *Config {
 		config = &Config{
 			directory: directory,
 			current:   nil,
-			delimiter: `.`, extension: `.yaml`,
-			items: make(map[string]*viper.Viper),
+			delimiter: `.`,
+			extension: `.yaml`,
+			items:     make(map[string]*viper.Viper),
 		}
 
 		// loadAll
@@ -75,14 +71,6 @@ func GetConfig() *Config {
 }
 
 //---------------------- config ------------------------
-
-func (c *Config) Register(f *firmeve.Firmeve) {
-
-}
-
-func (c *Config) Boot(f *firmeve.Firmeve) {
-
-}
 
 func (c *Config) Item(item string) *Config {
 	if itemConfig, ok := c.items[item]; ok {

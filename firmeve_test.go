@@ -115,7 +115,7 @@ func TestFirmeve_Singleton(t *testing.T) {
 	assert.NotEqual(t, fmt.Sprintf("%p", f.Get(t.Name()+"t2.prototype")), fmt.Sprintf("%p", f.Get(t.Name()+"t2.prototype")))
 }
 
-func TestReflectType(t *testing.T)  {
+func TestReflectType(t *testing.T) {
 	// 字符串
 	s1 := "abc"
 	s2 := "def"
@@ -126,7 +126,7 @@ func TestReflectType(t *testing.T)  {
 	n1 := 20
 	n2 := 40
 	var n3 int64
-	n3 =50
+	n3 = 50
 	fmt.Println(reflect.TypeOf(n1) == reflect.TypeOf(n2))
 	fmt.Println(reflect.TypeOf(n1) == reflect.TypeOf(n3))
 	// bool
@@ -153,21 +153,21 @@ func TestFirmeve_Resolve_Struct_Field(t *testing.T) {
 	t1 := testdata.NewT1()
 	f.Bind("t1", (t1))
 
-	fmt.Printf("%#v\n",f.Resolve(testdata.NewT2))
+	fmt.Printf("%#v\n", f.Resolve(testdata.NewT2))
 
 	t1struct := testdata.NewT1Sturct()
 	f.Bind("t1struct", (t1struct))
-	fmt.Printf("%#v",f.Resolve(testdata.NewTStruct))
+	fmt.Printf("%#v", f.Resolve(testdata.NewTStruct))
 }
 
 // 测试非单例注入
 func TestFirmeve_Resolve_Prototype(t *testing.T) {
 	f := NewFirmeve(basePath)
-	f.Bind("t1", (testdata.NewT1),WithBindCover(true))
+	f.Bind("t1", (testdata.NewT1), WithBindCover(true))
 	//f.Bind("t1", (testdata.NewT1Error))
 	//testdata.NewT2ErrorInterface(testdata.NewT1Error())
-	log.Printf("%#v\n",f.Resolve(testdata.NewT2))
-	assert.IsType(t,testdata.NewT2(f.Get("t1").(*testdata.T1)),f.Resolve(testdata.NewT2))
+	log.Printf("%#v\n", f.Resolve(testdata.NewT2))
+	assert.IsType(t, testdata.NewT2(f.Get("t1").(*testdata.T1)), f.Resolve(testdata.NewT2))
 
 	//t1struct := testdata.NewT1Sturct()
 	//f.Bind("t1struct", (t1struct))
@@ -206,7 +206,7 @@ func TestFirmeve_Bind_Struct_Prt2(t *testing.T) {
 	//t2 := testdata.NewT2(t1)
 
 	f := NewFirmeve(basePath)
-	f.Bind(t.Name() + "t1",(t1))
+	f.Bind(t.Name()+"t1", (t1))
 
 	t2 := new(testdata.T2)
 	//fmt.Printf("%#v\n", t2)
@@ -219,6 +219,16 @@ func TestFirmeve_Bind_Struct_Prt2(t *testing.T) {
 	//result2 := f.Get(t4)
 	//fmt.Printf("%#v\n", result2.(testdata.T2))
 }
+
+func TestGetFirmeve(t *testing.T) {
+	f := NewFirmeve(basePath)
+	f1 := GetFirmeve()
+	assert.Equal(t, f, f1)
+}
+
+//func TestFirmeve_Register(t *testing.T) {
+//
+//}
 
 //
 //func TestFirmeve_Bind(t *testing.T) {
@@ -250,8 +260,8 @@ func TestFirmeve_Bind_Struct_Prt2(t *testing.T) {
 //}
 
 //func TestFirmeve_Register(t *testing.T) {
-	// mock对象
-	//f := NewFirmeve(basePath)
-	//config := config2.NewConfig(strings.Join([]string{f.GetBasePath(),`testdata/conf`},`/`))
-	//f.Register(config)
+// mock对象
+//f := NewFirmeve(basePath)
+//config := config2.NewConfig(strings.Join([]string{f.GetBasePath(),`testdata/conf`},`/`))
+//f.Register(config)
 //}
