@@ -40,7 +40,6 @@ type binding struct {
 }
 
 type Firmeve struct {
-	Container
 	bashPath         string
 	bindings         map[string]*binding
 	types            map[reflect.Type]string
