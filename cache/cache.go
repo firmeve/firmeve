@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
+	"github.com/firmeve/firmeve"
 	"github.com/firmeve/firmeve/cache/redis"
 	"github.com/firmeve/firmeve/config"
 	goRedis "github.com/go-redis/redis"
@@ -59,6 +60,18 @@ type Manager struct {
 
 type Error struct {
 	RepositoryError error
+}
+
+type CacheServiceProvider struct {
+	firmeve.FirmeveServiceProvider
+}
+
+func (cs *CacheServiceProvider) Register() {
+	cs.Firmeve.Bind(`cache`, NewManager, firmeve.WithBindShare(true))
+}
+
+func (cs *CacheServiceProvider) Boot() {
+
 }
 
 // Create a new cache repository
@@ -231,7 +244,6 @@ func NewManager(config *config.Config) *Manager {
 
 	return manager
 }
-
 
 //func (this *Manager) register() {
 //	firmeve.NewFirmeve().Bind(NewManager)
