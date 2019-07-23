@@ -11,7 +11,6 @@ import (
 	"strings"
 	"sync"
 	"time"
-	"fmt"
 )
 
 type Cache interface {
@@ -68,11 +67,7 @@ type CacheServiceProvider struct {
 }
 
 func (csp *CacheServiceProvider) Register() {
-	//func(config *config.Config) *Manager {
-	//		return NewManager(config)
-	//	}
-	fmt.Println(csp.Provider)
-	//cs.Firmeve.Bind(`cache`, NewManager, firmeve.WithBindShare(true))
+	csp.Provider.Firmeve.Bind(`cache`, NewManager, firmeve.WithBindShare(true))
 }
 
 func (csp *CacheServiceProvider) Boot() {
