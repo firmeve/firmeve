@@ -320,10 +320,10 @@ func (f *Firmeve) parseStruct(reflectType reflect.Type, reflectValue reflect.Val
 		tag := reflectType.Field(i).Tag.Get("inject")
 		if tag != `` && reflectValue.Field(i).CanSet() {
 			if _, ok := f.bindings[tag]; ok {
-				result := f.Get(tag)
-				fmt.Println(result)
+				result := f.Resolve(f.Get(tag))
 				// Non-same type of direct skip
 				if reflect.TypeOf(result).Kind() == reflectType.Field(i).Type.Kind() {
+					fmt.Println("ok")
 					reflectValue.Field(i).Set(reflect.ValueOf(result))
 				}
 			}
