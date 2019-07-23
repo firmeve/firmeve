@@ -283,6 +283,8 @@ func (f *Firmeve) Remove(name string) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
+	name = strings.ToLower(name)
+
 	delete(f.bindings, name)
 
 	for key, v := range f.types {
