@@ -277,3 +277,21 @@ func TestGetFirmeve(t *testing.T) {
 //config := config2.NewConfig(strings.Join([]string{f.GetBasePath(),`testdata/conf`},`/`))
 //f.Register(config)
 //}
+
+//func TestFirmeve_multi_level_resolution(t *testing.T) {
+//	f := NewFirmeve(".")
+//	z := new(FirmeveServiceProvider)
+//	f.Bind("firmeve.provider", z,WithBindShare(true))
+//	//fmt.Printf("%#v",f.Resolve(z).(*firmeve.FirmeveServiceProvider).Firmeve)
+//	serviceProvider := new(cache.CacheServiceProvider)
+//	//serviceProvider := cache.CacheServiceProvider{}
+//	//f.Bind("service.provider2",serviceProvider)
+//	//zs := func(cs *cache.CacheServiceProvider) *cache.CacheServiceProvider {
+//	//	return cs
+//	//}
+//
+//	//fmt.Println("#############")
+//	fmt.Printf("%#v\n", f.Resolve(serviceProvider).(*cache.CacheServiceProvider).Provider)
+//	//fmt.Printf("%#v\n",serviceProvider.Provider.Firmeve)
+//	//f.Register(`cache`, new(cache.CacheServiceProvider))
+//}
