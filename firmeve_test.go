@@ -226,16 +226,16 @@ func TestGetFirmeve(t *testing.T) {
 	assert.Equal(t, f, f1)
 }
 
-func TestFirmeve_Remove(t *testing.T) {
-	t1 := testdata.NewT1()
-	//t2 := testdata.NewT2(t1)
-
-	f := NewFirmeve(basePath)
-	f.Bind(t.Name()+"t1", (t1))
-	f.Remove(t.Name()+"t1")
-
-	assert.Equal(t,false,f.Has(t.Name()+"t1"))
-}
+//func TestFirmeve_Remove(t *testing.T) {
+//	t1 := testdata.NewT1()
+//	//t2 := testdata.NewT2(t1)
+//
+//	f := NewFirmeve(basePath)
+//	f.Bind(t.Name()+"t1", (t1))
+//	f.Remove(t.Name()+"t1")
+//
+//	assert.Equal(t,false,f.Has(t.Name()+"t1"))
+//}
 
 //func TestFirmeve_Register(t *testing.T) {
 //	f := NewFirmeve(basePath)

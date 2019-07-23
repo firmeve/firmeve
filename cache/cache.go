@@ -64,14 +64,14 @@ type Error struct {
 }
 
 type CacheServiceProvider struct {
-	Firmeve *firmeve.FirmeveServiceProvider `inject:"service.provider"`
+	Provider *firmeve.FirmeveServiceProvider `inject:"firmeve.provider"`
 }
 
 func (csp *CacheServiceProvider) Register() {
 	//func(config *config.Config) *Manager {
 	//		return NewManager(config)
 	//	}
-	fmt.Println(csp.Firmeve)
+	fmt.Println(csp.Provider)
 	//cs.Firmeve.Bind(`cache`, NewManager, firmeve.WithBindShare(true))
 }
 
