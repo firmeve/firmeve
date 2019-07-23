@@ -252,11 +252,21 @@ func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface
 			return resultsInterface
 		}
 	} else if kind == reflect.Ptr {
-		newReflectType := reflectType.Elem()
-		if name, ok := f.types[newReflectType]; ok {
-			return f.Get(name)
-		} else if newReflectType.Kind() == reflect.Struct {
-			return f.parseStruct(newReflectType, reflect.ValueOf(abstract).Elem()).Addr().Interface()
+		if reflectType.Elem().Kind() == reflect.Struct {
+			// Get the struct value corresponding to the pointer structure
+			// Only the strcut value can get the number of fields, and set the field
+			// is not setting the pointer address
+
+			// reflect.Prt type, only get the pointer value through Elem()
+			// The value to be modified is the value of the pointer, not the address of the pointer itself.
+
+			// 取得指针结构体对应的struct值
+			// 只有strcut值才能取得字段数，以及设置字段
+			// 并不是设置指针地址
+
+			// reflect.Prt类型，只有通过Elem()来获取指针值
+			// 要修改的是指针对应的值，而不是指针本身的地址
+			return f.parseStruct(reflectType.Elem(), reflect.ValueOf(abstract).Elem()).Interface()
 		}
 	}
 
@@ -304,7 +314,14 @@ func (f *Firmeve) parseStruct(reflectType reflect.Type, reflectValue reflect.Val
 		tag := reflectType.Field(i).Tag.Get("inject")
 		if tag != `` && reflectValue.Field(i).CanSet() {
 			if _, ok := f.bindings[tag]; ok {
-				reflectValue.Field(i).Set(reflect.ValueOf(f.Get(tag)))
+				result := f.Get(tag)
+				// Non-same type of direct skip
+				if reflect.TypeOf(result).Kind() == reflectType.Field(i).Type.Kind() {
+					reflectValue.Field(i).Set(reflect.ValueOf(result))
+				}
+				//else {
+				//	reflectValue.Field(i).Set(reflect.ValueOf(result).Elem())
+				//}
 			}
 		}
 	}
