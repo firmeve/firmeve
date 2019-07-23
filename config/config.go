@@ -73,6 +73,8 @@ func GetConfig() *Config {
 //---------------------- config ------------------------
 
 func (c *Config) Item(item string) *Config {
+	mutex.Lock()
+	defer mutex.Unlock()
 	if itemConfig, ok := c.items[item]; ok {
 		c.current = itemConfig
 		return c
