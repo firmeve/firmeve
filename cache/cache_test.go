@@ -364,10 +364,7 @@ func TestRepository_Pull_Error(t *testing.T) {
 // -------------------- manager ---------------------------
 
 func TestNewManager(t *testing.T) {
-	config, err := config2.NewConfig("../testdata/conf")
-	if err != nil {
-		t.Fail()
-	}
+	config := config2.NewConfig("../testdata/conf")
 	var managern *Manager
 	manager := NewManager(config)
 
@@ -396,10 +393,7 @@ func TestNewManager(t *testing.T) {
 }
 
 func TestManager_Driver(t *testing.T) {
-	config, err := config2.NewConfig("../testdata/conf")
-	if err != nil {
-		t.Fail()
-	}
+	config := config2.NewConfig("../testdata/conf")
 
 	var driver Cache
 
@@ -433,8 +427,7 @@ func TestManager_Driver(t *testing.T) {
 }
 
 func TestManager_Driver_Error(t *testing.T) {
-	config, err := config2.NewConfig("../testdata/conf")
-	assert.Nil(t, err)
+	config := config2.NewConfig("../testdata/conf")
 
 	manager := NewManager(config)
 	_, err2 := manager.Driver(`redis2`)
