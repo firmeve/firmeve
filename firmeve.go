@@ -260,14 +260,20 @@ func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface
 			// reflect.Prt type, only get the pointer value through Elem()
 			// The value to be modified is the value of the pointer, not the address of the pointer itself.
 
+			// The Interface type that finally gets the address of the modified value returns
+
 			// 取得指针结构体对应的struct值
 			// 只有strcut值才能取得字段数，以及设置字段
 			// 并不是设置指针地址
 
 			// reflect.Prt类型，只有通过Elem()来获取指针值
 			// 要修改的是指针对应的值，而不是指针本身的地址
-			return f.parseStruct(reflectType.Elem(), reflect.ValueOf(abstract).Elem()).Interface()
+
+			// 最后取得修改值的地址的Interface类型返回
+			return f.parseStruct(reflectType.Elem(), reflect.ValueOf(abstract).Elem()).Addr().Interface()
 		}
+	} else if reflectType.Kind() == reflect.Struct {
+		return f.parseStruct(reflectType, reflect.ValueOf(abstract)).Interface()
 	}
 
 	panic(`unsupported type`)
@@ -315,13 +321,11 @@ func (f *Firmeve) parseStruct(reflectType reflect.Type, reflectValue reflect.Val
 		if tag != `` && reflectValue.Field(i).CanSet() {
 			if _, ok := f.bindings[tag]; ok {
 				result := f.Get(tag)
+				fmt.Println(result)
 				// Non-same type of direct skip
 				if reflect.TypeOf(result).Kind() == reflectType.Field(i).Type.Kind() {
 					reflectValue.Field(i).Set(reflect.ValueOf(result))
 				}
-				//else {
-				//	reflectValue.Field(i).Set(reflect.ValueOf(result).Elem())
-				//}
 			}
 		}
 	}
