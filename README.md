@@ -12,7 +12,8 @@ Those who have achieved nothing can always tell you that you can't make a big de
 ## Feature list
 - **Application**
     - [x] [Ioc](./docs/zh-CN/ioc.md)
-    - [ ] Config
+    - [x] Config
+    - [ ] ServiceProvider
     - [ ] Events
     - [ ] Log
 - **Cache**
