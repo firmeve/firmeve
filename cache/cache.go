@@ -62,15 +62,15 @@ type Error struct {
 	RepositoryError error
 }
 
-type CacheServiceProvider struct {
+type ServiceProvider struct {
 	Firmeve *firmeve.Firmeve `inject:"firmeve"`
 }
 
-func (csp *CacheServiceProvider) Register() {
+func (csp *ServiceProvider) Register() {
 	csp.Firmeve.Bind(`cache`, NewManager, firmeve.WithBindShare(true))
 }
 
-func (csp *CacheServiceProvider) Boot() {
+func (csp *ServiceProvider) Boot() {
 
 }
 
