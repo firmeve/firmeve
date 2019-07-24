@@ -77,7 +77,7 @@ func NewFirmeve(basePath string) *Firmeve {
 		}
 
 		firmeve.Bind(`firmeve`, firmeve, WithBindShare(true))
-		firmeve.Bind(`config`, config.NewConfig(strings.Join([]string{basePath, `config`}, `/`)))
+		firmeve.Bind(`config`, config.NewConfig(strings.Join([]string{basePath, `testdata/config`}, `/`)))
 	})
 
 	return firmeve

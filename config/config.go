@@ -35,6 +35,10 @@ type Config struct {
 
 // Create a new config instance
 func NewConfig(directory string) *Config {
+	// singleton
+	if config != nil {
+		return config
+	}
 
 	//直接使用once，其实就是调用mu.Lock和Unlock
 	once.Do(func() {
