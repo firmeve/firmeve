@@ -58,10 +58,6 @@ type firmeveOption struct {
 	force bool
 }
 
-type FirmeveServiceProvider struct {
-	Firmeve *Firmeve `inject:"firmeve"`
-}
-
 // Create a new firmeve container
 func NewFirmeve(basePath string) *Firmeve {
 	if firmeve != nil {
