@@ -19,3 +19,10 @@ func TestCacheProvider(t *testing.T)  {
 
 	assert.IsType(t,cache.NewManager(f.Get("config").(*config.Config)),f.Get("cache").(*cache.Manager))
 }
+//func TestHttpProvider(t *testing.T)  {
+//	f.Bind("firmeve.provider",new(firmeve.FirmeveServiceProvider))
+//	provider := f.Resolve(new(http.HttpServiceProvider)).(*http.HttpServiceProvider)
+//	provider.Register()
+//	//fmt.Printf("%#v",provider)
+//	f.Get("http.server").(*gin.Engine).Run(":22122")
+//}

@@ -292,3 +292,27 @@ func TestFirmeve_Remove(t *testing.T) {
 //	//fmt.Printf("%#v\n",serviceProvider.Provider.Firmeve)
 //	//f.Register(`cache`, new(cache.CacheServiceProvider))
 //}
+
+//func TestRun(t *testing.T) {
+//	//f := NewFirmeve(basePath)
+//	handlers := make(map[string]func(ctx context.Context) interface{},0)
+//	handlers[`def`] = func(ctx context.Context) interface{} {
+//		fmt.Println("==============")
+//		log.Printf("%#v",ctx.Value("params"))
+//		fmt.Println("==============")
+//		return "abc"
+//	}
+//	gin := gin2.Default()
+//	//ctx := context.Background()
+//	//ctx := context.Background()
+//	//fmt.Printf("%#p\n",ctx)
+//	gin.GET(`/def`, func(context2 *gin2.Context) {
+//		//fmt.Printf("%#p\n",context2)
+//		//subctx,cancel := context.WithDeadline(context2)
+//		//fmt.Printf("%#p",subctx)
+//		//subctx = context.WithValue(subctx,"params",context2.Request.RequestURI)
+//		result := handlers["def"](context2)
+//		context2.String(200,result.(string))
+//	})
+//	gin.Run(":28088")
+//}
