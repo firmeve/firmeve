@@ -331,6 +331,13 @@ func (f *Firmeve) parseStruct(reflectType reflect.Type, reflectValue reflect.Val
 	return reflectValue
 }
 
+//func Run(f *Firmeve) {
+//	// boot
+//	f.Boot()
+//
+//	f.Get(`server`).(server.Server).Run()
+//}
+
 // ---------------------------- firmeveOption ------------------------
 
 func newFirmeveOption() *firmeveOption {
