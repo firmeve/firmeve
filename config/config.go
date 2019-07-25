@@ -76,6 +76,7 @@ func GetConfig() *Config {
 
 //---------------------- config ------------------------
 
+// Get the current file node
 func (c *Config) Item(item string) *Config {
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -87,52 +88,62 @@ func (c *Config) Item(item string) *Config {
 	panic(fmt.Sprintf(`the config %s not exists`, item))
 }
 
-// Get the specified key configuration
+// Get the value of the specified key
 func (c *Config) Get(key string) interface{} {
 	return c.current.Get(key)
 }
 
+// Get the bool value of the specified key
 func (c *Config) GetBool(key string) bool {
 	return c.current.GetBool(key)
 }
 
+// Get the float value of the specified key
 func (c *Config) GetFloat64(key string) float64 {
 	return c.current.GetFloat64(key)
 }
 
+// Get the int value of the specified key
 func (c *Config) GetInt(key string) int {
 	return c.current.GetInt(key)
 }
 
+// Get the int slice value of the specified key
 func (c *Config) GetIntSlice(key string) []int {
 	return c.current.GetIntSlice(key)
 }
 
+// Get the string value of the specified key
 func (c *Config) GetString(key string) string {
 	return c.current.GetString(key)
 }
 
+// Get the string map value of the specified key
 func (c *Config) GetStringMap(key string) map[string]interface{} {
 	return c.current.GetStringMap(key)
 }
 
+// Get the string map string value of the specified key
 func (c *Config) GetStringMapString(key string) map[string]string {
 	return c.current.GetStringMapString(key)
 }
 
+// Get the string slice value of the specified key
 func (c *Config) GetStringSlice(key string) []string {
 	return c.current.GetStringSlice(key)
 }
 
+// Get the time type value of the specified key
 func (c *Config) GetTime(key string) time.Time {
 	return c.current.GetTime(key)
 }
 
+// Get the time duration value of the specified key
 func (c *Config) GetDuration(key string) time.Duration {
 	return c.current.GetDuration(key)
 }
 
-//
+// Determine if the specified key exists
 func (c *Config) Exists(key string) bool {
 	return c.current.IsSet(key)
 }

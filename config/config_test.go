@@ -5,6 +5,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"sync"
 	"testing"
+	"time"
 )
 
 var (
@@ -105,193 +106,63 @@ func TestConfig_Item(t *testing.T) {
 	},"open yaml")
 }
 
+func TestConfig_GetBool(t *testing.T) {
+	NewConfig(directory).Item("app").SetDefault(t.Name() + "bool",true)
+	assert.Equal(t,true,GetConfig().Item(`app`).GetBool(t.Name() + `bool`))
+}
 
-//
-//// 正常数据测试
-//func TestConfig_Get(t *testing.T) {
-//	config, err := NewConfig(directory)
-//	if err != nil {
-//		fmt.Printf("%s\n", err.Error())
-//		t.Fail()
-//	}
-//
-//	tests := []struct {
-//		file  string
-//		key   string
-//		value string
-//	}{
-//		{"app", "t_key", "t_value"},
-//		{"app", "t1.t2", "t2_value"},
-//		{"new", "nt.nt2.nt3", "nt3_value"},
-//	}
-//
-//	for _, test := range tests {
-//		err := config.Set(test.file+"."+test.key, test.value)
-//		if err != nil {
-//			fmt.Printf("%s\n", err.Error())
-//			t.Fail()
-//		}
-//	}
-//
-//	// 当一个值的时候，返回ini.File完整对象
-//	res, err := config.Get(`app`)
-//	if _, ok := res.(*ini.File); !ok {
-//		fmt.Printf("%s\n", err.Error())
-//		t.Fail()
-//	}
-//
-//	// 当是2个的时候，返回默认section的key值
-//	res1, err := config.Get(`app.t_key`)
-//	fmt.Printf("\n%s\n", res1.(*ini.Key).Value())
-//	assert.Equal(t, `t_value`, res1.(*ini.Key).Value())
-//
-//	// 当是2个的，Key不存在时
-//	_, err = config.Get(`app.ssssss`)
-//	if err == nil {
-//		t.Fail()
-//	} else if v, ok := err.(*FormatError); !ok {
-//		fmt.Printf("fail: error is %T", v)
-//		t.Fail()
-//	}
-//
-//	// 当是3个值的时候，返回指定section的key值
-//	res2, err := config.Get(`app.t1.t2`)
-//	fmt.Printf("\n%s\n", res2.(*ini.Key).Value())
-//	assert.Equal(t, `t2_value`, res2.(*ini.Key).Value())
-//
-//	// 当是4个以上值的时候，返回指定section子section的key值
-//	res3, err := config.Get(`new.nt.nt2.nt3`)
-//	fmt.Printf("\n%s\n", res3.(*ini.Key).Value())
-//	assert.Equal(t, `nt3_value`, res3.(*ini.Key).Value())
-//
-//	// 优先查找section的拼接
-//	res4, err := config.Get(`new.nt.nt2`)
-//	fmt.Printf("\n%T\n", res4)
-//	if _, ok := res4.(*ini.Section); !ok {
-//		t.Fail()
-//	}
-//}
-//
-//// default 非正常数据测试
-////func TestConfig_GetDefault(t *testing.T) {
-////	config, err := NewConfig(directory)
-////	if err != nil {
-////		fmt.Printf("%s\n", err.Error())
-////		t.Fail()
-////	}
-////
-////	// 当一个值的时候，返回ini.File完整对象
-////	res := config.GetDefault(`ssss`, `def`)
-////
-////	assert.Equal(t, `def`, res.(string))
-////
-////	// 当一个值的时候，返回ini.File完整对象
-////	res = config.GetDefault(`test.test`, 0)
-////	resInt, _ := res.(*ini.Key).Int()
-////	assert.Equal(t, 2, resInt)
-////}
-//
-//func TestConfig_All(t *testing.T) {
-//	config, err := NewConfig(directory)
-//	if err != nil {
-//		fmt.Printf("%s\n", err.Error())
-//		t.Fail()
-//	}
-//
-//	for _, v := range config.All() {
-//		fmt.Printf("%v", v)
-//	}
-//}
-//
-//func TestConfig_Set_Key_Error(t *testing.T) {
-//	config, err := NewConfig(directory)
-//	if err != nil {
-//		fmt.Printf("%s\n", err.Error())
-//		t.Fail()
-//	}
-//
-//	err = config.Set("app", "123")
-//	if err == nil {
-//		t.Fail()
-//	}
-//}
-//
-//func TestFormatError_Error(t *testing.T) {
-//	err := &FormatError{message: "abcdef"}
-//	assert.Equal(t, "abcdef", err.Error())
-//}
-//
-//// ======================== Example ======================
-//
-//func ExampleConfig_Set() {
-//	config, err := NewConfig(directory)
-//	if err != nil {
-//		panic(err.Error())
-//	}
-//
-//	err = config.Set("test.a.b.c", "1")
-//	if err != nil {
-//		panic(err.Error())
-//	}
-//}
-//
-//func ExampleConfig_Get() {
-//	config, err := NewConfig(directory)
-//	if err != nil {
-//		panic(err.Error())
-//	}
-//
-//	value, err := config.Get("app.x")
-//	if err != nil {
-//		panic(err.Error())
-//	}
-//	fmt.Println(value.(*ini.Key).Value())
-//
-//	// Output:
-//	// x
-//}
-//
-////
-////func ExampleConfig_GetDefault() {
-////	config, err := NewConfig(directory)
-////	if err != nil {
-////		panic(err.Error())
-////	}
-////
-////	value1 := config.GetDefault("app.zzzz", `def`)
-////	value2 := config.GetDefault("app.t_key", `def2`)
-////
-////	fmt.Println(value1, value2)
-////
-////	// Output:
-////	// def t_value
-////}
-//
-//func ExampleConfig_All() {
-//	config, err := NewConfig(directory)
-//	if err != nil {
-//		panic(err.Error())
-//	}
-//
-//	configs := config.All()
-//
-//	fmt.Printf("%T", configs)
-//
-//	// Output:
-//	// map[string]*ini.File
-//}
-//
-//func TestConfig_All2(t *testing.T) {
-//	viper.SetConfigName("config") // name of config file (without extension)
-//	viper.AddConfigPath(".")   // path to look for the config file in
-//	viper.SetDefault("ContentDir", "content")
-//	viper.SetDefault("LayoutDir", "layouts")
-//	viper.SetDefault("Taxonomies", map[string]string{"tag": "tags", "category": "categories"})
-//	viper.Set("Verbose", true)
-//	viper.Set("LogFile", "abc")
-//	viper.Set("Taxonomies", map[string]string{"tag": "tags", "category": "categories"})
-//
-//	viper.WriteConfig()
-//	viper.WriteConfigAs("./sss")
-//	fmt.Println(viper.Get("Verbose")) // this would be "steve")
-//}
+func TestConfig_GetInt(t *testing.T) {
+	NewConfig(directory).Item("app").SetDefault(t.Name() , 200)
+	assert.Equal(t,200,GetConfig().Item(`app`).GetInt(t.Name() ))
+}
+
+func TestConfig_GetString(t *testing.T) {
+	NewConfig(directory).Item("app").SetDefault(t.Name() , "abc")
+	assert.Equal(t,"abc",GetConfig().Item(`app`).GetString(t.Name() ))
+}
+
+func TestConfig_GetFloat64(t *testing.T) {
+	NewConfig(directory).Item("app").SetDefault(t.Name() , 20.02)
+	assert.Equal(t,20.02,GetConfig().Item(`app`).GetFloat64(t.Name() ))
+}
+
+func TestConfig_GetIntSlice(t *testing.T) {
+	value := []int{1,2,3}
+	NewConfig(directory).Item("app").SetDefault(t.Name() , value)
+	assert.Equal(t,value,GetConfig().Item(`app`).GetIntSlice(t.Name() ))
+}
+
+func TestConfig_GetStringSlice(t *testing.T) {
+	value := []string{"a","b","c"}
+	NewConfig(directory).Item("app").SetDefault(t.Name() , value)
+	assert.Equal(t,value,GetConfig().Item(`app`).GetStringSlice(t.Name() ))
+}
+
+func TestConfig_GetStringMap(t *testing.T) {
+	value := map[string]interface{}{"a":"a","b":1,"c":2.02}
+	NewConfig(directory).Item("app").SetDefault(t.Name() , value)
+	assert.Equal(t,value,GetConfig().Item(`app`).GetStringMap(t.Name() ))
+}
+
+func TestConfig_GetStringMapString(t *testing.T) {
+	value := map[string]string{"a":"a","b":"b","c":"c"}
+	NewConfig(directory).Item("app").SetDefault(t.Name() , value)
+	assert.Equal(t,value,GetConfig().Item(`app`).GetStringMapString(t.Name() ))
+}
+
+func TestConfig_GetTime(t *testing.T) {
+	value := time.Now()
+	NewConfig(directory).Item("app").SetDefault(t.Name() , value)
+	assert.Equal(t,value,GetConfig().Item(`app`).GetTime(t.Name() ))
+}
+
+func TestConfig_GetDuration(t *testing.T) {
+	value := time.Second
+	NewConfig(directory).Item("app").SetDefault(t.Name() , value)
+	assert.Equal(t,value,GetConfig().Item(`app`).GetDuration(t.Name() ))
+}
+
+func TestConfig_Exists(t *testing.T) {
+	NewConfig(directory).Item("app").SetDefault(t.Name() , "abc")
+	assert.Equal(t,true,GetConfig().Item(`app`).Exists(t.Name() ))
+}
