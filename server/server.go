@@ -1,7 +1,7 @@
 package server
 
 import (
-	"github.com/firmeve/firmeve"
+	"github.com/firmeve/firmeve/container"
 	"sync"
 )
 
@@ -14,7 +14,7 @@ type Manager struct {
 }
 
 type ServiceProvider struct {
-	Firmeve *firmeve.Firmeve `inject:"firmeve"`
+	Firmeve *container.Firmeve `inject:"firmeve"`
 }
 
 type Type string
@@ -71,9 +71,9 @@ func (m *Manager) Run() {
 // ------------------------------- ServiceProvider ------------------------------
 
 func (sp *ServiceProvider) Register() {
-	sp.Firmeve.Bind(`server`, NewServer())
+	sp.Firmeve.GetContainer().Bind(`server`, NewServer())
 }
 
 func (sp *ServiceProvider) Boot() {
-	manager.Add(`http`, sp.Firmeve.Get(`http.server`).(Server))
+	manager.Add(`http`, sp.Firmeve.GetContainer().Get(`http.server`).(Server))
 }

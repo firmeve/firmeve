@@ -2,7 +2,9 @@ package container
 
 import (
 	"fmt"
+	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/utils"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"sync"
@@ -16,6 +18,16 @@ type Container interface {
 	Bind(name string, prototype interface{}, options ...utils.OptionFunc)
 	Resolve(abstract interface{}, params ...interface{}) interface{}
 	Remove(name string)
+}
+
+type ServiceProvider interface {
+	Register()
+	Boot()
+}
+
+type Instance struct {
+	bindings map[string]*binding
+	types    map[reflect.Type]string
 }
 
 type binding struct {
@@ -33,42 +45,29 @@ type bindingOption struct {
 	prototype interface{}
 }
 
-type Instance struct {
-	bindings map[string]*binding
-	types    map[reflect.Type]string
+type Firmeve struct {
+	bashPath         string
+	container        *Instance
+	serviceProviders map[string]ServiceProvider
+	booted           bool
+}
+
+type firmeveOption struct {
+	registerForce bool
 }
 
 var (
-	instance *Instance
 	once     sync.Once
 	mutex    sync.Mutex
+	firmeve  *Firmeve
 )
 
 // Create a new container instance
-func NewInstance() *Instance {
-	if instance != nil {
-		return instance
+func newInstance() *Instance {
+	return &Instance{
+		bindings: make(map[string]*binding),
+		types:    make(map[reflect.Type]string),
 	}
-
-	once.Do(func() {
-		instance = &Instance{
-			bindings: make(map[string]*binding),
-			types:    make(map[reflect.Type]string),
-		}
-
-		instance.Bind(`container`, instance, WithBindShare(true))
-	})
-
-	return instance
-}
-
-// Get a existing instance
-func GetInstance() *Instance {
-	if instance != nil {
-		return instance
-	}
-
-	panic(`instance not exists`)
 }
 
 // Determine whether the specified name object is included in the container
@@ -300,4 +299,123 @@ func (b *binding) resolvePrototype(container Container, params ...interface{}) i
 	}
 
 	return prototype
+}
+
+// --------------------------------------- firmeve ----------------------------------------
+
+// Create a new firmeve container
+func NewFirmeve(basePath string) *Firmeve {
+	if firmeve != nil {
+		return firmeve
+	}
+
+	basePath, err := filepath.Abs(basePath)
+	if err != nil {
+		panic(err.Error())
+	}
+
+	once.Do(func() {
+		firmeve = &Firmeve{
+			bashPath:         basePath,
+			serviceProviders: make(map[string]ServiceProvider),
+			booted:           false,
+			container:        newInstance(),
+		}
+
+		firmeve.container.Bind(`container`, firmeve.container, WithBindShare(true))
+		firmeve.container.Bind(`firmeve`, firmeve, WithBindShare(true))
+		firmeve.container.Bind(`config`, config.NewConfig(strings.Join([]string{basePath, `config`}, `/`)), WithBindShare(true))
+	})
+
+	return firmeve
+}
+
+// Get a existing instance
+func GetFirmeve() *Firmeve {
+	if firmeve != nil {
+		return firmeve
+	}
+
+	panic(`firmeve not exists`)
+}
+
+// Start all service providers at once
+func (f *Firmeve) Boot() {
+	if f.booted {
+		return
+	}
+
+	for _, provider := range f.serviceProviders {
+		provider.Boot()
+	}
+
+	f.booted = true
+}
+
+// Register force param
+func WithRegisterForce(force bool) utils.OptionFunc {
+	return func(option interface{}) {
+		option.(*firmeveOption).registerForce = force
+	}
+}
+
+// Register a service provider
+func (f *Firmeve) Register(name string, provider ServiceProvider, options ...utils.OptionFunc) {
+	// Parameter analysis
+	firmeveOption := newFirmeveOption()
+	utils.ApplyOption(firmeveOption, options...)
+
+	if f.HasProvider(name) && !firmeveOption.registerForce {
+		return
+	}
+
+	f.registerProvider(name, provider)
+
+	provider.Register()
+
+	if f.booted {
+		provider.Boot()
+	}
+}
+
+// Add a service provider to serviceProviders map
+func (f *Firmeve) registerProvider(name string, provider ServiceProvider) {
+	mutex.Lock()
+	defer mutex.Unlock()
+	f.serviceProviders[name] = provider
+}
+
+// Determine if the provider exists
+func (f *Firmeve) HasProvider(name string) bool {
+	if _, ok := f.serviceProviders[name]; ok {
+		return ok
+	}
+
+	return false
+}
+
+// Get a if the provider exists
+// If not found then panic
+func (f *Firmeve) getProvider(name string) ServiceProvider {
+	if !f.HasProvider(name) {
+		panic(fmt.Sprintf("the %s service provider not exists", name))
+	}
+
+	return f.serviceProviders[name]
+}
+
+// Get application base path
+func (f *Firmeve) GetBasePath() string {
+	return f.bashPath
+}
+
+// Get application container instance
+func (f *Firmeve) GetContainer() *Instance {
+	return f.container
+}
+
+// ---------------------------- firmeveOption ------------------------
+
+func newFirmeveOption() *firmeveOption {
+	return &firmeveOption{registerForce: false}
 }

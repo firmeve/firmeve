@@ -4,9 +4,9 @@ import (
 	"bytes"
 	"encoding/gob"
 	"errors"
-	"github.com/firmeve/firmeve"
 	"github.com/firmeve/firmeve/cache/redis"
 	"github.com/firmeve/firmeve/config"
+	"github.com/firmeve/firmeve/container"
 	goRedis "github.com/go-redis/redis"
 	"strings"
 	"sync"
@@ -63,11 +63,11 @@ type Error struct {
 }
 
 type ServiceProvider struct {
-	Firmeve *firmeve.Firmeve `inject:"firmeve"`
+	Firmeve *container.Firmeve `inject:"firmeve"`
 }
 
 func (csp *ServiceProvider) Register() {
-	csp.Firmeve.Bind(`cache`, NewManager, firmeve.WithBindShare(true))
+	csp.Firmeve.GetContainer().Bind(`cache`, NewManager, container.WithBindShare(true))
 }
 
 func (csp *ServiceProvider) Boot() {

@@ -1,15 +1,15 @@
 package http
 
 import (
-	"github.com/firmeve/firmeve"
+	"fmt"
 	"github.com/firmeve/firmeve/config"
+	"github.com/firmeve/firmeve/container"
 	"github.com/gin-gonic/gin"
-	"strings"
 	"sync"
 )
 
 type ServiceProvider struct {
-	Firmeve *firmeve.Firmeve `inject:"firmeve"`
+	Firmeve *container.Firmeve `inject:"firmeve"`
 }
 
 type Http struct {
@@ -38,7 +38,8 @@ func NewHttp(config *config.Config) *Http {
 }
 
 func (h *Http) Run() {
-	h.server.Run(strings.Join([]string{h.config.Item("server").GetString("http.host"),h.config.Item("server").GetString("http.port")}, `:`))
+	fmt.Println(h.config.Item("server").GetString("http.host"))
+	h.server.Run(h.config.Item("server").GetString("http.host"))
 }
 
 func (h *Http) Route() {
@@ -49,13 +50,13 @@ func (h *Http) Route() {
 
 func (hsp *ServiceProvider) Register() {
 	// Register Http Server
-	hsp.Firmeve.Bind(`http.server`, NewHttp)
+	hsp.Firmeve.GetContainer().Bind(`http.server`, NewHttp)
 
 }
 
 func (hsp *ServiceProvider) Boot() {
 	// Register Router
-	hsp.Firmeve.Get(`http.server`).(*Http).Route()
+	hsp.Firmeve.GetContainer().Get(`http.server`).(*Http).Route()
 
 	// Use Http middleware
 
