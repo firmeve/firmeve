@@ -98,11 +98,11 @@ func TestRepository_Put_Int(t *testing.T) {
 			key   string
 			value int
 		}{
-			{key: randString(5), value: rand.Int()},
-			{key: randString(5), value: rand.Int()},
-			{key: randString(5), value: rand.Int()},
-			{key: randString(5), value: rand.Int()},
-			{key: randString(5), value: rand.Int()},
+			{key: t.Name() + randString(5), value: rand.Int()},
+			{key: t.Name() + randString(5), value: rand.Int()},
+			{key: t.Name() + randString(5), value: rand.Int()},
+			{key: t.Name() + randString(5), value: rand.Int()},
+			{key: t.Name() + randString(5), value: rand.Int()},
 		}
 
 		for _, v := range tests {
