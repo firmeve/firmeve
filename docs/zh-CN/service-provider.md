@@ -8,15 +8,15 @@ import (
 	"github.com/firmeve/firmeve"
 )
 
-type CacheServiceProvider struct {
-	firmeve.FirmeveServiceProvider
+type ServiceProvider struct {
+	Firmeve *firmeve.Firmeve `inject:"firmeve"`
 }
 
-func (csp *CacheServiceProvider) Boot() {
+func (csp *ServiceProvider) Boot() {
 
 }
 
-func (csp *CacheServiceProvider) Register() {
+func (csp *ServiceProvider) Register() {
 	// 绑定CacheManager
 	csp.Firmeve.Bind(`cache`, NewManager, firmeve.WithBindShare(true))
 }
