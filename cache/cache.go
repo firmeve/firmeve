@@ -103,7 +103,6 @@ func (this *Repository) PullDefault(key string, defaultValue interface{}) (inter
 
 // Get the value of the specified key
 func (this *Repository) Get(key string) (interface{}, error) {
-
 	return this.store.Get(key)
 }
 

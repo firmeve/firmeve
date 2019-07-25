@@ -13,7 +13,7 @@ import (
 type message string
 
 func TestContainer_Resolve_String_Alias_Type(t *testing.T) {
-	i := NewInstance()
+	i := newInstance()
 
 	i.Bind("message", message("message bar"))
 	i.Bind("string", "string value")
@@ -34,7 +34,7 @@ func TestContainer_Resolve_Number(t *testing.T) {
 	var IntAliasNum IntAlias
 	IntAliasNum = 80
 
-	f := NewInstance()
+	f := newInstance()
 	f.Bind(t.Name()+"num", num, )
 	f.Bind(t.Name()+"fnum", fnum, )
 	f.Bind(t.Name()+"IntAliasNum", IntAliasNum, )
@@ -45,7 +45,7 @@ func TestContainer_Resolve_Number(t *testing.T) {
 }
 
 func TestContainer_Resolve_Bool(t *testing.T) {
-	f := NewInstance()
+	f := newInstance()
 	f.Bind("bool", (false))
 
 	assert.Equal(t, false, f.Get("bool").(bool))
@@ -54,7 +54,7 @@ func TestContainer_Resolve_Bool(t *testing.T) {
 func TestContainer_Resolve_Struct_Prt(t *testing.T) {
 	t1 := testdata.NewT1()
 
-	f := NewInstance()
+	f := newInstance()
 	f.Bind(t.Name()+"t1", (t1))
 	assert.Equal(t, t1, f.Get(t.Name()+"t1"))
 }
@@ -62,7 +62,7 @@ func TestContainer_Resolve_Struct_Prt(t *testing.T) {
 type FuncType func() int64
 
 func TestContainer_Resolve_Func_Simple(t *testing.T) {
-	f := NewInstance()
+	f := newInstance()
 
 	var z FuncType
 	z = func() int64 {
@@ -85,7 +85,7 @@ func TestContainer_Resolve_Cover(t *testing.T) {
 	t1 := testdata.NewT1()
 	//t3 := testdata.NewT1Sturct()
 
-	f := NewInstance()
+	f := newInstance()
 	f.Bind(t.Name()+"t1", (t1), )
 	assert.Equal(t, t1, f.Get(t.Name()+"t1"))
 
@@ -101,7 +101,7 @@ func TestContainer_Resolve_Cover(t *testing.T) {
 func TestContainer_Singleton(t *testing.T) {
 	//t1 := testdata.NewT1
 	//t3 := testdata.NewT1Sturct()
-	f := NewInstance()
+	f := newInstance()
 	f.Bind(t.Name()+"t1.singleton", (testdata.NewT1), WithBindShare(true))
 	assert.Equal(t, fmt.Sprintf("%p", f.Get(t.Name()+"t1.singleton")), fmt.Sprintf("%p", f.Get(t.Name()+"t1.singleton")))
 
@@ -143,7 +143,7 @@ func TestReflectType(t *testing.T) {
 
 // 测试struct字段反射
 func TestContainer_Resolve_Struct_Field(t *testing.T) {
-	f := NewInstance()
+	f := newInstance()
 	t1 := testdata.NewT1()
 	f.Bind("t1", (t1))
 
@@ -156,7 +156,7 @@ func TestContainer_Resolve_Struct_Field(t *testing.T) {
 
 // 测试非单例注入
 func TestContainer_Resolve_Prototype(t *testing.T) {
-	f := NewInstance()
+	f := newInstance()
 	f.Bind("t1", (testdata.NewT1), WithBindCover(true))
 	log.Printf("%#v\n", f.Resolve(testdata.NewT2))
 	assert.IsType(t, testdata.NewT2(f.Get("t1").(*testdata.T1)), f.Resolve(testdata.NewT2))
@@ -167,7 +167,7 @@ func TestContainer_Bind_Struct_Prt2(t *testing.T) {
 	t1 := testdata.NewT1()
 	//t2 := testdata.NewT2(t1)
 
-	f := NewInstance()
+	f := newInstance()
 	f.Bind(t.Name()+"t1", (t1))
 
 	t2 := new(testdata.T2)
@@ -182,23 +182,23 @@ func TestContainer_Bind_Struct_Prt2(t *testing.T) {
 	//fmt.Printf("%#v\n", result2.(testdata.T2))
 }
 
-func TestGetInstance(t *testing.T) {
-	f := NewInstance()
-	f1 := GetInstance()
-	assert.Equal(t, f, f1)
-}
-
-func TestInstance_GetError(t *testing.T) {
-	assert.Panics(t, func() {
-		GetInstance()
-	},`instance not exists`)
-}
+//func TestGetInstance(t *testing.T) {
+//	f := newInstance()
+//	f1 := GetInstance()
+//	assert.Equal(t, f, f1)
+//}
+//
+//func TestInstance_GetError(t *testing.T) {
+//	assert.Panics(t, func() {
+//		GetInstance()
+//	},`instance not exists`)
+//}
 
 func TestContainer_Remove(t *testing.T) {
 	t1 := testdata.NewT1()
 	//t2 := testdata.NewT2(t1)
 
-	f := NewInstance()
+	f := newInstance()
 	f.Bind(t.Name()+"t1", t1)
 	f.Remove(t.Name() + "t1")
 

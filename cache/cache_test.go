@@ -88,19 +88,19 @@ func TestRepository_Pull_Default(t *testing.T) {
 	wg.Add(1000)
 	for i := 0; i < 1000; i++ {
 		go func(i int) {
-			key := randString(30) + strconv.Itoa(i)
+			key := t.Name() + randString(30) + strconv.Itoa(i)
 
 			err := redisRepository.Put(key, "def", time.Now().Add(time.Second*50))
 			assert.Nil(t, err)
 
-			value, err := redisRepository.PullDefault(key, "abc")
-			assert.Equal(t, "def", value.(string))
+			value1, err := redisRepository.PullDefault(key, "def1")
+			assert.Equal(t, "def", value1.(string))
 
-			value, err = redisRepository.PullDefault(key, "abc")
-			assert.Equal(t, "abc", value.(string))
+			value2, err := redisRepository.PullDefault(key, "abc")
+			assert.Equal(t, "abc", value2.(string))
 
-			value, err = redisRepository.PullDefault(randString(20), "abc")
-			assert.Equal(t, "abc", value.(string))
+			value3, err := redisRepository.PullDefault(t.Name() + randString(20), "abcd")
+			assert.Equal(t, "abcd", value3.(string))
 
 			wg.Done()
 		}(i)
