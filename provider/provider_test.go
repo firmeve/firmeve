@@ -21,14 +21,14 @@ func TestCacheProvider(t *testing.T) {
 
 //func TestHttpProvider(t *testing.T)  {
 //	f.Bind("firmeve.provider",new(firmeve.FirmeveServiceProvider))
-//	provider := f.Resolve(new(http.HttpServiceProvider)).(*http.HttpServiceProvider)
+//	provider := f.Resolve(new(http.ServiceProvider)).(*http.ServiceProvider)
 //	provider.Register()
 //	//fmt.Printf("%#v",provider)
 //	f.Get("http.server").(*gin.Engine).Run(":22122")
 //}
 
 
-
+//
 //func TestFirmeve_Run(t *testing.T) {
 //	serviceProvider := f.Resolve(new(server.ServiceProvider)).(*server.ServiceProvider)
 //	httpServiceProvider := f.Resolve(new(http.ServiceProvider)).(*http.ServiceProvider)
