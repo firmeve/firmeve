@@ -1,0 +1,9 @@
+channels:
+  stack:
+    - file
+    - console
+  file:
+    path: "b/c"
+  console:
+
+
