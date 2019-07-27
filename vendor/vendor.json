@@ -3,9 +3,269 @@
 	"ignore": "",
 	"package": [
 		{
+			"path": "github.com/BurntSushi/toml",
+			"revision": ""
+		},
+		{
+			"path": "github.com/davecgh/go-spew/spew",
+			"revision": ""
+		},
+		{
+			"path": "github.com/fsnotify/fsnotify",
+			"revision": ""
+		},
+		{
+			"path": "github.com/gin-contrib/sse",
+			"revision": ""
+		},
+		{
+			"path": "github.com/gin-gonic/gin",
+			"revision": ""
+		},
+		{
+			"path": "github.com/gin-gonic/gin/binding",
+			"revision": ""
+		},
+		{
+			"path": "github.com/gin-gonic/gin/internal/json",
+			"revision": ""
+		},
+		{
+			"path": "github.com/gin-gonic/gin/render",
+			"revision": ""
+		},
+		{
+			"path": "github.com/gin-gonic/gin/testdata/protoexample",
+			"revision": ""
+		},
+		{
 			"path": "github.com/go-redis/redis",
+			"revision": ""
+		},
+		{
+			"path": "github.com/go-redis/redis/internal",
+			"revision": ""
+		},
+		{
+			"path": "github.com/go-redis/redis/internal/consistenthash",
+			"revision": ""
+		},
+		{
+			"path": "github.com/go-redis/redis/internal/hashtag",
+			"revision": ""
+		},
+		{
+			"path": "github.com/go-redis/redis/internal/pool",
+			"revision": ""
+		},
+		{
+			"path": "github.com/go-redis/redis/internal/proto",
+			"revision": ""
+		},
+		{
+			"path": "github.com/go-redis/redis/internal/util",
+			"revision": ""
+		},
+		{
+			"path": "github.com/golang/protobuf/proto",
+			"revision": ""
+		},
+		{
+			"path": "github.com/golang/protobuf/proto/proto3_proto",
+			"revision": ""
+		},
+		{
+			"path": "github.com/golang/protobuf/proto/test_proto",
+			"revision": ""
+		},
+		{
+			"path": "github.com/golang/protobuf/protoc-gen-go/descriptor",
+			"revision": ""
+		},
+		{
+			"path": "github.com/golang/protobuf/ptypes",
+			"revision": ""
+		},
+		{
+			"path": "github.com/golang/protobuf/ptypes/any",
+			"revision": ""
+		},
+		{
+			"path": "github.com/golang/protobuf/ptypes/duration",
+			"revision": ""
+		},
+		{
+			"path": "github.com/golang/protobuf/ptypes/timestamp",
+			"revision": ""
+		},
+		{
+			"path": "github.com/hashicorp/hcl",
+			"revision": ""
+		},
+		{
+			"path": "github.com/hashicorp/hcl/hcl/ast",
+			"revision": ""
+		},
+		{
+			"path": "github.com/hashicorp/hcl/hcl/parser",
+			"revision": ""
+		},
+		{
+			"path": "github.com/hashicorp/hcl/hcl/printer",
+			"revision": ""
+		},
+		{
+			"path": "github.com/hashicorp/hcl/hcl/scanner",
+			"revision": ""
+		},
+		{
+			"path": "github.com/hashicorp/hcl/hcl/strconv",
+			"revision": ""
+		},
+		{
+			"path": "github.com/hashicorp/hcl/hcl/token",
+			"revision": ""
+		},
+		{
+			"path": "github.com/hashicorp/hcl/json/parser",
+			"revision": ""
+		},
+		{
+			"path": "github.com/hashicorp/hcl/json/scanner",
+			"revision": ""
+		},
+		{
+			"path": "github.com/hashicorp/hcl/json/token",
+			"revision": ""
+		},
+		{
+			"path": "github.com/json-iterator/go",
+			"revision": ""
+		},
+		{
+			"path": "github.com/magiconair/properties",
+			"revision": ""
+		},
+		{
+			"path": "github.com/magiconair/properties/assert",
+			"revision": ""
+		},
+		{
+			"path": "github.com/mattn/go-isatty",
+			"revision": ""
+		},
+		{
+			"path": "github.com/mitchellh/mapstructure",
+			"revision": ""
+		},
+		{
+			"path": "github.com/onsi/ginkgo",
+			"revision": ""
+		},
+		{
+			"path": "github.com/onsi/gomega",
+			"revision": ""
+		},
+		{
+			"path": "github.com/pelletier/go-toml",
+			"revision": ""
+		},
+		{
+			"path": "github.com/pmezard/go-difflib/difflib",
+			"revision": ""
+		},
+		{
+			"path": "github.com/spf13/afero",
+			"revision": ""
+		},
+		{
+			"path": "github.com/spf13/afero/mem",
+			"revision": ""
+		},
+		{
+			"path": "github.com/spf13/cast",
+			"revision": ""
+		},
+		{
+			"path": "github.com/spf13/jwalterweatherman",
+			"revision": ""
+		},
+		{
+			"path": "github.com/spf13/pflag",
+			"revision": ""
+		},
+		{
+			"path": "github.com/spf13/viper",
+			"revision": ""
+		},
+		{
+			"path": "github.com/stretchr/testify/assert",
+			"revision": ""
+		},
+		{
+			"path": "github.com/stretchr/testify/require",
+			"revision": ""
+		},
+		{
+			"path": "github.com/subosito/gotenv",
+			"revision": ""
+		},
+		{
+			"path": "github.com/ugorji/go/codec",
+			"revision": ""
+		},
+		{
+			"path": "go.uber.org/zap",
+			"revision": ""
+		},
+		{
+			"path": "go.uber.org/zap/zapcore",
+			"revision": ""
+		},
+		{
+			"path": "golang.org/x/sys/unix",
+			"revision": ""
+		},
+		{
+			"path": "golang.org/x/text/internal/gen",
+			"revision": ""
+		},
+		{
+			"path": "golang.org/x/text/internal/testtext",
+			"revision": ""
+		},
+		{
+			"path": "golang.org/x/text/transform",
+			"revision": ""
+		},
+		{
+			"path": "golang.org/x/text/unicode/cldr",
+			"revision": ""
+		},
+		{
+			"path": "golang.org/x/text/unicode/norm",
+			"revision": ""
+		},
+		{
+			"path": "gopkg.in/check.v1",
+			"revision": ""
+		},
+		{
+			"path": "gopkg.in/go-playground/assert.v1",
+			"revision": ""
+		},
+		{
+			"path": "gopkg.in/go-playground/validator.v8",
+			"revision": ""
+		},
+		{
+			"path": "gopkg.in/natefinch/lumberjack.v2",
+			"revision": ""
+		},
+		{
+			"path": "gopkg.in/yaml.v2",
 			"revision": ""
 		}
 	],
-	"rootPath": "firmeve"
+	"rootPath": "github.com/firmeve/firmeve"
 }
