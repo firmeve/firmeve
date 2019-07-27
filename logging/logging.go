@@ -1,42 +1,118 @@
 package logging
 
 import (
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"gopkg.in/natefinch/lumberjack.v2"
+	"fmt"
+	"github.com/firmeve/firmeve/config"
+	"sync"
 )
 
-type Logger struct {
-	zap *zap.Logger
+type Logger interface {
+	Debug(message string, context ...interface{})
+	Info(message string, context ...interface{})
+	Warn(message string, context ...interface{})
+	Error(message string, context ...interface{})
+	Fatal(message string, context ...interface{})
 }
 
-func NewLogger() {
-	//core := zapcore.NewTee(
-	//	//zapcore.NewCore(kafkaEncoder, topicErrors, highPriority),
-	//	//zapcore.NewCore(consoleEncoder, consoleErrors, highPriority),
-	//	//zapcore.NewCore(kafkaEncoder, topicDebugging, lowPriority),
-	//	//zapcore.NewCore(consoleEncoder, consoleDebugging, lowPriority),
-	//)
-
-	z := zapcore.NewTee(
-		file("a"),
-		file("b"),
-	)
-	logger := zap.New(z)
-	defer logger.Sync()
-	logger.Info("constructed a logger")
+type Manager struct {
+	channels Channel
 }
 
-func file(name string) zapcore.Core {
-	writer := zapcore.AddSync(&lumberjack.Logger{
-		Filename:   "logs/app" +name+".log",
-		MaxSize:    100,
-		MaxBackups: 3,
-		MaxAge:     1,
+type Level int8
+type Channel map[string]Logger
+
+const (
+	Debug Level = iota
+	Info        = iota
+	Warn        = iota
+	Error       = iota
+	Fatal       = iota
+)
+
+var (
+	manager  *Manager
+	once     sync.Once
+)
+
+func NewLogger(config *config.Config) *Manager {
+	if manager != nil {
+		return manager
+	}
+
+	once.Do(func() {
+		manager = &Manager{
+			channels: resolveChannels(config.Item(`logging`)),
+		}
 	})
-	config := zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
-	lowPriority := zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-		return lvl < zapcore.ErrorLevel
-	})
-	return zapcore.NewCore(config,writer,lowPriority)
+
+	return manager
+}
+
+func factory(stack string, config *config.Config) Logger {
+	var logger Logger
+	switch stack {
+	case `file`:
+		logger = newFileLogger(
+			Debug,
+			&fileOption{
+				file:   config.GetString("channels.file.path") + ".log",
+				size:   config.GetInt("channels.file.size"),
+				backup: config.GetInt("channels.file.backup"),
+				age:    config.GetInt("channels.file.age"),
+			},
+		)
+	default:
+		panic(fmt.Sprintf("the logger stack %s not exists", stack))
+	}
+
+	return logger
+}
+
+func resolveChannels(config *config.Config) Channel {
+
+	stacks := config.Item(`logging`).GetStringSlice(`stacks`)
+	stackChannels := make(Channel, len(stacks))
+	for _, stack := range stacks {
+		stackChannels[stack] = factory(stack, config)
+	}
+
+	return stackChannels
+}
+
+func (m *Manager) Debug(message string, context ...interface{}) {
+	for _, channel := range m.channels {
+		channel.Debug(message, context)
+	}
+}
+
+func (m *Manager) Info(message string, context ...interface{}) {
+	for _, channel := range m.channels {
+		channel.Debug(message, context)
+	}
+}
+
+func (m *Manager) Warn(message string, context ...interface{}) {
+	for _, channel := range m.channels {
+		channel.Debug(message, context)
+	}
+}
+
+func (m *Manager) Error(message string, context ...interface{}) {
+	for _, channel := range m.channels {
+		channel.Debug(message, context)
+	}
+}
+
+func (m *Manager) Fatal(message string, context ...interface{}) {
+	for _, channel := range m.channels {
+		channel.Debug(message, context)
+	}
+}
+
+//func (m *Manager) newChannel(stack string) Logger {
+//	//return factory(stack,)
+//}
+
+func (m *Manager) channel(stack string) Logger {
+	return m.channels[stack]
 }
