@@ -20,8 +20,8 @@ func TestNewLogger(t *testing.T) {
 	logger := NewLogger(config.NewConfig("../testdata/config"))
 	//test := map[string]string{"url":"firmeve.com"}
 	logger.Debug("abc", "url", "http://example.com",)
-	logger.Warn("abc")
+	//logger.Warn("abc")
 	logger.Info("abc")
-	logger.Fatal("abc")
-	logger.Error("abc")
+	//logger.Fatal("abc")
+	//logger.Error("abc")
 }

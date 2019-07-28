@@ -1,12 +1,17 @@
-default: file
+default: stack
 channels:
+  stack:
+    - file
+    - console
   file:
     path: "../testdata/logs"
     # megabytes
     size:    100,
     backup: 3,
     age:     1,
-    # 0:debug ,1:info,2:warn,3:error,4:fatal
-    level: 0
+    # debug ,info,warn,error,fatal
+    level: debug
   console:
+    level: debug
+
 
