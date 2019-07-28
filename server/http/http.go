@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/container"
 	"github.com/gin-gonic/gin"
@@ -38,7 +37,6 @@ func NewHttp(config *config.Config) *Http {
 }
 
 func (h *Http) Run() {
-	fmt.Println(h.config.Item("server").GetString("http.host"))
 	h.server.Run(h.config.Item("server").GetString("http.host"))
 }
 
@@ -48,15 +46,14 @@ func (h *Http) Route() {
 	})
 }
 
-func (hsp *ServiceProvider) Register() {
+func (sp *ServiceProvider) Register() {
 	// Register Http Server
-	hsp.Firmeve.GetContainer().Bind(`http.server`, NewHttp)
-
+	sp.Firmeve.GetContainer().Bind(`http.server`, NewHttp)
 }
 
-func (hsp *ServiceProvider) Boot() {
+func (sp *ServiceProvider) Boot() {
 	// Register Router
-	hsp.Firmeve.GetContainer().Get(`http.server`).(*Http).Route()
+	sp.Firmeve.GetContainer().Get(`http.server`).(*Http).Route()
 
 	// Use Http middleware
 
