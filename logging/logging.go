@@ -30,8 +30,8 @@ const (
 )
 
 var (
-	manager  *Manager
-	once     sync.Once
+	manager *Manager
+	once    sync.Once
 )
 
 func NewLogger(config *config.Config) *Manager {

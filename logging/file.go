@@ -39,10 +39,10 @@ func newFileLogger(level Level, option *fileOption) Logger {
 
 	core := zapcore.NewCore(
 		// 暂时使用production
-		zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()),
+		zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()),
 		writer,
 		zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-			return lvl < loggerMap[level]
+			return lvl == loggerMap[level]
 		}),
 	)
 
