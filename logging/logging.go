@@ -16,6 +16,9 @@ type Logger interface {
 
 type Manager struct {
 	channels Channel
+	//default channel
+	channel string
+	config  *config.Config
 }
 
 type Level int8
@@ -31,6 +34,7 @@ const (
 
 var (
 	manager *Manager
+	mu      sync.Mutex
 	once    sync.Once
 )
 
@@ -41,21 +45,58 @@ func NewLogger(config *config.Config) *Manager {
 
 	once.Do(func() {
 		manager = &Manager{
-			channels: resolveChannels(config.Item(`logging`)),
+			config:   config.Item(`logging`),
+			channel:  config.Item(`logging`).GetString(`default`),
+			channels: make(Channel, 0),
 		}
 	})
 
 	return manager
 }
 
+func (m *Manager) Debug(message string, context ...interface{}) {
+	m.Channel(m.channel).Debug(message, context...)
+}
+
+func (m *Manager) Info(message string, context ...interface{}) {
+	m.Channel(m.channel).Debug(message, context...)
+}
+
+func (m *Manager) Warn(message string, context ...interface{}) {
+	m.Channel(m.channel).Debug(message, context...)
+}
+
+func (m *Manager) Error(message string, context ...interface{}) {
+	m.Channel(m.channel).Debug(message, context...)
+}
+
+func (m *Manager) Fatal(message string, context ...interface{}) {
+	m.Channel(m.channel).Debug(message, context...)
+}
+
+func (m *Manager) Channel(stack string) Logger {
+	if channel, ok := m.channels[stack]; ok {
+		return channel
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+
+	m.channels[stack] = factory(stack, m.config)
+	return m.channels[stack]
+}
+
+// ---------------------------------------------- func --------------------------------------------------
+
 func factory(stack string, config *config.Config) Logger {
 	var logger Logger
 	switch stack {
 	case `file`:
+		fmt.Println(config.GetString("channels.file.path") + "/log.log")
 		logger = newFileLogger(
 			Debug,
 			&fileOption{
-				file:   config.GetString("channels.file.path") + ".log",
+				file:   config.GetString("channels.file.path") + "/log.log",
 				size:   config.GetInt("channels.file.size"),
 				backup: config.GetInt("channels.file.backup"),
 				age:    config.GetInt("channels.file.age"),
@@ -66,53 +107,4 @@ func factory(stack string, config *config.Config) Logger {
 	}
 
 	return logger
-}
-
-func resolveChannels(config *config.Config) Channel {
-
-	stacks := config.Item(`logging`).GetStringSlice(`stacks`)
-	stackChannels := make(Channel, len(stacks))
-	for _, stack := range stacks {
-		stackChannels[stack] = factory(stack, config)
-	}
-
-	return stackChannels
-}
-
-func (m *Manager) Debug(message string, context ...interface{}) {
-	for _, channel := range m.channels {
-		channel.Debug(message, context)
-	}
-}
-
-func (m *Manager) Info(message string, context ...interface{}) {
-	for _, channel := range m.channels {
-		channel.Debug(message, context)
-	}
-}
-
-func (m *Manager) Warn(message string, context ...interface{}) {
-	for _, channel := range m.channels {
-		channel.Debug(message, context)
-	}
-}
-
-func (m *Manager) Error(message string, context ...interface{}) {
-	for _, channel := range m.channels {
-		channel.Debug(message, context)
-	}
-}
-
-func (m *Manager) Fatal(message string, context ...interface{}) {
-	for _, channel := range m.channels {
-		channel.Debug(message, context)
-	}
-}
-
-//func (m *Manager) newChannel(stack string) Logger {
-//	//return factory(stack,)
-//}
-
-func (m *Manager) channel(stack string) Logger {
-	return m.channels[stack]
 }

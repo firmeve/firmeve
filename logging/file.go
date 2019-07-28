@@ -36,10 +36,24 @@ func newFileLogger(level Level, option *fileOption) Logger {
 		MaxBackups: option.backup,
 		MaxAge:     option.age,
 	})
+	//zap.NewProductionEncoderConfig()
+	//zapcore.Dev
 
 	core := zapcore.NewCore(
 		// 暂时使用production
-		zapcore.NewJSONEncoder(zap.NewDevelopmentEncoderConfig()),
+		zapcore.NewJSONEncoder(zapcore.EncoderConfig{
+			TimeKey:        "ts",
+			LevelKey:       "level",
+			NameKey:        "logger",
+			CallerKey:      "caller",
+			MessageKey:     "msg",
+			StacktraceKey:  "stacktrace",
+			LineEnding:     zapcore.DefaultLineEnding,
+			EncodeLevel:    zapcore.LowercaseLevelEncoder,
+			EncodeTime:     zapcore.EpochTimeEncoder,
+			EncodeDuration: zapcore.SecondsDurationEncoder,
+			EncodeCaller:   zapcore.FullCallerEncoder,
+		}),
 		writer,
 		zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 			return lvl == loggerMap[level]
@@ -47,31 +61,31 @@ func newFileLogger(level Level, option *fileOption) Logger {
 	)
 
 	return &file{
-		zap: zap.New(core),
+		zap: zap.New(core,zap.Development(),zap.AddCaller(),zap.AddStacktrace(zap.DebugLevel)),
 	}
 }
 
 func (f *file) Debug(message string, context ...interface{}) {
-	defer f.zap.Sync()
-	f.zap.Sugar().Debugw(message, context)
+	f.zap.Sugar().Debugw(message, context...)
+	f.zap.Sync()
 }
 
 func (f *file) Info(message string, context ...interface{}) {
-	f.zap.Sugar().Infow(message, context)
-	f.zap.Sugar().Sync()
+	f.zap.Sugar().Infow(message, context...)
+	f.zap.Sync()
 }
 
 func (f *file) Warn(message string, context ...interface{}) {
-	f.zap.Sugar().Warnw(message, context)
-	f.zap.Sugar().Sync()
+	f.zap.Sugar().Warnw(message, context...)
+	f.zap.Sync()
 }
 
 func (f *file) Error(message string, context ...interface{}) {
-	f.zap.Sugar().Errorw(message, context)
-	f.zap.Sugar().Sync()
+	f.zap.Sugar().Errorw(message, context...)
+	f.zap.Sync()
 }
 
 func (f *file) Fatal(message string, context ...interface{}) {
-	f.zap.Sugar().Fatalw(message, context)
-	f.zap.Sugar().Sync()
+	f.zap.Sugar().Fatalw(message, context...)
+	f.zap.Sync()
 }

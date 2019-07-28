@@ -1,8 +1,7 @@
-stacks:
-  - file
+default: file
 channels:
   file:
-    path: "./testdata/log"
+    path: "../testdata/logs"
     # megabytes
     size:    100,
     backup: 3,
