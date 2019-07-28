@@ -3,6 +3,7 @@ package container
 import (
 	"fmt"
 	"github.com/firmeve/firmeve/config"
+	"github.com/firmeve/firmeve/logging"
 	"github.com/firmeve/firmeve/utils"
 	"path/filepath"
 	"reflect"
@@ -57,9 +58,9 @@ type firmeveOption struct {
 }
 
 var (
-	once     sync.Once
-	mutex    sync.Mutex
-	firmeve  *Firmeve
+	once    sync.Once
+	mutex   sync.Mutex
+	firmeve *Firmeve
 )
 
 // Create a new container instance
@@ -322,9 +323,7 @@ func NewFirmeve(basePath string) *Firmeve {
 			container:        newInstance(),
 		}
 
-		firmeve.container.Bind(`container`, firmeve.container, WithBindShare(true))
-		firmeve.container.Bind(`firmeve`, firmeve, WithBindShare(true))
-		firmeve.container.Bind(`config`, config.NewConfig(strings.Join([]string{basePath, `config`}, `/`)), WithBindShare(true))
+		firmeve.bingingBaseInstance()
 	})
 
 	return firmeve
@@ -383,6 +382,14 @@ func (f *Firmeve) registerProvider(name string, provider ServiceProvider) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	f.serviceProviders[name] = provider
+}
+
+// Binging base instance
+func (f *Firmeve) bingingBaseInstance() {
+	firmeve.container.Bind(`container`, firmeve.container, WithBindShare(true))
+	firmeve.container.Bind(`firmeve`, firmeve, WithBindShare(true))
+	firmeve.container.Bind(`config`, config.NewConfig(strings.Join([]string{f.bashPath, `config`}, `/`)), WithBindShare(true))
+	firmeve.container.Bind(`logger`, logging.NewLogger, WithBindShare(true))
 }
 
 // Determine if the provider exists
