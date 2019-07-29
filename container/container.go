@@ -393,7 +393,7 @@ func (f *Firmeve) registerProvider(name string, provider ServiceProvider) {
 // Binging base instance
 func (f *Firmeve) bingingBaseInstance() {
 	firmeve.container.Bind(`container`, firmeve.container, WithBindShare(true))
-	firmeve.container.Bind(`firmeve`, firmeve, WithBindShare(true))
+	firmeve.container.Bind(`firmeve`, f, WithBindShare(true))
 	firmeve.container.Bind(`config`, config.NewConfig(strings.Join([]string{f.bashPath, `config`}, `/`)), WithBindShare(true))
 	firmeve.container.Bind(`logger`, logging.NewLogger, WithBindShare(true))
 }
