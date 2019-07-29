@@ -2,6 +2,7 @@ package server
 
 import (
 	"github.com/firmeve/firmeve/container"
+	_ "github.com/firmeve/firmeve/server/http"
 	"sync"
 )
 
@@ -19,17 +20,22 @@ type ServiceProvider struct {
 
 type Type string
 
+const (
+	Http Type = `http`
+	Websocket Type = `websocket`
+	Tcp	Type = `tcp`
+)
+
 var (
 	manager *Manager
 	mu      sync.Mutex
 	once    sync.Once
 )
 
-const (
-	Http Type = `http`
-	Websocket Type = `websocket`
-	Tcp	Type = `tcp`
-)
+func init()  {
+	firmeve := container.GetFirmeve()
+	firmeve.Register(`server`, firmeve.GetContainer().Resolve(new(ServiceProvider)).(*ServiceProvider))
+}
 
 func NewServer() *Manager {
 	if manager != nil {

@@ -33,12 +33,6 @@ type Cache interface {
 	Flush() error
 }
 
-var (
-	manager *Manager
-	once    sync.Once
-	mutex   sync.Mutex
-)
-
 type Serialization interface {
 	GetDecode(key string, to interface{}) (interface{}, error)
 
@@ -66,11 +60,23 @@ type ServiceProvider struct {
 	Firmeve *container.Firmeve `inject:"firmeve"`
 }
 
-func (csp *ServiceProvider) Register() {
-	csp.Firmeve.GetContainer().Bind(`cache`, NewManager, container.WithBindShare(true))
+
+var (
+	manager *Manager
+	once    sync.Once
+	mutex   sync.Mutex
+)
+
+func init()  {
+	firmeve := container.GetFirmeve()
+	firmeve.Register(`cache`, firmeve.GetContainer().Resolve(new(ServiceProvider)).(*ServiceProvider))
 }
 
-func (csp *ServiceProvider) Boot() {
+func (sp *ServiceProvider) Register() {
+	sp.Firmeve.GetContainer().Bind(`cache`, NewManager, container.WithBindShare(true))
+}
+
+func (sp *ServiceProvider) Boot() {
 
 }
 

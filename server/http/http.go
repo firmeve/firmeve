@@ -21,6 +21,11 @@ var (
 	once sync.Once
 )
 
+func init()  {
+	firmeve := container.GetFirmeve()
+	firmeve.Register(`http`, firmeve.GetContainer().Resolve(new(ServiceProvider)).(*ServiceProvider))
+}
+
 func NewHttp(config *config.Config) *Http {
 	if http != nil {
 		return http

@@ -5,6 +5,7 @@ import (
 	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/logging"
 	"github.com/firmeve/firmeve/utils"
+	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -62,6 +63,10 @@ var (
 	mutex   sync.Mutex
 	firmeve *Firmeve
 )
+
+func init()  {
+	NewFirmeve()
+}
 
 // Create a new container instance
 func newInstance() *Instance {
@@ -305,10 +310,11 @@ func (b *binding) resolvePrototype(container Container, params ...interface{}) i
 // --------------------------------------- firmeve ----------------------------------------
 
 // Create a new firmeve container
-func NewFirmeve(basePath string) *Firmeve {
+func NewFirmeve() *Firmeve {
 	if firmeve != nil {
 		return firmeve
 	}
+	basePath := os.Getenv("FIRMEVE_BASE_PATH")
 
 	basePath, err := filepath.Abs(basePath)
 	if err != nil {
