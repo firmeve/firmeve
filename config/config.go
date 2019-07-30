@@ -168,6 +168,9 @@ func (c *Config) SetDefault(key string, value interface{}) {
 
 // Load all configuration files at once
 func (c *Config) loadAll() error {
+	fmt.Println("================")
+	fmt.Println(c.directory)
+	fmt.Println("================")
 	err := filepath.Walk(c.directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
