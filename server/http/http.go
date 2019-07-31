@@ -1,9 +1,11 @@
 package http
 
 import (
+	"context"
 	"github.com/firmeve/firmeve/container"
-	"github.com/gin-gonic/gin"
+	"github.com/firmeve/firmeve/server"
 	"github.com/go-chi/chi"
+	net_http "net/http"
 	"sync"
 )
 
@@ -12,7 +14,6 @@ type ServiceProvider struct {
 }
 
 type Http struct {
-	Server *gin.Engine
 }
 
 type Router struct {
@@ -23,29 +24,26 @@ var (
 	http *Http
 	once sync.Once
 )
-//
+
 //func init() {
 //	firmeve := container.GetFirmeve()
 //	firmeve.Register(`http`, firmeve.GetContainer().Resolve(new(ServiceProvider)).(*ServiceProvider))
 //}
-//
-//func NewRouter() *Router {
-//	return &Router{
-//		router: chi.NewRouter(),
-//	}
-//}
-//
-////func (r *Router) Get(pattern string,z func(ctx server.Context)) {
-////	r.router.Get(`/`,func(w http.ResponseWriter, r *http.Request) {
-////		//context := ctx(w http.ResponseWriter, r *http.Request)
-////		//context
-////		z(context)
-////		//w.Write([]byte("hello world"))
-////	})
-////}
-//
-//// --------------------------------- http server -------------------------------------------
-//
+
+func NewRouter() *Router {
+	return &Router{
+		router: chi.NewRouter(),
+	}
+}
+
+func (r *Router) Get(pattern string, ctxFunc func(context.Context)) {
+	r.router.Get(pattern, func(w net_http.ResponseWriter, r *net_http.Request) {
+		ctxFunc(server.NewContext(&Context{request: r, response: w}))
+	})
+}
+
+// --------------------------------- http server -------------------------------------------
+
 //func NewHttp(config *config.Config) *Http {
 //	if http != nil {
 //		return http
@@ -64,7 +62,7 @@ var (
 //	//h.Server.Run(h.config.Item("server").GetString("http.host"))
 //	h.Server.Run(container.GetFirmeve().GetContainer().Get(`config`).(*config.Config).Item("server").GetString("http.host"))
 //}
-//
+
 //func (h *Http) Route() {
 //	//h.Server.GET(`/test`, func(context *gin.Context) {
 //	//	//fmt.Printf("%#v\n",server.NewContext(context))

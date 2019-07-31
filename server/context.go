@@ -6,27 +6,27 @@ import (
 )
 
 type Context struct {
-	protocol context.Context
+	Protocol context.Context
 }
 
 func NewContext(ctx context.Context) *Context {
 	return &Context{
-		protocol: ctx,
+		Protocol: ctx,
 	}
 }
 
 func (c *Context) Deadline() (deadline time.Time, ok bool) {
-	return c.protocol.Deadline()
+	return c.Protocol.Deadline()
 }
 
 func (c *Context) Done() <-chan struct{} {
-	return c.protocol.Done()
+	return c.Protocol.Done()
 }
 
 func (c *Context) Err() error {
-	return c.protocol.Err()
+	return c.Protocol.Err()
 }
 
 func (c *Context) Value(key interface{}) interface{} {
-	return c.protocol.Value(key)
+	return c.Protocol.Value(key)
 }
