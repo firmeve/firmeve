@@ -19,7 +19,7 @@ Those who have achieved nothing can always tell you that you can't make a big de
     - [x] [Config](./docs/zh-CN/config.md)
     - [x] [ServiceProvider](./docs/zh-CN/service-provider.md)
     - [ ] Events
-    - [ ] Log
+    - [ ] [Logging](./docs/zh-CN/logging.md)
 - **Cache**
     - [ ] Redis
     - [ ] File
