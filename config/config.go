@@ -44,7 +44,7 @@ func NewConfig(directory string) *Config {
 	once.Do(func() {
 		directory, err := filepath.Abs(directory)
 		if err != nil {
-			panic(err.Error())
+			panic(err)
 		}
 
 		config = &Config{
@@ -58,7 +58,7 @@ func NewConfig(directory string) *Config {
 		// loadAll
 		err = config.loadAll()
 		if err != nil {
-			panic(err.Error())
+			panic(err)
 		}
 	})
 
@@ -168,9 +168,6 @@ func (c *Config) SetDefault(key string, value interface{}) {
 
 // Load all configuration files at once
 func (c *Config) loadAll() error {
-	fmt.Println("================")
-	fmt.Println(c.directory)
-	fmt.Println("================")
 	err := filepath.Walk(c.directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -198,8 +195,26 @@ func (c *Config) Load(file string) {
 	conf.SetConfigFile(file)
 	err := conf.ReadInConfig()
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 
 	c.items[strings.Replace(filepath.Base(file), c.extension, "", 1)] = conf
+}
+
+// -------------------------------- Env ----------------------------------------
+
+// Set env
+func SetEnv(key, value string) {
+	err := os.Setenv(strings.ToUpper(key), value)
+	if err != nil {
+		panic(err)
+	}
+}
+
+// Get all env
+func GetEnv(key string) string {
+	// 自动查找所有环境变量
+	viper.AutomaticEnv()
+
+	return viper.GetString(strings.ToUpper(key))
 }
