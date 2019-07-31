@@ -32,7 +32,7 @@ install:
 
 script:
   - go vet -atomic -asmdecl ./...
-  - go test -v -race -covermode=atomic -coverprofile=coverage.out
+  - go test -v -race -count=1 -covermode=atomic -coverprofile=coverage.out
   - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 #  - $GOPATH/bin/goveralls -service=travis-ci
 #  - go test -v -race -count=1 ./...
