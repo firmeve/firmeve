@@ -36,3 +36,8 @@ script:
   - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 #  - $GOPATH/bin/goveralls -service=travis-ci
 #  - go test -v -race -count=1 ./...
+
+  - go test -race -coverprofile=coverage.txt -covermode=atomic
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
