@@ -90,7 +90,7 @@ func TestRepository_Pull_Default(t *testing.T) {
 		go func(i int) {
 			key := t.Name() + randString(30) + strconv.Itoa(i)
 
-			err := redisRepository.Put(key, "def", time.Now().Add(time.Second*50))
+			err := redisRepository.Put(key, "def", time.Now().Add(time.Second*150))
 			assert.Nil(t, err)
 
 			value1, err := redisRepository.PullDefault(key, "def1")
