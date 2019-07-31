@@ -57,7 +57,24 @@ GetConfig().Load(file)
 
 ## 环境变量
 
-TODO
+使用`Config`环境变量的键会统一转换为大写，**不支持小写**环境变量名
 
-## 感谢
-基于[viper](https://github.com/spf13/viper)封装
+### 环境变量设置
+```go
+// go自动环境变量的设置
+os.Setenv("FOO", "foo")
+// config 当使用SetEnv函数设置
+SetEnv("bar", "bar")
+// 
+os.Setenv("baz","baz")
+``` 
+### 环境变量读取
+```go
+// 可以读取
+fmt.Println(GetEnv("FOO"))
+// 可以读取
+fmt.Println(GetEnv("bar"))
+fmt.Println(os.Getenv("BAR"))
+// 无法读取
+fmt.Println(os.Getenv("baz"))
+```
