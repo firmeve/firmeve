@@ -3,7 +3,7 @@ language: go
 env:
   global:
     - REDIS_HOST=localhost
-    - FIRMEVE_BASE_PATH=./testdata
+    - FIRMEVE_BASE_PATH=${TRAVIS_BUILD_DIR}/testdata
 
 services:
   - redis-server
