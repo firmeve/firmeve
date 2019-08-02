@@ -1,7 +1,6 @@
 package http
 
 import (
-	"github.com/go-chi/chi"
 	net_http "net/http"
 	"time"
 )
@@ -11,20 +10,33 @@ type Context struct {
 	response net_http.ResponseWriter
 }
 
+func NewContext(response net_http.ResponseWriter, request *net_http.Request) *Context {
+	return &Context{
+		request:  request,
+		response: response,
+	}
+}
+
 func (c *Context) Param(key string) string {
-	return chi.URLParam(c.request, key)
+	return c.request.P(c.request, key)
 }
 
 func (c *Context) String(content string) int {
-	result,err :=  c.response.Write([]byte(content))
-	if err != nil{
+	result, err := c.response.Write([]byte(content))
+	if err != nil {
 		panic(err)
 	}
 	return result
 }
 
+func (c *Context) Request() *net_http.Request {
+	return c.request
+}
+
+// -------------- Context interface ---------------------
+
 func (c *Context) Deadline() (deadline time.Time, ok bool) {
-	panic("implement me")
+	return time.Now(), false
 }
 
 func (c *Context) Done() <-chan struct{} {
@@ -36,5 +48,5 @@ func (c *Context) Err() error {
 }
 
 func (c *Context) Value(key interface{}) interface{} {
-	panic("implement me")
+	return nil
 }
