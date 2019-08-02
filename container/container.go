@@ -48,8 +48,10 @@ type bindingOption struct {
 }
 
 type Firmeve struct {
+	Container
+
 	bashPath         string
-	container        *Instance
+	//container        *Instance
 	serviceProviders map[string]ServiceProvider
 	booted           bool
 }
@@ -326,7 +328,7 @@ func NewFirmeve() *Firmeve {
 			bashPath:         basePath,
 			serviceProviders: make(map[string]ServiceProvider),
 			booted:           false,
-			container:        newInstance(),
+			Container:        newInstance(),
 		}
 
 		firmeve.bingingBaseInstance()
@@ -392,10 +394,10 @@ func (f *Firmeve) registerProvider(name string, provider ServiceProvider) {
 
 // Binging base instance
 func (f *Firmeve) bingingBaseInstance() {
-	firmeve.container.Bind(`container`, firmeve.container, WithBindShare(true))
-	firmeve.container.Bind(`firmeve`, f, WithBindShare(true))
-	firmeve.container.Bind(`config`, config.NewConfig(strings.Join([]string{f.bashPath, `config`}, `/`)), WithBindShare(true))
-	firmeve.container.Bind(`logger`, logging.NewLogger, WithBindShare(true))
+	firmeve.Bind(`container`, f, WithBindShare(true))
+	firmeve.Bind(`firmeve`, f, WithBindShare(true))
+	firmeve.Bind(`config`, config.NewConfig(strings.Join([]string{f.bashPath, `config`}, `/`)), WithBindShare(true))
+	firmeve.Bind(`logger`, logging.NewLogger, WithBindShare(true))
 }
 
 // Determine if the provider exists
@@ -420,11 +422,6 @@ func (f *Firmeve) getProvider(name string) ServiceProvider {
 // Get application base path
 func (f *Firmeve) GetBasePath() string {
 	return f.bashPath
-}
-
-// Get application container instance
-func (f *Firmeve) GetContainer() *Instance {
-	return f.container
 }
 
 // ---------------------------- firmeveOption ------------------------

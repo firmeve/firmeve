@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"github.com/firmeve/firmeve/container"
-	"github.com/firmeve/firmeve/server"
 	"github.com/go-chi/chi"
 	net_http "net/http"
 	"sync"
@@ -38,7 +37,7 @@ func NewRouter() *Router {
 
 func (r *Router) Get(pattern string, ctxFunc func(context.Context)) {
 	r.router.Get(pattern, func(w net_http.ResponseWriter, r *net_http.Request) {
-		ctxFunc(server.NewContext(&Context{request: r, response: w}))
+		//ctxFunc(server.NewContext(&Context{request: r, response: w}))
 	})
 }
 
