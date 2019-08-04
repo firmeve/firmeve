@@ -17,9 +17,9 @@ func NewContext(response net_http.ResponseWriter, request *net_http.Request) *Co
 	}
 }
 
-func (c *Context) Param(key string) string {
-	return c.request.P(c.request, key)
-}
+//func (c *Context) Param(key string) string {
+//	return c.request.P(c.request, key)
+//}
 
 func (c *Context) String(content string) int {
 	result, err := c.response.Write([]byte(content))
@@ -36,7 +36,7 @@ func (c *Context) Request() *net_http.Request {
 // -------------- Context interface ---------------------
 
 func (c *Context) Deadline() (deadline time.Time, ok bool) {
-	return time.Now(), false
+	return
 }
 
 func (c *Context) Done() <-chan struct{} {

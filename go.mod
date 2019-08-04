@@ -27,7 +27,7 @@ require (
 	github.com/gin-gonic/gin v1.4.0
 	github.com/go-chi/chi v4.0.2+incompatible
 	github.com/go-redis/redis v6.15.2+incompatible
-	github.com/gorilla/mux v1.7.3 // indirect
+	github.com/gorilla/mux v1.7.3
 	github.com/onsi/ginkgo v1.8.0 // indirect
 	github.com/onsi/gomega v1.5.0 // indirect
 	github.com/spf13/viper v1.4.1-0.20190729163700-33bf76add3b7

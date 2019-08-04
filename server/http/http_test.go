@@ -1,5 +1,10 @@
 package http
 
+import (
+	"fmt"
+	"testing"
+)
+
 //import (
 //	"context"
 //	"github.com/firmeve/firmeve/server"
@@ -15,3 +20,23 @@ package http
 //
 //	net_http.ListenAndServe(":28818", router.router)
 //}
+
+func TestRouter_Get(t *testing.T) {
+	router1 := NewRouter()
+	router1.Get(`/abc`, func(ctx *Context) {
+
+	}).Name(`abcd`)
+
+	router1.Group(func(router *Router) {
+		router.Get("/sub/ss", func(ctx *Context) {
+			
+		})
+	})
+	//z := mux.NewRouter()
+	//z.HandleFunc(`/abc`, func(writer net_http.ResponseWriter, request *net_http.Request) {
+	//
+	//}).Name("def")
+
+	fmt.Println(router1.router.Get(`abcd`).GetMethods())
+	//fmt.Println(z.Get(`def`).GetName())
+}

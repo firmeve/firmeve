@@ -16,6 +16,7 @@ type Http struct {
 
 type Router struct {
 	router *mux.Router
+	//route  *mux.Route
 }
 
 var (
@@ -34,54 +35,42 @@ func NewRouter() *Router {
 	}
 }
 
-//func (r *Router) ServeHttp(w net_http.ResponseWriter, req *net_http.Request)  {
-//	if !r.skipClean {
-//		path := req.URL.Path
-//		if r.useEncodedPath {
-//			path = req.URL.EscapedPath()
-//		}
-//		// Clean path to canonical form and redirect.
-//		if p := cleanPath(path); p != path {
-//
-//			// Added 3 lines (Philip Schlump) - It was dropping the query string and #whatever from query.
-//			// This matches with fix in go 1.2 r.c. 4 for same problem.  Go Issue:
-//			// http://code.google.com/p/go/issues/detail?id=5252
-//			url := *req.URL
-//			url.Path = p
-//			p = url.String()
-//
-//			w.Header().Set("Location", p)
-//			w.WriteHeader(http.StatusMovedPermanently)
-//			return
-//		}
-//	}
-//	var match RouteMatch
-//	var handler http.Handler
-//	if r.Match(req, &match) {
-//		handler = match.Handler
-//		req = setVars(req, match.Vars)
-//		req = setCurrentRoute(req, match.Route)
-//	}
-//
-//	if handler == nil && match.MatchErr == ErrMethodMismatch {
-//		handler = methodNotAllowedHandler()
-//	}
-//
-//	if handler == nil {
-//		handler = http.NotFoundHandler()
-//	}
-//
-//	handler.ServeHTTP(w, req)
+func (r *Router) Get(pattern string, ctxFunc func(ctx *Context)) *mux.Route {
+	return r.router.HandleFunc(pattern, func(w net_http.ResponseWriter, r *net_http.Request) {
+		ctxFunc(NewContext(w, r))
+	}).Methods(`GET`)
+}
+func (r *Router) Post(pattern string, ctxFunc func(ctx *Context)) *mux.Route {
+	return r.router.HandleFunc(pattern, func(w net_http.ResponseWriter, r *net_http.Request) {
+		ctxFunc(NewContext(w, r))
+	}).Methods(`POST`)
+}
+func (r *Router) Delete(pattern string, ctxFunc func(ctx *Context)) *mux.Route {
+	return r.router.HandleFunc(pattern, func(w net_http.ResponseWriter, r *net_http.Request) {
+		ctxFunc(NewContext(w, r))
+	}).Methods(`DELETE`)
+}
+func (r *Router) Put(pattern string, ctxFunc func(ctx *Context)) *mux.Route {
+	return r.router.HandleFunc(pattern, func(w net_http.ResponseWriter, r *net_http.Request) {
+		ctxFunc(NewContext(w, r))
+	}).Methods(`PUT`)
+}
+
+//func (r *Router) Options(pattern string, ctxFunc func(ctx *Context)) *mux.Route {
+//	return r.router.HandleFunc(pattern,func(w net_http.ResponseWriter, r *net_http.Request) {
+//		ctxFunc(NewContext(w, r))
+//	}).Methods(`PUT`)
 //}
 
-//func (r *Router) ServeHttp(w net_http.ResponseWriter, req *net_http.Request) {
-//	ctxFunc(NewContext(w, r))
-//}
+func (r *Router) PathPrefix(prefix string) *mux.Route {
+	return r.router.PathPrefix(prefix)
+}
 
-func (r *Router) Get(pattern string, ctxFunc func(ctx *Context)) {
-	r.router.Methods(`GET`).HandlerFunc(func(w net_http.ResponseWriter, req *net_http.Request) {
-		ctxFunc(NewContext(w, req))
-	})
+func (r *Router) Group(f func(router *Router)) {
+	//route := NewRouter().router.NewRoute().Subrouter()
+	//route.PathPrefix("/sub")
+	r.router = r.router.NewRoute().Subrouter()
+	f(NewRouter())
 }
 
 // --------------------------------- http server -------------------------------------------
