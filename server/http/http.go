@@ -15,8 +15,12 @@ type Http struct {
 }
 
 type Router struct {
-	router *mux.Router
+	*mux.Router
 	//route  *mux.Route
+}
+
+type Route struct {
+	*mux.Route
 }
 
 var (
@@ -31,46 +35,46 @@ var (
 
 func NewRouter() *Router {
 	return &Router{
-		router: mux.NewRouter(),
+		Router:mux.NewRouter(),
 	}
 }
 
 func (r *Router) Get(pattern string, ctxFunc func(ctx *Context)) *mux.Route {
-	return r.router.HandleFunc(pattern, func(w net_http.ResponseWriter, r *net_http.Request) {
+	return r.HandleFunc(pattern, func(w net_http.ResponseWriter, r *net_http.Request) {
 		ctxFunc(NewContext(w, r))
 	}).Methods(`GET`)
 }
 func (r *Router) Post(pattern string, ctxFunc func(ctx *Context)) *mux.Route {
-	return r.router.HandleFunc(pattern, func(w net_http.ResponseWriter, r *net_http.Request) {
+	return r.HandleFunc(pattern, func(w net_http.ResponseWriter, r *net_http.Request) {
 		ctxFunc(NewContext(w, r))
 	}).Methods(`POST`)
 }
 func (r *Router) Delete(pattern string, ctxFunc func(ctx *Context)) *mux.Route {
-	return r.router.HandleFunc(pattern, func(w net_http.ResponseWriter, r *net_http.Request) {
+	return r.HandleFunc(pattern, func(w net_http.ResponseWriter, r *net_http.Request) {
 		ctxFunc(NewContext(w, r))
 	}).Methods(`DELETE`)
 }
 func (r *Router) Put(pattern string, ctxFunc func(ctx *Context)) *mux.Route {
-	return r.router.HandleFunc(pattern, func(w net_http.ResponseWriter, r *net_http.Request) {
+	return r.HandleFunc(pattern, func(w net_http.ResponseWriter, r *net_http.Request) {
 		ctxFunc(NewContext(w, r))
 	}).Methods(`PUT`)
 }
 
 //func (r *Router) Options(pattern string, ctxFunc func(ctx *Context)) *mux.Route {
-//	return r.router.HandleFunc(pattern,func(w net_http.ResponseWriter, r *net_http.Request) {
+//	return r.HandleFunc(pattern,func(w net_http.ResponseWriter, r *net_http.Request) {
 //		ctxFunc(NewContext(w, r))
 //	}).Methods(`PUT`)
 //}
 
 func (r *Router) PathPrefix(prefix string) *mux.Route {
-	return r.router.PathPrefix(prefix)
+	return r.PathPrefix(prefix)
 }
 
 func (r *Router) Group(f func(router *Router)) {
 	//route := NewRouter().router.NewRoute().Subrouter()
 	//route.PathPrefix("/sub")
-	r.router = r.router.NewRoute().Subrouter()
-	f(NewRouter())
+	//r = r.NewRoute().Subrouter()
+	f(r)
 }
 
 // --------------------------------- http server -------------------------------------------
