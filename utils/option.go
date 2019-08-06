@@ -1,10 +1,14 @@
 package utils
 
-type OptionFunc func(option interface{})
+type Option interface{}
+
+type OptionFunc func(option Option)
 
 // Apply option
-func ApplyOption(option interface{}, options ...OptionFunc) {
+func ApplyOption(option Option, options ...OptionFunc) Option {
 	for _, opt := range options {
 		opt(option)
 	}
+
+	return option
 }

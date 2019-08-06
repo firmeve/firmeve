@@ -50,7 +50,7 @@ type bindingOption struct {
 type Firmeve struct {
 	Container
 
-	bashPath         string
+	bashPath string
 	//container        *Instance
 	serviceProviders map[string]ServiceProvider
 	booted           bool
@@ -66,7 +66,7 @@ var (
 	firmeve *Firmeve
 )
 
-func init()  {
+func init() {
 	NewFirmeve()
 }
 
@@ -98,14 +98,14 @@ func (f *Instance) Get(name string) interface{} {
 
 // Bind method `share` param
 func WithBindShare(share bool) utils.OptionFunc {
-	return func(option interface{}) {
+	return func(option utils.Option) {
 		option.(*bindingOption).share = share
 	}
 }
 
 // Bind method `cover` param
 func WithBindCover(cover bool) utils.OptionFunc {
-	return func(option interface{}) {
+	return func(option utils.Option) {
 		option.(*bindingOption).cover = cover
 	}
 }
@@ -113,8 +113,7 @@ func WithBindCover(cover bool) utils.OptionFunc {
 // Bind a object to container
 func (f *Instance) Bind(name string, prototype interface{}, options ...utils.OptionFunc) { //, value interface{}
 	// Parameter analysis
-	bindingOption := newBindingOption(name, prototype)
-	utils.ApplyOption(bindingOption, options...)
+	bindingOption := utils.ApplyOption(newBindingOption(name, prototype), options...).(*bindingOption)
 
 	// Coverage detection
 	if _, ok := f.bindings[bindingOption.name]; ok && !bindingOption.cover {
@@ -361,7 +360,7 @@ func (f *Firmeve) Boot() {
 
 // Register force param
 func WithRegisterForce(force bool) utils.OptionFunc {
-	return func(option interface{}) {
+	return func(option utils.Option) {
 		option.(*firmeveOption).registerForce = force
 	}
 }
@@ -369,8 +368,7 @@ func WithRegisterForce(force bool) utils.OptionFunc {
 // Register a service provider
 func (f *Firmeve) Register(name string, provider ServiceProvider, options ...utils.OptionFunc) {
 	// Parameter analysis
-	firmeveOption := newFirmeveOption()
-	utils.ApplyOption(firmeveOption, options...)
+	firmeveOption := utils.ApplyOption(newFirmeveOption(), options...).(*firmeveOption)
 
 	if f.HasProvider(name) && !firmeveOption.registerForce {
 		return
