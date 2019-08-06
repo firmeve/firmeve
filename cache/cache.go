@@ -69,11 +69,11 @@ var (
 
 func init()  {
 	firmeve := container.GetFirmeve()
-	firmeve.Register(`cache`, firmeve.GetContainer().Resolve(new(ServiceProvider)).(*ServiceProvider))
+	firmeve.Register(`cache`, firmeve.Resolve(new(ServiceProvider)).(*ServiceProvider))
 }
 
 func (sp *ServiceProvider) Register() {
-	sp.Firmeve.GetContainer().Bind(`cache`, NewManager, container.WithBindShare(true))
+	sp.Firmeve.Bind(`cache`, NewManager, container.WithBindShare(true))
 }
 
 func (sp *ServiceProvider) Boot() {
