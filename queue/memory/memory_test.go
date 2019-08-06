@@ -1,7 +1,6 @@
 package memory
 
 import (
-	"fmt"
 	"testing"
 )
 
@@ -12,13 +11,13 @@ func (f JobFunc) Handle(data interface{}) {
 }
 
 func TestMemory(t *testing.T) {
-	queue := NewMemory()
+	//queue := NewMemory()
 
-	go queue.Run()
-
-	queue.Push(JobFunc(func(i interface{}) {
-		fmt.Println(i)
-	}),"sss","fdsfdsfds")
+	//go queue.Run()
+	//
+	//queue.Push(JobFunc(func(i interface{}) {
+	//	fmt.Println(i)
+	//}),"sss","fdsfdsfds")
 
 	//http.HandleFunc()
 
