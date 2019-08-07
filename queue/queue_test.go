@@ -38,7 +38,9 @@ func TestQueue(t *testing.T) {
 	jobDemo := &JobDemo{}
 
 	RegisterJob(`jobDemo`,jobDemo)
-
+	go Run(`default_queue`)
 	manager := NewManager(config.NewConfig("../testdata/config"))
 	manager.Connection(`memory`).Push(`jobDemo`,WithQueueName(`default_queue`),WithData("abc"))
+
+
 }

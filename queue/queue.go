@@ -3,7 +3,6 @@ package queue
 import (
 	"fmt"
 	"github.com/firmeve/firmeve/config"
-	"github.com/firmeve/firmeve/queue/memory"
 	"github.com/firmeve/firmeve/utils"
 	"sync"
 	"time"
@@ -94,7 +93,7 @@ func (m *Manager) Connection(name string) Queue {
 func factory(name string, config *config.Config) Queue {
 	switch name {
 	case `memory`:
-		return memory.NewMemory(config)
+		return NewMemory(config)
 	default:
 		panic(fmt.Sprintf("the queue driver %s not exists", name))
 	}
