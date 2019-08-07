@@ -113,7 +113,9 @@ func (m *manager) GetProcess(name string) Processor {
 
 func (m *manager) Connection(name string) Queue {
 	if _, ok := m.connections[name]; !ok {
+		mu.Lock()
 		m.connections[name] = factory(name, m.config)
+		mu.Unlock()
 	}
 
 	return m.connections[name]
