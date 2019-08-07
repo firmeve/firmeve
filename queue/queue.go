@@ -112,12 +112,11 @@ func (m *manager) GetProcess(name string) Processor {
 }
 
 func (m *manager) Connection(name string) Queue {
+	mu.Lock()
 	if _, ok := m.connections[name]; !ok {
-		mu.Lock()
 		m.connections[name] = factory(name, m.config)
-		mu.Unlock()
 	}
-
+	mu.Unlock()
 	return m.connections[name]
 }
 
@@ -177,6 +176,12 @@ func (m *manager) RunProcess(queueName string) {
 }
 
 func (p *processor) Handle(payload *Payload) {
+	defer func() {
+		if err := recover(); err != nil {
+			fmt.Println("error")
+			fmt.Printf("%#v",err)
+		}
+	}()
 	job := queueManager.GetJob(payload.jobName)
 	job.Handle(payload.data)
 }
