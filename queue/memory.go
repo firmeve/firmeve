@@ -29,6 +29,8 @@ func (m *memory) Push(jobName string, options ...utils.OptionFunc) {
 }
 
 func (m *memory) Pop(queueName string) <-chan *Payload {
+	mu.Lock()
+	defer mu.Unlock()
 	return m.list[queueName]
 }
 
