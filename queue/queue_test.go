@@ -31,6 +31,7 @@ type JobDemo struct {
 }
 
 func (jd *JobDemo) Handle(data interface{}) {
+	panic(`error`)
 	fmt.Println(data)
 }
 
