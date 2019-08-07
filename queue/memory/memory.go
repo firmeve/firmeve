@@ -9,33 +9,25 @@ import (
 
 
 type Memory struct {
-	payload map[string]chan *queue.Payload
+	payload queue.Payloader
 }
 
 func NewMemory(config *config.Config) *Memory {
 	return &Memory{
-		payload: make(map[string]chan *queue.Payload),
+		payload: make(queue.Payloader),
 	}
 }
 
 func (m *Memory) Push(jobName string, options ...utils.OptionFunc) {
-	//
-	option := utils.ApplyOption(&queue.Option{
-		QueueName: `default`,
-		Data:      nil,
-	}, options...).(*queue.Option)
 
-	if _, ok := m.payload[option.QueueName]; !ok {
-		m.payload[option.QueueName] = make(chan *queue.Payload)
+	payload := queue.NewPayload(jobName,options...)
+
+	if _, ok := m.payload[payload.QueueName]; !ok {
+		m.payload[payload.QueueName] = make(chan *queue.Payload)
 	}
 
-	m.payload[option.QueueName] <- &queue.Payload{
-		JobName:  jobName,
-		Timeout:  time.Now(),
-		Delay:    time.Now(),
-		MaxTries: 8,
-		Data:     option.Data,
-	}
+
+	m.payload[payload.QueueName] <- payload
 }
 
 func (m *Memory) Pop(queueName string) <-chan *queue.Payload {

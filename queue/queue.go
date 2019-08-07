@@ -20,11 +20,14 @@ type Option struct {
 	Data      interface{}
 }
 
+type Payloader map[string]chan *Payload
+
 type Job interface {
 	Handle(data interface{})
 }
 
 type Payload struct {
+	QueueName string
 	JobName  string
 	Timeout  time.Time
 	Delay    time.Time
@@ -97,6 +100,21 @@ func factory(name string, config *config.Config) Queue {
 	}
 }
 
+func NewPayload(jobName string, options ...utils.OptionFunc) *Payload  {
+	option := utils.ApplyOption(&Option{
+		QueueName: `default`,
+		Data:      nil,
+	}, options...).(*Option)
+
+	return &Payload{
+		QueueName: option.QueueName,
+		JobName:  jobName,
+		Timeout:  time.Now(),
+		Delay:    time.Now(),
+		MaxTries: 8,
+		Data:     option.Data,
+	}
+}
 
 
 func Run(queueName string) {
