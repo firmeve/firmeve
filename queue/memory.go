@@ -6,32 +6,31 @@ import (
 	"time"
 )
 
-
-type Memory struct {
-	payload Payloader
+type memory struct {
+	list map[string]chan *Payload
 }
 
-func NewMemory(config *config.Config) *Memory {
-	return &Memory{
-		payload: make(Payloader),
+func NewMemory(config *config.Config) *memory {
+	return &memory{
+		list: make(map[string]chan *Payload),
 	}
 }
 
-func (m *Memory) Push(jobName string, options ...utils.OptionFunc) {
+func (m *memory) Push(jobName string, options ...utils.OptionFunc) {
+	payloadBlock := createPayload(jobName, options...)
 
-	payload := NewPayload(jobName,options...)
-
-	if _, ok := m.payload[payload.QueueName]; !ok {
-		m.payload[payload.QueueName] = make(chan *Payload)
+	if _, ok := m.list[payloadBlock.queueName]; !ok {
+		mu.Lock()
+		m.list[payloadBlock.queueName] = make(chan *Payload)
+		mu.Unlock()
 	}
 
-
-	m.payload[payload.QueueName] <- payload
+	m.list[payloadBlock.queueName] <- payloadBlock
 }
 
-func (m *Memory) Pop(queueName string) <-chan *Payload {
-	return m.payload[queueName]
+func (m *memory) Pop(queueName string) <-chan *Payload {
+	return m.list[queueName]
 }
 
-func (m *Memory) Later(delay time.Time, jobName string, options ...utils.OptionFunc) {
+func (m *memory) Later(delay time.Time, jobName string, options ...utils.OptionFunc) {
 }

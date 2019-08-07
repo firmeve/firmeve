@@ -9,80 +9,109 @@ import (
 )
 
 type Queue interface {
+	// 入队
 	Push(jobName string, options ...utils.OptionFunc)
-	Pop(queueName string) <-chan *Payload
+	// 延时入队
 	Later(delay time.Time, jobName string, options ...utils.OptionFunc)
+	// 出队
+	Pop(queueName string) <-chan *Payload
 }
 
-type Option struct {
-	QueueName string
-	Data      interface{}
-}
-
-type Payloader map[string]chan *Payload
-
+// 实际队列业务处理者
 type Job interface {
 	Handle(data interface{})
 }
 
+// 队列处理器
+type Processor interface {
+	Handle(payload *Payload)
+}
+
+// 队列参数选项
+type option struct {
+	queueName string
+	data      interface{}
+}
+
+// 入队数据载荷
 type Payload struct {
-	QueueName string
-	JobName  string
-	Timeout  time.Time
-	Delay    time.Time
-	MaxTries uint8
-	Data     interface{}
+	processorName string
+	queueName     string
+	jobName       string
+	timeout       time.Time
+	delay         time.Time
+	maxTries      uint8
+	data          interface{}
+}
+
+// 队列管理器
+type manager struct {
+	config      *config.Config
+	jobs        map[string]Job
+	connections map[string]Queue
+	processors  map[string]Processor
+}
+
+type processor struct {
+
 }
 
 var (
-	manager *Manager
-	once    sync.Once
-	jobs    map[string]Job = make(map[string]Job)
+	queueManager *manager
+	once         sync.Once
+	mu           sync.Mutex
 )
 
 func WithQueueName(queueName string) utils.OptionFunc {
-	return func(option utils.Option) {
-		option.(*Option).QueueName = queueName
+	return func(utilOption utils.Option) {
+		utilOption.(*option).queueName = queueName
 	}
 }
 
 func WithData(data interface{}) utils.OptionFunc {
-	return func(option utils.Option) {
-		option.(*Option).Data = data
+	return func(utilOption utils.Option) {
+		utilOption.(*option).data = data
 	}
 }
 
-type Manager struct {
-	config      *config.Config
-	//jobs        map[string]Job
-	connections map[string]Queue
-}
-
-func NewManager(config *config.Config) *Manager {
-	if manager != nil {
-		return manager
+func NewManager(config *config.Config) *manager {
+	if queueManager != nil {
+		return queueManager
 	}
 
 	once.Do(func() {
-		manager = &Manager{
+		queueManager = &manager{
 			config:      config.Item(`queue`),
-			//jobs:        make(map[string]Job),
+			jobs:        make(map[string]Job),
 			connections: make(map[string]Queue),
+			processors:  map[string]Processor{`default`:&processor{}},
 		}
 	})
 
-	return manager
+	return queueManager
 }
 
-func RegisterJob(jobName string, job Job) {
-	jobs[jobName] = job
+func (m *manager) RegisterJob(name string, job Job) {
+	mu.Lock()
+	m.jobs[name] = job
+	mu.Unlock()
 }
 
-func GetJob(jobName string) Job {
-	return jobs[jobName]
+func (m *manager) GetJob(name string) Job {
+	return m.jobs[name]
 }
 
-func (m *Manager) Connection(name string) Queue {
+func (m *manager) RegisterProcess(name string, processor Processor) {
+	mu.Lock()
+	m.processors[name] = processor
+	mu.Unlock()
+}
+
+func (m *manager) GetProcess(name string) Processor {
+	return m.processors[name]
+}
+
+func (m *manager) Connection(name string) Queue {
 	if _, ok := m.connections[name]; !ok {
 		m.connections[name] = factory(name, m.config)
 	}
@@ -90,6 +119,7 @@ func (m *Manager) Connection(name string) Queue {
 	return m.connections[name]
 }
 
+// Connection factory
 func factory(name string, config *config.Config) Queue {
 	switch name {
 	case `memory`:
@@ -99,39 +129,40 @@ func factory(name string, config *config.Config) Queue {
 	}
 }
 
-func NewPayload(jobName string, options ...utils.OptionFunc) *Payload  {
-	option := utils.ApplyOption(&Option{
-		QueueName: `default`,
-		Data:      nil,
-	}, options...).(*Option)
+func createPayload(jobName string, options ...utils.OptionFunc) *Payload {
+	option := utils.ApplyOption(&option{
+		queueName: `default`,
+		data:      nil,
+	}, options...).(*option)
 
 	return &Payload{
-		QueueName: option.QueueName,
-		JobName:  jobName,
-		Timeout:  time.Now(),
-		Delay:    time.Now(),
-		MaxTries: 8,
-		Data:     option.Data,
+		queueName:     option.queueName,
+		processorName: ``,
+		jobName:       jobName,
+		timeout:       time.Now(),
+		delay:         time.Now(),
+		maxTries:      8,
+		data:          option.data,
 	}
 }
 
-
-func Run(queueName string) {
+func (m *manager) Run(queueName string) {
 	processNum := 5
 
 	// 同时开5个进程
 	for i := 0; i < processNum; i++ {
-		go RunProcess(queueName)
+		go m.RunProcess(queueName)
 	}
 }
 
-func RunProcess(queueName string) {
+func (m *manager) RunProcess(queueName string) {
 	for {
 		select {
-		case payload := <-manager.Connection(`memory`).Pop(queueName):
+		case payload := <-m.Connection(`memory`).Pop(queueName):
 			// recover(), error() 如果出错，并且有重试，重新放回队列
 
-			NewWorker(payload).Handle()
+			queueManager.GetProcess(`default`).Handle(payload)
+			//NewWorker(payload).Handle()
 		//case payload := <-m.Pop(queueName):
 		// 这块就是worker了
 		//job := queue.NewManager().Get(payload.Job)
@@ -141,4 +172,9 @@ func RunProcess(queueName string) {
 			fmt.Println("超时")
 		}
 	}
+}
+
+func (p *processor) Handle(payload *Payload) {
+	job := queueManager.GetJob(payload.jobName)
+	job.Handle(payload.data)
 }
