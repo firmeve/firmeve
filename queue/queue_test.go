@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"github.com/firmeve/firmeve/config"
 	"testing"
+	"time"
 )
+
 
 //func TestNewManager(t *testing.T) {
 //	z := make(chan int)
@@ -30,19 +32,23 @@ type JobDemo struct {
 
 }
 
-func (jd *JobDemo) Handle(data interface{}) {
-	panic(`error`)
+func (jd *JobDemo) Handle(data interface{}) error {
+	panic(&Error{Message:"Foo"})
+	//panic(`abc`)
 	fmt.Println(data)
+	return nil
 }
 
 func TestQueue(t *testing.T) {
+
 	jobDemo := &JobDemo{}
 	manager := NewManager(config.NewConfig("../testdata/config"))
 
 	manager.RegisterJob(`jobDemo`,jobDemo)
+
 	go manager.Run(`default_queue`)
 
 	manager.Connection(`memory`).Push(`jobDemo`,WithQueueName(`default_queue`),WithData("abc"))
 
-
+	time.Sleep(time.Second * 5)
 }

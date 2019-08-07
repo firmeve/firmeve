@@ -19,7 +19,7 @@ type Queue interface {
 
 // 实际队列业务处理者
 type Job interface {
-	Handle(data interface{})
+	Handle(data interface{}) error
 }
 
 // 队列处理器
@@ -31,6 +31,7 @@ type Processor interface {
 type option struct {
 	queueName string
 	data      interface{}
+	attempt   uint8
 }
 
 // 入队数据载荷
@@ -41,6 +42,7 @@ type Payload struct {
 	timeout       time.Time
 	delay         time.Time
 	maxTries      uint8
+	attempt       uint8
 	data          interface{}
 }
 
@@ -52,8 +54,14 @@ type manager struct {
 	processors  map[string]Processor
 }
 
+// 默认处理进程
 type processor struct {
+}
 
+// Queue error
+type Error struct {
+	Message string
+	payload *Payload
 }
 
 var (
@@ -74,6 +82,12 @@ func WithData(data interface{}) utils.OptionFunc {
 	}
 }
 
+func WithAttempt(attempt uint8) utils.OptionFunc {
+	return func(utilOption utils.Option) {
+		utilOption.(*option).attempt = attempt
+	}
+}
+
 func NewManager(config *config.Config) *manager {
 	if queueManager != nil {
 		return queueManager
@@ -84,7 +98,7 @@ func NewManager(config *config.Config) *manager {
 			config:      config.Item(`queue`),
 			jobs:        make(map[string]Job),
 			connections: make(map[string]Queue),
-			processors:  map[string]Processor{`default`:&processor{}},
+			processors:  map[string]Processor{`default`: &processor{}},
 		}
 	})
 
@@ -134,6 +148,7 @@ func createPayload(jobName string, options ...utils.OptionFunc) *Payload {
 	option := utils.ApplyOption(&option{
 		queueName: `default`,
 		data:      nil,
+		attempt:   0,
 	}, options...).(*option)
 
 	return &Payload{
@@ -142,7 +157,8 @@ func createPayload(jobName string, options ...utils.OptionFunc) *Payload {
 		jobName:       jobName,
 		timeout:       time.Now(),
 		delay:         time.Now(),
-		maxTries:      8,
+		maxTries:      3,
+		attempt:       option.attempt,
 		data:          option.data,
 	}
 }
@@ -160,28 +176,55 @@ func (m *manager) RunProcess(queueName string) {
 	for {
 		select {
 		case payload := <-m.Connection(`memory`).Pop(queueName):
-			// recover(), error() 如果出错，并且有重试，重新放回队列
-
 			queueManager.GetProcess(`default`).Handle(payload)
-			//NewWorker(payload).Handle()
-		//case payload := <-m.Pop(queueName):
-		// 这块就是worker了
-		//job := queue.NewManager().Get(payload.Job)
-		//job.Handle(payload.Handle)
-		//data.job.Handle(data.data)
 		case <-time.After(time.Second * 10):
 			fmt.Println("超时")
 		}
 	}
 }
 
+// ---------------------------------------------- processor ---------------------------------------
+
+// 默认处理器
 func (p *processor) Handle(payload *Payload) {
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Println("error")
-			fmt.Printf("%#v",err)
+			if _, ok := err.(*Error); !ok {
+				panic(err)
+			}
+
+			// 设置error信息
+			err.(*Error).SetPayload(payload)
+
+			// 重试次数达到，则丢弃否则重新投入队列
+			if payload.attempt > payload.maxTries {
+				// panic(`达到最大值`)
+				fmt.Println(`队列失败`)
+			} else {
+				queueManager.Connection(`memory`).Push(payload.jobName, WithAttempt(payload.attempt+1), WithQueueName(payload.queueName), WithData(payload.data))
+				fmt.Println("执行", payload.attempt + 1)
+			}
+
 		}
 	}()
+
 	job := queueManager.GetJob(payload.jobName)
-	job.Handle(payload.data)
+	err := job.Handle(payload.data)
+	if err != nil {
+		fmt.Println("err")
+	}
+}
+
+// ---------------------------------------------- error ---------------------------------------
+
+func (e *Error) SetPayload(payload *Payload) {
+	e.payload = payload
+}
+
+func (e *Error) Payload() *Payload {
+	return e.payload
+}
+
+func (e *Error) Error() string {
+	return fmt.Sprintf("the queue[%s] execute job[%s] error, message: %s", e.payload.queueName, e.payload.jobName, e.Message)
 }
