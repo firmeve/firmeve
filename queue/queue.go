@@ -211,7 +211,7 @@ func (p *processor) Handle(payload *Payload) {
 	job := queueManager.GetJob(payload.jobName)
 	err := job.Handle(payload.data)
 	if err != nil {
-		fmt.Println("err")
+		panic(err)
 	}
 }
 
