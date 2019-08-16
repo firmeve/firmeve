@@ -5,15 +5,19 @@
 
 ### 注册事件
 ```go
-event := NewDispatcher()
-event.listen("eventName",func (params ...interface{}) interface{}{
+dispatcher := event.NewDispatcher()
+// or 
+f := NewFirmeve()
+dispatcher := f.Get(`dispatcher`).(*event.Dispatcher)
+
+dispatcher.listen("eventName", func (params ...interface{}) interface{}{
 	...
 })
 ```
 
 ### 触发事件
 ```go
-results := event.dispatch("eventName")
+results := dispatcher.dispatch("eventName")
 fmt.Println(results)
 ```
 

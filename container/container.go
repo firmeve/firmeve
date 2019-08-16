@@ -3,6 +3,7 @@ package container
 import (
 	"fmt"
 	"github.com/firmeve/firmeve/config"
+	"github.com/firmeve/firmeve/event"
 	"github.com/firmeve/firmeve/logging"
 	"github.com/firmeve/firmeve/utils"
 	"os"
@@ -396,6 +397,7 @@ func (f *Firmeve) bingingBaseInstance() {
 	firmeve.Bind(`firmeve`, f, WithBindShare(true))
 	firmeve.Bind(`config`, config.NewConfig(strings.Join([]string{f.bashPath, `config`}, `/`)), WithBindShare(true))
 	firmeve.Bind(`logger`, logging.NewLogger, WithBindShare(true))
+	firmeve.Bind(`dispatcher`, event.NewDispatcher, WithBindShare(true))
 }
 
 // Determine if the provider exists
