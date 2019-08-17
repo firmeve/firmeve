@@ -7,7 +7,8 @@ import (
 )
 
 type memory struct {
-	list map[string]chan *Payload
+	list      map[string]chan *Payload
+	LaterList map[string]chan *Payload
 }
 
 func NewMemory(config *config.Config) *memory {
@@ -34,5 +35,7 @@ func (m *memory) Pop(queueName string) <-chan *Payload {
 	return m.list[queueName]
 }
 
-func (m *memory) Later(delay time.Time, jobName string, options ...utils.OptionFunc) {
+func (m *memory) Delay(delay time.Time, jobName string, options ...utils.OptionFunc) {
+	options = append(options, WithDelay(delay))
+	m.Push(jobName, options...)
 }

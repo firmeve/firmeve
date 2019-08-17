@@ -12,7 +12,7 @@ type Queue interface {
 	// 入队
 	Push(jobName string, options ...utils.OptionFunc)
 	// 延时入队
-	Later(delay time.Time, jobName string, options ...utils.OptionFunc)
+	Delay(delay time.Time, jobName string, options ...utils.OptionFunc)
 	// 出队
 	Pop(queueName string) <-chan *Payload
 }
@@ -32,6 +32,9 @@ type option struct {
 	queueName string
 	data      interface{}
 	attempt   uint8
+	tries     uint8
+	timeout   time.Time
+	delay     time.Time
 }
 
 // 入队数据载荷
@@ -41,7 +44,7 @@ type Payload struct {
 	jobName       string
 	timeout       time.Time
 	delay         time.Time
-	maxTries      uint8
+	tries         uint8
 	attempt       uint8
 	data          interface{}
 }
@@ -85,6 +88,24 @@ func WithData(data interface{}) utils.OptionFunc {
 func WithAttempt(attempt uint8) utils.OptionFunc {
 	return func(utilOption utils.Option) {
 		utilOption.(*option).attempt = attempt
+	}
+}
+
+func WithDelay(delay time.Time) utils.OptionFunc {
+	return func(utilOption utils.Option) {
+		utilOption.(*option).delay = delay
+	}
+}
+
+func WithTimeout(timeout time.Time) utils.OptionFunc {
+	return func(utilOption utils.Option) {
+		utilOption.(*option).timeout = timeout
+	}
+}
+
+func WithTries(tries uint8) utils.OptionFunc {
+	return func(utilOption utils.Option) {
+		utilOption.(*option).tries = tries
 	}
 }
 
@@ -155,9 +176,9 @@ func createPayload(jobName string, options ...utils.OptionFunc) *Payload {
 		queueName:     option.queueName,
 		processorName: ``,
 		jobName:       jobName,
-		timeout:       time.Now(),
-		delay:         time.Now(),
-		maxTries:      3,
+		timeout:       option.timeout,
+		delay:         option.delay,
+		tries:         option.tries,
 		attempt:       option.attempt,
 		data:          option.data,
 	}
@@ -197,12 +218,12 @@ func (p *processor) Handle(payload *Payload) {
 			err.(*Error).SetPayload(payload)
 
 			// 重试次数达到，则丢弃否则重新投入队列
-			if payload.attempt > payload.maxTries {
+			if payload.attempt > payload.tries {
 				// panic(`达到最大值`)
 				fmt.Println(`队列失败`)
 			} else {
 				queueManager.Connection(`memory`).Push(payload.jobName, WithAttempt(payload.attempt+1), WithQueueName(payload.queueName), WithData(payload.data))
-				fmt.Println("执行", payload.attempt + 1)
+				fmt.Println("执行", payload.attempt+1)
 			}
 
 		}
