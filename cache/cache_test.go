@@ -132,21 +132,6 @@ func TestRepository_Forget(t *testing.T) {
 	wg.Wait()
 }
 
-func TestRepository_Flush(t *testing.T) {
-	redisRepository := redisRepository()
-
-	_ = redisRepository.Put("abc", "1", time.Now().Add(time.Hour))
-
-	err := redisRepository.Flush()
-	if err != nil {
-		t.Fail()
-	}
-
-	result := redisRepository.Has("abc")
-	if result {
-		t.Fail()
-	}
-}
 
 // RandString 生成随机字符串
 func randString(len int) string {
@@ -432,4 +417,21 @@ func TestManager_Driver_Error(t *testing.T) {
 	manager := NewManager(config)
 	_, err2 := manager.Driver(`redis2`)
 	assert.NotNil(t, err2)
+}
+
+
+func TestRepository_Flush(t *testing.T) {
+	redisRepository := redisRepository()
+
+	_ = redisRepository.Put("abc", "1", time.Now().Add(time.Hour))
+
+	err := redisRepository.Flush()
+	if err != nil {
+		t.Fail()
+	}
+
+	result := redisRepository.Has("abc")
+	if result {
+		t.Fail()
+	}
 }

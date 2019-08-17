@@ -170,22 +170,6 @@ func TestRepository_Add(t *testing.T) {
 	assert.Equal(t, "a", value.(string))
 }
 
-func TestRepository_Flush(t *testing.T) {
-	client := client()
-	cache := NewRepository(client, "redis_")
-	err := cache.Flush()
-	if err != nil {
-		t.Fail()
-	}
-
-	strings, err := client.Keys(`*`).Result()
-	if err != nil {
-		t.Fail()
-	}
-
-	assert.Equal(t, 0, len(strings))
-}
-
 func TestRepository_Forget(t *testing.T) {
 	cache := NewRepository(client(), "redis_")
 	expire := time.Now().Add(time.Second * 10)
@@ -322,4 +306,21 @@ func TestRepository_Forever(t *testing.T) {
 
 	num, err := strconv.Atoi(value.(string))
 	assert.Equal(t, 100, num)
+}
+
+
+func TestRepository_Flush(t *testing.T) {
+	client := client()
+	cache := NewRepository(client, "redis_")
+	err := cache.Flush()
+	if err != nil {
+		t.Fail()
+	}
+
+	strings, err := client.Keys(`*`).Result()
+	if err != nil {
+		t.Fail()
+	}
+
+	assert.Equal(t, 0, len(strings))
 }
