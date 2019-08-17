@@ -146,12 +146,13 @@ fmt.Printf("%#v", f.Resolve(NewPerson))
 现在，让我们修改下上面的`Person`
 ```go
 type Person struct {
-	name PersonName `inject:"PersonName"`
+	Name PersonName `inject:"PersonName"`
 	Age *PersonAge `inject:"PersonAge"`
+	age1 *PersonAge `inject:"PersonAge"`
 }
 ```
 然后我们使用`new`函数直接创建一个新的结构体指针
 ```go
 fmt.Printf("%#v", new(NewPerson))
 ```
-> 注意：此时 `Person`中的`name`字段并不是指针类型，所以`Firmeve`会自动忽略。
+> 注意：此时 `Person`中的`Name`字段并不是指针类型，而`age1`不符合`struct`的`tag`规范，所以`Firmeve`都会自动忽略。
