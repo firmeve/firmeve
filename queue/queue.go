@@ -14,7 +14,7 @@ type Queue interface {
 	// 延时入队
 	Delay(delay time.Time, jobName string, options ...utils.OptionFunc)
 	// 出队
-	Pop(queueName string) <-chan *Payload
+	Pop(queueName string) *Payload
 }
 
 // 实际队列业务处理者
@@ -33,7 +33,7 @@ type option struct {
 	data      interface{}
 	attempt   uint8
 	tries     uint8
-	timeout   time.Time
+	timeout   time.Duration
 	delay     time.Time
 }
 
@@ -42,7 +42,7 @@ type Payload struct {
 	processorName string
 	queueName     string
 	jobName       string
-	timeout       time.Time
+	timeout       time.Duration
 	delay         time.Time
 	tries         uint8
 	attempt       uint8
@@ -97,7 +97,7 @@ func WithDelay(delay time.Time) utils.OptionFunc {
 	}
 }
 
-func WithTimeout(timeout time.Time) utils.OptionFunc {
+func WithTimeout(timeout time.Duration) utils.OptionFunc {
 	return func(utilOption utils.Option) {
 		utilOption.(*option).timeout = timeout
 	}
@@ -170,6 +170,8 @@ func createPayload(jobName string, options ...utils.OptionFunc) *Payload {
 		queueName: `default`,
 		data:      nil,
 		attempt:   0,
+		delay:     time.Now(),
+		timeout:   time.Duration(5) * time.Second,
 	}, options...).(*option)
 
 	return &Payload{
@@ -195,12 +197,16 @@ func (m *manager) Run(queueName string) {
 
 func (m *manager) RunProcess(queueName string) {
 	for {
-		select {
-		case payload := <-m.Connection(`memory`).Pop(queueName):
+		payload := m.Connection(`memory`).Pop(queueName)
+		if payload != nil {
 			queueManager.GetProcess(`default`).Handle(payload)
-		case <-time.After(time.Second * 10):
-			fmt.Println("超时")
 		}
+		//select {
+		//case payload := <-m.Connection(`memory`).Pop(queueName):
+		//	queueManager.GetProcess(`default`).Handle(payload)
+		//case <-time.After(time.Second * 10):
+		//	fmt.Println("超时")
+		//}
 	}
 }
 
