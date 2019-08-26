@@ -30,15 +30,14 @@ import (
 type JobDemo struct {
 }
 
-func (jd *JobDemo) Handle(payload *Payload) error {
-	panic(&Error{Message: "Foo"})
+func (jd *JobDemo) Handle(payload *Payload) {
+	panic("error")
 	//panic(`abc`)
 	fmt.Println(payload.Data)
-	return nil
 }
-func (jd *JobDemo) Failed(err *Error) {
+func (jd *JobDemo) Failed(err *JobError) {
 	//panic(`abc`)
-	fmt.Println(err.Payload())
+	fmt.Println(err.GetPayload())
 }
 
 func TestQueue(t *testing.T) {

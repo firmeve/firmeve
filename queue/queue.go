@@ -24,8 +24,8 @@ type Queue interface {
 
 // 实际队列业务Job
 type Job interface {
-	Handle(payload *Payload) error
-	Failed(err *Error)
+	Handle(payload *Payload)
+	Failed(err *JobError)
 }
 
 // 队列处理器
@@ -71,9 +71,10 @@ type processor struct {
 }
 
 // Queue error
-type Error struct {
-	Message string
+type JobError struct {
+	message string
 	payload *Payload
+	err     error
 }
 
 var (
@@ -245,27 +246,37 @@ func (p *processor) Handle(connection Queue, payload *Payload) {
 	job := queueManager.GetJob(payload.Job)
 
 	defer func(job Job) {
-		if err := recover(); err != nil {
-			if _, ok := err.(*Error); !ok {
+		// 再次执行 recover 防止 job.Failed 出现panic
+		defer func() {
+			if err := recover(); err != nil {
 				panic(err)
 			}
+		}()
+
+		if err := recover(); err != nil {
+			var jobError *JobError
+			if v, ok := err.(*JobError); !ok {
+				jobError = NewJobError()
+				if v, ok := err.(error); ok {
+					jobError.SetError(v)
+				} else if v, ok := err.(string); ok {
+					jobError.SetMessage(v)
+				}
+			} else {
+				jobError = v
+			}
+
+			jobError.SetPayload(payload)
 
 			// 设置error信息
-			err.(*Error).SetPayload(payload)
-			job.Failed(err.(*Error))
+			job.Failed(jobError)
 
 			// 重试次数达到，则丢弃否则重新投入队列
 			if payload.Attempt < payload.Tries {
 				// 重新入队
 				payload.Attempt = payload.Attempt + 1
 				connection.PushRaw(payload)
-				panic(fmt.Sprintf("the job %s execute more than the specified number of times", payload.Job))
-			} else {
-
-				fmt.Println("执行", payload.Attempt+1)
 			}
-			// 保存error信息
-			fmt.Printf("%#v", err)
 		}
 	}(job)
 
@@ -278,22 +289,63 @@ func (p *processor) Handle(connection Queue, payload *Payload) {
 		panic(fmt.Sprintf("the job %s execute more than the specified number of times", payload.Job))
 	}
 
-	err := job.Handle(payload)
-	if err != nil {
-		panic(err)
-	}
+	job.Handle(payload)
 }
 
 // ---------------------------------------------- error ---------------------------------------
-
-func (e *Error) SetPayload(payload *Payload) {
-	e.payload = payload
+type errorOption struct {
+	message string
+	err     error
+	payload *Payload
 }
 
-func (e *Error) Payload() *Payload {
+//func WithJobErrorMessage(message string) utils.OptionFunc {
+//	return func(utilOption utils.Option) {
+//		utilOption.(*errorOption).message = message
+//	}
+//}
+
+func NewJobError(options ...utils.OptionFunc) *JobError {
+	option := utils.ApplyOption(&errorOption{
+		message: "",
+		err:     nil,
+		payload: nil,
+	}, options...).(*errorOption)
+
+	return &JobError{
+		message: option.message,
+		err:     option.err,
+		payload: option.payload,
+	}
+}
+
+func (e *JobError) SetMessage(message string) *JobError {
+	e.message = message
+	return e
+}
+
+func (e *JobError) SetPayload(payload *Payload) *JobError {
+	e.payload = payload
+	return e
+}
+
+func (e *JobError) SetError(err error) *JobError {
+	e.err = err
+	return e
+}
+
+func (e *JobError) GetMessage() string {
+	return e.message
+}
+
+func (e *JobError) GetError() error {
+	return e.err
+}
+
+func (e *JobError) GetPayload() *Payload {
 	return e.payload
 }
 
-func (e *Error) Error() string {
-	return fmt.Sprintf("the queue[%s] execute job[%s] error, message: %s", e.payload.Queue, e.payload.Job, e.Message)
+func (e *JobError) Error() string {
+	return fmt.Sprintf("the queue[%s] execute job[%s] error, message: %s", e.payload.Queue, e.payload.Job, e.message)
 }
