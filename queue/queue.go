@@ -10,43 +10,52 @@ import (
 
 type Queue interface {
 	// 入队
-	Push(jobName string, options ...utils.OptionFunc)
+	Push(job string, options ...utils.OptionFunc)
+
+	//
+	PushRaw(payload *Payload)
+
 	// 延时入队
-	Delay(delay time.Time, jobName string, options ...utils.OptionFunc)
+	Delay(delay time.Duration, job string, options ...utils.OptionFunc)
+
 	// 出队
-	Pop(queueName string) *Payload
+	Pop(queue string) *Payload
 }
 
-// 实际队列业务处理者
+// 实际队列业务Job
 type Job interface {
-	Handle(data interface{}) error
+	Handle(payload *Payload) error
+	Failed(err *Error)
 }
 
 // 队列处理器
 type Processor interface {
-	Handle(payload *Payload)
+	Handle(connection Queue, payload *Payload)
 }
 
 // 队列参数选项
 type option struct {
-	queueName string
+	queue     string
+	processor string
 	data      interface{}
 	attempt   uint8
 	tries     uint8
 	timeout   time.Duration
+	timeoutAt time.Time
 	delay     time.Time
 }
 
 // 入队数据载荷
 type Payload struct {
-	processorName string
-	queueName     string
-	jobName       string
-	timeout       time.Duration
-	delay         time.Time
-	tries         uint8
-	attempt       uint8
-	data          interface{}
+	Processor string
+	Queue     string
+	Job       string
+	Timeout   time.Duration
+	TimeoutAt time.Time
+	Delay     time.Time
+	Tries     uint8
+	Attempt   uint8
+	Data      interface{}
 }
 
 // 队列管理器
@@ -73,9 +82,15 @@ var (
 	mu           sync.Mutex
 )
 
-func WithQueueName(queueName string) utils.OptionFunc {
+func WithQueue(queue string) utils.OptionFunc {
 	return func(utilOption utils.Option) {
-		utilOption.(*option).queueName = queueName
+		utilOption.(*option).queue = queue
+	}
+}
+
+func WithProcessor(processor string) utils.OptionFunc {
+	return func(utilOption utils.Option) {
+		utilOption.(*option).processor = processor
 	}
 }
 
@@ -91,15 +106,16 @@ func WithAttempt(attempt uint8) utils.OptionFunc {
 	}
 }
 
-func WithDelay(delay time.Time) utils.OptionFunc {
+func WithDelay(delay time.Duration) utils.OptionFunc {
 	return func(utilOption utils.Option) {
-		utilOption.(*option).delay = delay
+		utilOption.(*option).delay = time.Now().Add(delay)
 	}
 }
 
 func WithTimeout(timeout time.Duration) utils.OptionFunc {
 	return func(utilOption utils.Option) {
 		utilOption.(*option).timeout = timeout
+		utilOption.(*option).timeoutAt = time.Now().Add(timeout)
 	}
 }
 
@@ -126,26 +142,31 @@ func NewManager(config *config.Config) *manager {
 	return queueManager
 }
 
+// Register handle job
 func (m *manager) RegisterJob(name string, job Job) {
 	mu.Lock()
 	m.jobs[name] = job
 	mu.Unlock()
 }
 
+// Get handle job
 func (m *manager) GetJob(name string) Job {
 	return m.jobs[name]
 }
 
+// Register handle Process
 func (m *manager) RegisterProcess(name string, processor Processor) {
 	mu.Lock()
 	m.processors[name] = processor
 	mu.Unlock()
 }
 
+// Get handle Process
 func (m *manager) GetProcess(name string) Processor {
 	return m.processors[name]
 }
 
+// Get a queue connection
 func (m *manager) Connection(name string) Queue {
 	mu.Lock()
 	if _, ok := m.connections[name]; !ok {
@@ -165,24 +186,28 @@ func factory(name string, config *config.Config) Queue {
 	}
 }
 
-func createPayload(jobName string, options ...utils.OptionFunc) *Payload {
+// Create a core payload
+func createPayload(job string, options ...utils.OptionFunc) *Payload {
 	option := utils.ApplyOption(&option{
-		queueName: `default`,
+		queue:     `default`,
+		processor: `default`,
 		data:      nil,
 		attempt:   0,
 		delay:     time.Now(),
-		timeout:   time.Duration(5) * time.Second,
+		timeout:   0,
+		timeoutAt: time.Now(),
 	}, options...).(*option)
 
 	return &Payload{
-		queueName:     option.queueName,
-		processorName: ``,
-		jobName:       jobName,
-		timeout:       option.timeout,
-		delay:         option.delay,
-		tries:         option.tries,
-		attempt:       option.attempt,
-		data:          option.data,
+		Queue:     option.queue,
+		Processor: option.processor,
+		Job:       job,
+		Timeout:   option.timeout,
+		TimeoutAt: option.timeoutAt,
+		Delay:     option.delay,
+		Tries:     option.tries,
+		Attempt:   option.attempt,
+		Data:      option.data,
 	}
 }
 
@@ -197,9 +222,12 @@ func (m *manager) Run(queueName string) {
 
 func (m *manager) RunProcess(queueName string) {
 	for {
-		payload := m.Connection(`memory`).Pop(queueName)
+		// 这里memory后面会用命令行控制
+		connection := m.Connection(`memory`)
+		payload := connection.Pop(queueName)
 		if payload != nil {
-			queueManager.GetProcess(`default`).Handle(payload)
+			// 这里default后面会用命令行控制
+			queueManager.GetProcess(`default`).Handle(connection, payload)
 		}
 		//select {
 		//case payload := <-m.Connection(`memory`).Pop(queueName):
@@ -213,8 +241,10 @@ func (m *manager) RunProcess(queueName string) {
 // ---------------------------------------------- processor ---------------------------------------
 
 // 默认处理器
-func (p *processor) Handle(payload *Payload) {
-	defer func() {
+func (p *processor) Handle(connection Queue, payload *Payload) {
+	job := queueManager.GetJob(payload.Job)
+
+	defer func(job Job) {
 		if err := recover(); err != nil {
 			if _, ok := err.(*Error); !ok {
 				panic(err)
@@ -222,21 +252,33 @@ func (p *processor) Handle(payload *Payload) {
 
 			// 设置error信息
 			err.(*Error).SetPayload(payload)
+			job.Failed(err.(*Error))
 
 			// 重试次数达到，则丢弃否则重新投入队列
-			if payload.attempt > payload.tries {
-				// panic(`达到最大值`)
-				fmt.Println(`队列失败`)
+			if payload.Attempt < payload.Tries {
+				// 重新入队
+				payload.Attempt = payload.Attempt + 1
+				connection.PushRaw(payload)
+				panic(fmt.Sprintf("the job %s execute more than the specified number of times", payload.Job))
 			} else {
-				queueManager.Connection(`memory`).Push(payload.jobName, WithAttempt(payload.attempt+1), WithQueueName(payload.queueName), WithData(payload.data))
-				fmt.Println("执行", payload.attempt+1)
+
+				fmt.Println("执行", payload.Attempt+1)
 			}
-
+			// 保存error信息
+			fmt.Printf("%#v", err)
 		}
-	}()
+	}(job)
 
-	job := queueManager.GetJob(payload.jobName)
-	err := job.Handle(payload.data)
+	// 判断是否超时
+	if payload != nil && time.Now().Sub(payload.TimeoutAt).Seconds() < 0 {
+		panic(fmt.Sprintf("the job %s timeout", payload.Job))
+	}
+	// 判断重试次数
+	if payload.Tries > 0 && payload.Attempt >= payload.Tries {
+		panic(fmt.Sprintf("the job %s execute more than the specified number of times", payload.Job))
+	}
+
+	err := job.Handle(payload)
 	if err != nil {
 		panic(err)
 	}
@@ -253,5 +295,5 @@ func (e *Error) Payload() *Payload {
 }
 
 func (e *Error) Error() string {
-	return fmt.Sprintf("the queue[%s] execute job[%s] error, message: %s", e.payload.queueName, e.payload.jobName, e.Message)
+	return fmt.Sprintf("the queue[%s] execute job[%s] error, message: %s", e.payload.Queue, e.payload.Job, e.Message)
 }

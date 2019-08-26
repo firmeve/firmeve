@@ -30,11 +30,15 @@ import (
 type JobDemo struct {
 }
 
-func (jd *JobDemo) Handle(data interface{}) error {
+func (jd *JobDemo) Handle(payload *Payload) error {
 	panic(&Error{Message: "Foo"})
 	//panic(`abc`)
-	fmt.Println(data)
+	fmt.Println(payload.Data)
 	return nil
+}
+func (jd *JobDemo) Failed(err *Error) {
+	//panic(`abc`)
+	fmt.Println(err.Payload())
 }
 
 func TestQueue(t *testing.T) {
@@ -46,7 +50,7 @@ func TestQueue(t *testing.T) {
 
 	go manager.Run(`default_queue`)
 
-	manager.Connection(`memory`).Push(`jobDemo`, WithQueueName(`default_queue`), WithData("abc"))
+	manager.Connection(`memory`).Push(`jobDemo`, WithQueue(`default_queue`), WithData("abc"))
 
 	time.Sleep(time.Second * 5)
 }
