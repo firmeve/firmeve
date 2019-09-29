@@ -91,7 +91,7 @@ func (f *Instance) Has(name string) bool {
 // Get a object from container
 func (f *Instance) Get(name string) interface{} {
 	if !f.Has(name) {
-		panic(`object that does not exist`)
+		panic(fmt.Errorf("object[%s] that does not exist", name))
 	}
 
 	return f.bindings[strings.ToLower(name)].resolvePrototype(f)
@@ -118,7 +118,7 @@ func (f *Instance) Bind(name string, prototype interface{}, options ...utils.Opt
 
 	// Coverage detection
 	if _, ok := f.bindings[bindingOption.name]; ok && !bindingOption.cover {
-		panic(`binding alias type already exists`)
+		panic(fmt.Errorf("binding alias type %s already exists", bindingOption.name))
 	}
 
 	// set binding item
@@ -141,7 +141,7 @@ func (f *Instance) Resolve(abstract interface{}, params ...interface{}) interfac
 				if name, ok := f.types[reflectType.In(i)]; ok {
 					newParams = append(newParams, reflect.ValueOf(f.Get(name)))
 				} else {
-					panic(`unable to find reflection parameter`)
+					panic(fmt.Errorf(`unable to find reflection parameter`))
 				}
 			}
 		}
@@ -152,7 +152,7 @@ func (f *Instance) Resolve(abstract interface{}, params ...interface{}) interfac
 		for _, result := range results {
 			resultInterface := result.Interface()
 			if err, ok := resultInterface.(error); ok && err != nil {
-				panic(err.Error())
+				panic(err)
 			}
 
 			resultsInterface = append(resultsInterface, resultInterface)
@@ -184,11 +184,13 @@ func (f *Instance) Resolve(abstract interface{}, params ...interface{}) interfac
 			// 最后取得修改值的地址的Interface类型返回
 			return f.parseStruct(reflectType.Elem(), reflect.ValueOf(abstract).Elem()).Addr().Interface()
 		}
-	} else if reflectType.Kind() == reflect.Struct {
+	} else if kind == reflect.Struct {
 		return f.parseStruct(reflectType, reflect.ValueOf(abstract)).Interface()
+	} else if kind == reflect.String {
+		return f.Get(abstract.(string))
 	}
 
-	panic(`unsupported type`)
+	panic(fmt.Errorf("unsupported type %#v", abstract))
 }
 
 // Remove a binding
@@ -320,7 +322,7 @@ func NewFirmeve() *Firmeve {
 
 	basePath, err := filepath.Abs(basePath)
 	if err != nil {
-		panic(err.Error())
+		panic(err)
 	}
 
 	once.Do(func() {
@@ -343,7 +345,7 @@ func GetFirmeve() *Firmeve {
 		return firmeve
 	}
 
-	panic(`firmeve not exists`)
+	panic(fmt.Errorf(`firmeve not exists`))
 }
 
 // Start all service providers at once
@@ -413,7 +415,7 @@ func (f *Firmeve) HasProvider(name string) bool {
 // If not found then panic
 func (f *Firmeve) getProvider(name string) ServiceProvider {
 	if !f.HasProvider(name) {
-		panic(fmt.Sprintf("the %s service provider not exists", name))
+		panic(fmt.Errorf("the %s service provider not exists", name))
 	}
 
 	return f.serviceProviders[name]
