@@ -14,20 +14,13 @@ Those who have achieved nothing can always tell you that you can't make a big de
 [![GitHub license](https://img.shields.io/github/license/firmeve/firmeve.svg)](https://github.com/firmeve/firmeve/blob/master/LICENSE)
 
 ## Feature list
-- **Application**
-    - [x] [Ioc](./docs/zh-CN/ioc.md)
+- **Core**
+    - [x] [Ioc](./docs/zh-CN/container.md)
+    - [x] [~~Application~~](./docs/zh-CN/firmeve.md)
     - [x] [Config](./docs/zh-CN/config.md)
-    - [x] [ServiceProvider](./docs/zh-CN/service-provider.md)
+    - [x] [Provider](./docs/zh-CN/provider.md)
     - [x] [Event](./docs/zh-CN/event.md)
-    - [ ] [Logging](./docs/zh-CN/logging.md)
-- **Cache**
-    - [ ] Redis
-    - [ ] File
-- **Server**
-    - [ ] Http
-    - [ ] Websocket
-    - [ ] Socket
-    - [ ] Rpc
-- **Commands**
-- **Queue**
-    - [ ] Chan(Memory)
+    - [ ] [Logger](./docs/zh-CN/logger.md)
+- **Base**
+    - [ ] [Cache](./docs/zh-CN/cache.md)
+- **Extension**
