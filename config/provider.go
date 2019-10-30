@@ -24,6 +24,6 @@ func (p *Provider) Boot() {
 }
 
 func init() {
-	firmeve := firmeve.NewFirmeve()
+	firmeve := firmeve.New()
 	firmeve.Register(`config`, firmeve.Resolve(new(Provider)).(*Provider))
 }

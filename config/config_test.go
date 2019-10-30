@@ -184,7 +184,7 @@ func TestGetEnv(t *testing.T) {
 }
 
 func TestProvider_Register(t *testing.T) {
-	firmeve := firmeve2.NewFirmeve()
+	firmeve := firmeve2.New()
 	firmeve.Boot()
 	assert.Equal(t, true, firmeve.HasProvider("config"))
 	assert.Equal(t,true,firmeve.Has(`config`))

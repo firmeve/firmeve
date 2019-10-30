@@ -7,7 +7,7 @@
 ```go
 dispatcher := event.NewDispatcher()
 // or 
-f := NewFirmeve()
+f := New()
 dispatcher := f.Get(`dispatcher`).(*event.Dispatcher)
 
 dispatcher.listen("eventName", func (params ...interface{}) interface{}{

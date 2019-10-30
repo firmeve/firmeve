@@ -371,7 +371,7 @@ func TestRepository_Flush(t *testing.T) {
 
 
 func TestProvider_Register(t *testing.T) {
-	firmeve := firmeve2.NewFirmeve()
+	firmeve := firmeve2.New()
 	firmeve.Boot()
 	assert.Equal(t, true, firmeve.HasProvider("cache"))
 	assert.Equal(t,true,firmeve.Has(`cache`))

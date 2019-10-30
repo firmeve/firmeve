@@ -31,7 +31,7 @@ var (
 )
 
 // Create a new firmeve container
-func NewFirmeve() *Firmeve {
+func New() *Firmeve {
 	if firmeve != nil {
 		return firmeve
 	}

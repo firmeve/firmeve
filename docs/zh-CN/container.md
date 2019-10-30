@@ -4,7 +4,7 @@ Ioc
 ## 对象绑定
 
 ```go
-f := NewFirmeve()
+f := New()
 ```
 
 ### 标量绑定
