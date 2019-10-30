@@ -24,13 +24,6 @@ replace (
 )
 
 require (
-	github.com/go-redis/redis v6.15.2+incompatible
-	github.com/gorilla/mux v1.7.3
-	github.com/onsi/ginkgo v1.8.0 // indirect
-	github.com/onsi/gomega v1.5.0 // indirect
-	github.com/spf13/viper v1.4.1-0.20190729163700-33bf76add3b7
+	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/stretchr/testify v1.3.0
-	github.com/subosito/gotenv v1.1.1 // indirect
-	go.uber.org/zap v1.10.0
-	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )

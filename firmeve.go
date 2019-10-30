@@ -44,7 +44,7 @@ func NewFirmeve() *Firmeve {
 
 	firmeveOnce.Do(func() {
 		firmeve = &Firmeve{
-			bashPath:         nil,
+			bashPath:         "",
 			serviceProviders: make(map[string]ServiceProvider),
 			booted:           false,
 			Container:        container.NewContainer(),
