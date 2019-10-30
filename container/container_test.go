@@ -15,19 +15,19 @@ type message string
 func TestContainer_Resolve_String_Alias_Type(t *testing.T) {
 	i := NewContainer()
 
-	i.Bind("message", message("message bar"))
-	i.Bind("string", "string value")
+	i.Bind(t.Name() + "message", message("message bar"))
+	i.Bind(t.Name() + "string", "string value")
 
 	//assert.IsType(t,message(""),f.Get("message"))
-	z := i.Get("message").(message)
+	z := i.Get(t.Name() + "message").(message)
 	assert.Equal(t, "message bar", fmt.Sprintf("%s", z))
-	assert.Equal(t, "string value", i.Get("string").(string))
+	assert.Equal(t, "string value", i.Get(t.Name() + "string").(string))
 }
 
 func TestBaseContainer_Has(t *testing.T) {
 	i := NewContainer()
-	i.Bind("string", "string value")
-	assert.Equal(t, true, i.Has("string"))
+	i.Bind(t.Name() + "string", "string value")
+	assert.Equal(t, true, i.Has(t.Name() + "string"))
 }
 
 type IntAlias int32
