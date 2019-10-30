@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-type ServiceProvider interface {
+type Provider interface {
 	Register()
 	Boot()
 }
@@ -17,8 +17,8 @@ type Firmeve struct {
 
 	bashPath string
 	//container        *Instance
-	serviceProviders map[string]ServiceProvider
-	booted           bool
+	providers map[string]Provider
+	booted    bool
 }
 
 type firmeveOption struct {
@@ -26,7 +26,7 @@ type firmeveOption struct {
 }
 
 var (
-	firmeve *Firmeve
+	firmeve     *Firmeve
 	firmeveOnce sync.Once
 )
 
@@ -44,12 +44,14 @@ func NewFirmeve() *Firmeve {
 
 	firmeveOnce.Do(func() {
 		firmeve = &Firmeve{
-			bashPath:         "",
-			serviceProviders: make(map[string]ServiceProvider),
-			booted:           false,
-			Container:        container.NewContainer(),
+			bashPath:  "",
+			providers: make(map[string]Provider),
+			booted:    false,
+			Container: container.NewContainer(),
 		}
 
+		// binding self
+		firmeve.Bind("firmeve", firmeve)
 		//firmeve.bingingBaseInstance()
 	})
 
@@ -62,7 +64,7 @@ func (f *Firmeve) Boot() {
 		return
 	}
 
-	for _, provider := range f.serviceProviders {
+	for _, provider := range f.providers {
 		provider.Boot()
 	}
 
@@ -77,7 +79,7 @@ func WithRegisterForce(force bool) support.Option {
 }
 
 // Register a service provider
-func (f *Firmeve) Register(name string, provider ServiceProvider, options ...support.Option) {
+func (f *Firmeve) Register(name string, provider Provider, options ...support.Option) {
 	// Parameter analysis
 	firmeveOption := support.ApplyOption(newFirmeveOption(), options...).(*firmeveOption)
 
@@ -94,11 +96,11 @@ func (f *Firmeve) Register(name string, provider ServiceProvider, options ...sup
 	}
 }
 
-// Add a service provider to serviceProviders map
-func (f *Firmeve) registerProvider(name string, provider ServiceProvider) {
+// Add a service provider to providers map
+func (f *Firmeve) registerProvider(name string, provider Provider) {
 	var mutex sync.Mutex
 	mutex.Lock()
-	f.serviceProviders[name] = provider
+	f.providers[name] = provider
 	mutex.Unlock()
 }
 
@@ -113,7 +115,7 @@ func (f *Firmeve) registerProvider(name string, provider ServiceProvider) {
 
 // Determine if the provider exists
 func (f *Firmeve) HasProvider(name string) bool {
-	if _, ok := f.serviceProviders[name]; ok {
+	if _, ok := f.providers[name]; ok {
 		return ok
 	}
 
@@ -122,12 +124,12 @@ func (f *Firmeve) HasProvider(name string) bool {
 
 // Get a if the provider exists
 // If not found then panic
-func (f *Firmeve) GetProvider(name string) ServiceProvider {
+func (f *Firmeve) GetProvider(name string) Provider {
 	if !f.HasProvider(name) {
 		panic(fmt.Errorf("the %s service provider not exists", name))
 	}
 
-	return f.serviceProviders[name]
+	return f.providers[name]
 }
 
 // Get application base path
