@@ -10,7 +10,7 @@ Those who have achieved nothing can always tell you that you can't make a big de
 
 
 [![Build Status](https://www.travis-ci.org/firmeve/firmeve.svg?branch=master)](https://www.travis-ci.org/firmeve/firmeve)
-[![codecov](https://codecov.io/gh/firmeve/firmeve/branch/master/graph/badge.svg)](https://codecov.io/gh/firmeve/firmeve)
+[![codecov](https://codecov.io/gh/firmeve/firmeve/branch/develop/graph/badge.svg)](https://codecov.io/gh/firmeve/firmeve)
 [![GitHub license](https://img.shields.io/github/license/firmeve/firmeve.svg)](https://github.com/firmeve/firmeve/blob/master/LICENSE)
 
 ## Feature list
