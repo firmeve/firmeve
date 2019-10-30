@@ -59,7 +59,7 @@ var (
 	}
 )
 
-func NewLogger(config *Config) *Logger {
+func New(config *Config) *Logger {
 	if logger != nil {
 		return logger
 	}
@@ -74,7 +74,7 @@ func NewLogger(config *Config) *Logger {
 	return logger
 }
 
-func DefaultLogger() *Logger {
+func Default() *Logger {
 	config := &Config{
 		Current: `console`,
 		Channels: ConfigChannelType{
@@ -92,7 +92,7 @@ func DefaultLogger() *Logger {
 		},
 	}
 
-	return NewLogger(config)
+	return New(config)
 }
 
 func (l *Logger) Config(config *Config) *Logger {

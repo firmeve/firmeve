@@ -15,7 +15,7 @@ func listenATwo(params ...interface{}) interface{} {
 }
 
 func TestBaseDispatcher(t *testing.T) {
-	dispatch := NewDispatcher()
+	dispatch := New()
 	dispatch.listen("a", listenAOne)
 	dispatch.listen("a", listenATwo)
 
@@ -35,7 +35,7 @@ func listenBTwo(params ...interface{}) interface{} {
 }
 
 func TestFalseDispatcher(t *testing.T)  {
-	dispatch := NewDispatcher()
+	dispatch := New()
 	dispatch.listen("b", listenBOne)
 	dispatch.listen("b", listenBTwo)
 
@@ -46,7 +46,7 @@ func TestFalseDispatcher(t *testing.T)  {
 
 func TestNamePanic(t *testing.T)  {
 	assert.Panics(t, func() {
-		dispatch := NewDispatcher()
+		dispatch := New()
 		dispatch.dispatch("c", listenBOne)
 	},`the event not exists`)
 }

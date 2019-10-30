@@ -12,7 +12,7 @@ type Provider struct {
 
 func (p *Provider) Register() {
 	//@todo 这里需要引入config
-	p.Firmeve.Bind(`logger`, DefaultLogger(), container.WithShare(true))
+	p.Firmeve.Bind(`logger`, Default(), container.WithShare(true))
 }
 
 func (p *Provider) Boot() {

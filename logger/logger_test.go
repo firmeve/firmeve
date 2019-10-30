@@ -6,8 +6,8 @@ import (
 	"testing"
 )
 
-func TestDefaultLogger(t *testing.T) {
-	logger := DefaultLogger()
+func TestDefault(t *testing.T) {
+	logger := Default()
 	logger.Debug("Debug")
 	logger.Info("Info")
 	logger.Error("Error")
@@ -17,11 +17,11 @@ func TestDefaultLogger(t *testing.T) {
 }
 
 func TestLogger_Channel(t *testing.T) {
-	DefaultLogger().Channel(`file`).Debug("Debug")
+	Default().Channel(`file`).Debug("Debug")
 }
 
 func TestLogger_Logger_Config(t *testing.T) {
-	logger := DefaultLogger().Config(&Config{
+	logger := Default().Config(&Config{
 		Current: `stack`,
 		Channels: ConfigChannelType{
 			`stack`: []string{`file`, `console`},
@@ -47,7 +47,7 @@ func TestLogger_Logger_Config(t *testing.T) {
 }
 
 func TestLogger_File(t *testing.T) {
-	logger := DefaultLogger().Config(&Config{
+	logger := Default().Config(&Config{
 		Current: `file`,
 		Channels: ConfigChannelType{
 			`stack`: []string{`file`, `console`},

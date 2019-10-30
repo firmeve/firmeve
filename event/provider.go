@@ -11,7 +11,7 @@ type Provider struct {
 }
 
 func (p *Provider) Register() {
-	p.Firmeve.Bind(`event`, NewDispatcher(), container.WithShare(true))
+	p.Firmeve.Bind(`event`, New(), container.WithShare(true))
 }
 
 func (p *Provider) Boot() {
