@@ -34,7 +34,7 @@ type Config struct {
 }
 
 // Create a new config instance
-func NewConfig(directory string) *Config {
+func New(directory string) *Config {
 	// singleton
 	if config != nil {
 		return config
@@ -65,13 +65,13 @@ func NewConfig(directory string) *Config {
 	return config
 }
 
-func GetConfig() *Config {
+func Get() *Config {
 	// singleton
 	if config != nil {
 		return config
 	}
 
-	panic(`config instance not exists`)
+	panic(fmt.Errorf(`config instance not exists`))
 }
 
 //---------------------- config ------------------------
@@ -85,7 +85,7 @@ func (c *Config) Item(item string) *Config {
 		return c
 	}
 
-	panic(fmt.Sprintf(`the config %s not exists`, item))
+	panic(fmt.Errorf(`the config %s not exists`, item))
 }
 
 // Get the value of the specified key

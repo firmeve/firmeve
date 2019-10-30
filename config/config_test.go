@@ -15,21 +15,14 @@ var (
 	wg        sync.WaitGroup
 )
 
-func TestGetConfig(t *testing.T) {
-	assert.Panics(t, func() {
-		GetConfig()
-	}, "config instance")
-	config = nil
-}
+func TestNew(t *testing.T) {
 
-func TestNewConfig(t *testing.T) {
-
-	config := NewConfig(directory)
+	config := New(directory)
 
 	wg.Add(1000)
 	for i := 0; i < 1000; i++ {
 		go func(directory string) {
-			NewConfig(directory)
+			New(directory)
 			wg.Done()
 		}(directory)
 	}
@@ -37,14 +30,15 @@ func TestNewConfig(t *testing.T) {
 	wg.Wait()
 
 	// 单例测试
-	config2 := NewConfig(directory)
+	config2 := New(directory)
 
 	assert.Equal(t, config, config2)
 	config = nil
 }
 
+
 func TestConfig_Set(t *testing.T) {
-	config := NewConfig(directory)
+	config := New(directory)
 
 	config.Item("app").Set("abc", "def")
 	fmt.Printf("%#v", config)
@@ -70,7 +64,7 @@ func TestConfig_Set(t *testing.T) {
 			}, 4)
 			copy(testn, tests)
 
-			config1 := NewConfig(directory)
+			config1 := New(directory)
 			fmt.Printf("in,%p\n", config1)
 			for _, test := range testn {
 				config1.Item(test.File).Set(test.Key, test.Value)
@@ -84,90 +78,90 @@ func TestConfig_Set(t *testing.T) {
 }
 
 func TestConfig_Get(t *testing.T) {
-	NewConfig(directory)
+	New(directory)
 
-	value := GetConfig().Item("app").Get("def").(int)
+	value := Get().Item("app").Get("def").(int)
 	assert.Equal(t, 123, value)
 
-	GetConfig().Item("app").SetDefault("abcdef", "def")
+	Get().Item("app").SetDefault("abcdef", "def")
 
-	value1 := GetConfig().Item("app").Get("abcdef").(string)
+	value1 := Get().Item("app").Get("abcdef").(string)
 	assert.Equal(t, "def", value1)
 }
 
 func TestConfig_Load(t *testing.T) {
-	NewConfig(directory)
+	New(directory)
 	assert.Panics(t, func() {
-		GetConfig().Load("abc.yaml")
+		Get().Load("abc.yaml")
 	}, "open yaml")
 }
 
 func TestConfig_Item(t *testing.T) {
-	NewConfig(directory)
+	New(directory)
 	assert.Panics(t, func() {
-		GetConfig().Item("def").Load("abc.yaml")
+		Get().Item("def").Load("abc.yaml")
 	}, "open yaml")
 }
 
 func TestConfig_GetBool(t *testing.T) {
-	NewConfig(directory).Item("app").SetDefault(t.Name()+"bool", true)
-	assert.Equal(t, true, GetConfig().Item(`app`).GetBool(t.Name()+`bool`))
+	New(directory).Item("app").SetDefault(t.Name()+"bool", true)
+	assert.Equal(t, true, Get().Item(`app`).GetBool(t.Name()+`bool`))
 }
 
 func TestConfig_GetInt(t *testing.T) {
-	NewConfig(directory).Item("app").SetDefault(t.Name(), 200)
-	assert.Equal(t, 200, GetConfig().Item(`app`).GetInt(t.Name()))
+	New(directory).Item("app").SetDefault(t.Name(), 200)
+	assert.Equal(t, 200, Get().Item(`app`).GetInt(t.Name()))
 }
 
 func TestConfig_GetString(t *testing.T) {
-	NewConfig(directory).Item("app").SetDefault(t.Name(), "abc")
-	assert.Equal(t, "abc", GetConfig().Item(`app`).GetString(t.Name()))
+	New(directory).Item("app").SetDefault(t.Name(), "abc")
+	assert.Equal(t, "abc", Get().Item(`app`).GetString(t.Name()))
 }
 
 func TestConfig_GetFloat64(t *testing.T) {
-	NewConfig(directory).Item("app").SetDefault(t.Name(), 20.02)
-	assert.Equal(t, 20.02, GetConfig().Item(`app`).GetFloat64(t.Name()))
+	New(directory).Item("app").SetDefault(t.Name(), 20.02)
+	assert.Equal(t, 20.02, Get().Item(`app`).GetFloat64(t.Name()))
 }
 
 func TestConfig_GetIntSlice(t *testing.T) {
 	value := []int{1, 2, 3}
-	NewConfig(directory).Item("app").SetDefault(t.Name(), value)
-	assert.Equal(t, value, GetConfig().Item(`app`).GetIntSlice(t.Name()))
+	New(directory).Item("app").SetDefault(t.Name(), value)
+	assert.Equal(t, value, Get().Item(`app`).GetIntSlice(t.Name()))
 }
 
 func TestConfig_GetStringSlice(t *testing.T) {
 	value := []string{"a", "b", "c"}
-	NewConfig(directory).Item("app").SetDefault(t.Name(), value)
-	assert.Equal(t, value, GetConfig().Item(`app`).GetStringSlice(t.Name()))
+	New(directory).Item("app").SetDefault(t.Name(), value)
+	assert.Equal(t, value, Get().Item(`app`).GetStringSlice(t.Name()))
 }
 
 func TestConfig_GetStringMap(t *testing.T) {
 	value := map[string]interface{}{"a": "a", "b": 1, "c": 2.02}
-	NewConfig(directory).Item("app").SetDefault(t.Name(), value)
-	assert.Equal(t, value, GetConfig().Item(`app`).GetStringMap(t.Name()))
+	New(directory).Item("app").SetDefault(t.Name(), value)
+	assert.Equal(t, value, Get().Item(`app`).GetStringMap(t.Name()))
 }
 
 func TestConfig_GetStringMapString(t *testing.T) {
 	value := map[string]string{"a": "a", "b": "b", "c": "c"}
-	NewConfig(directory).Item("app").SetDefault(t.Name(), value)
-	assert.Equal(t, value, GetConfig().Item(`app`).GetStringMapString(t.Name()))
+	New(directory).Item("app").SetDefault(t.Name(), value)
+	assert.Equal(t, value, Get().Item(`app`).GetStringMapString(t.Name()))
 }
 
 func TestConfig_GetTime(t *testing.T) {
 	value := time.Now()
-	NewConfig(directory).Item("app").SetDefault(t.Name(), value)
-	assert.Equal(t, value, GetConfig().Item(`app`).GetTime(t.Name()))
+	New(directory).Item("app").SetDefault(t.Name(), value)
+	assert.Equal(t, value, Get().Item(`app`).GetTime(t.Name()))
 }
 
 func TestConfig_GetDuration(t *testing.T) {
 	value := time.Second
-	NewConfig(directory).Item("app").SetDefault(t.Name(), value)
-	assert.Equal(t, value, GetConfig().Item(`app`).GetDuration(t.Name()))
+	New(directory).Item("app").SetDefault(t.Name(), value)
+	assert.Equal(t, value, Get().Item(`app`).GetDuration(t.Name()))
 }
 
 func TestConfig_Exists(t *testing.T) {
-	NewConfig(directory).Item("app").SetDefault(t.Name(), "abc")
-	assert.Equal(t, true, GetConfig().Item(`app`).Exists(t.Name()))
+	New(directory).Item("app").SetDefault(t.Name(), "abc")
+	assert.Equal(t, true, Get().Item(`app`).Exists(t.Name()))
 }
 
 //func TestSetEnv(t *testing.T) {

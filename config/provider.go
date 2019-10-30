@@ -16,7 +16,7 @@ func (p *Provider) Register() {
 	if path == "" {
 		path = "../testdata/config"
 	}
-	p.Firmeve.Bind(`config`, NewConfig(path), container.WithShare(true))
+	p.Firmeve.Bind(`config`, New(path), container.WithShare(true))
 }
 
 func (p *Provider) Boot() {
