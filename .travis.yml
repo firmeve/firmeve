@@ -31,7 +31,7 @@ install:
 #  - echo `pwd`
 
 script:
-  - go vet -atomic -asmdecl ./...
+#  - go vet -atomic -asmdecl ./...
 #  - go test -v -race -count=1 -covermode=atomic -coverprofile=coverage.out ./...
 #  - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 
@@ -39,7 +39,7 @@ script:
 #  - $GOPATH/bin/goveralls -service=travis-ci
 #  - go test -v -race -count=1 ./...
 
-  - go test -race -count=1 -coverprofile=coverage.txt -covermode=atomic
+  - go test -race -count=1 -coverprofile=coverage.txt -covermode=atomic ./...
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
