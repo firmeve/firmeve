@@ -21,7 +21,7 @@ func TestLogger_Channel(t *testing.T) {
 }
 
 func TestLogger_Logger_Config(t *testing.T) {
-	logger := Default().Config(&Config{
+	logger := New(&Config{
 		Current: `stack`,
 		Channels: ConfigChannelType{
 			`stack`: []string{`file`, `console`},
@@ -47,7 +47,7 @@ func TestLogger_Logger_Config(t *testing.T) {
 }
 
 func TestLogger_File(t *testing.T) {
-	logger := Default().Config(&Config{
+	logger := New(&Config{
 		Current: `file`,
 		Channels: ConfigChannelType{
 			`stack`: []string{`file`, `console`},
@@ -68,7 +68,7 @@ func TestLogger_File(t *testing.T) {
 
 
 func TestProvider_Register(t *testing.T) {
-	firmeve := firmeve2.New()
+	firmeve := firmeve2.Instance()
 	firmeve.Boot()
 	assert.Equal(t, true, firmeve.HasProvider("logger"))
 	assert.Equal(t,true,firmeve.Has(`logger`))

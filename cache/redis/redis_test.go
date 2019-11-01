@@ -25,19 +25,13 @@ func randString(len int) string {
 func client() *redis.Client {
 	addr := os.Getenv(`REDIS_HOST`)
 	if addr == "" {
-		addr = "192.168.1.107"
+		addr = "127.0.0.1"
 	}
 
 	return redis.NewClient(&redis.Options{
 		Addr: addr + ":6379",
 		DB:   0,
 	})
-}
-
-func TestNew(t *testing.T) {
-	cache1 := New(client(), "redis_")
-	cache2 := New(client(), "redis_")
-	assert.Equal(t, cache1, cache2)
 }
 
 func TestRepository_Put_String(t *testing.T) {

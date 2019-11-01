@@ -13,35 +13,21 @@ type ListenDispatcher interface {
 	Dispatch(name string, params ...interface{}) []interface{}
 }
 
-type Event struct {
+type event struct {
 	listeners map[string]listenFuncs
 }
 
 var (
-	instance ListenDispatcher
-	once  sync.Once
-	mutex    sync.Mutex
+	mutex sync.Mutex
 )
 
 func New() ListenDispatcher {
-	return &Event{
+	return &event{
 		listeners: make(map[string]listenFuncs, 0),
 	}
 }
 
-func Instance() ListenDispatcher {
-	if instance != nil {
-		return instance
-	}
-
-	once.Do(func() {
-		instance = New()
-	})
-
-	return instance
-}
-
-func (e *Event) Listen(name string, df listenFunc) {
+func (e *event) Listen(name string, df listenFunc) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	if _, ok := e.listeners[name]; !ok {
@@ -51,7 +37,7 @@ func (e *Event) Listen(name string, df listenFunc) {
 	e.listeners[name] = append(e.listeners[name], df)
 }
 
-func (e *Event) Dispatch(name string, params ...interface{}) []interface{} {
+func (e *event) Dispatch(name string, params ...interface{}) []interface{} {
 	var listeners listenFuncs
 	var ok bool
 	if listeners, ok = e.listeners[name]; !ok {

@@ -3,115 +3,65 @@ package cache
 import (
 	"fmt"
 	firmeve2 "github.com/firmeve/firmeve"
-	"github.com/firmeve/firmeve/cache/redis"
-	"github.com/firmeve/firmeve/event"
-	goRedis "github.com/go-redis/redis"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
-	"os"
 	"strconv"
-	"sync"
 	"testing"
 	"time"
 )
 
-var wg sync.WaitGroup
-
-func TestNewRepository(t *testing.T) {
-	addr := os.Getenv(`REDIS_HOST`)
-	if addr == "" {
-		addr = "192.168.1.107"
-	}
-
-	redisStore := redis.New(goRedis.NewClient(&goRedis.Options{
-		Addr: addr + ":6379",
-		DB:   0,
-	}), "redis")
-
-	repository := NewRepository(redisStore)
-
-	assert.IsType(t, repository, &Repository{})
-	assert.Implements(t, new(Cacheable), repository)
-	assert.Implements(t, new(Serialization), repository)
-}
-
 func TestRepository_Get(t *testing.T) {
 
-	redisRepository := redisRepository()
-	wg.Add(1000)
-	for i := 0; i < 1000; i++ {
-		go func(i int) {
+	cache := Default()
 
-			key := randString(30) + strconv.Itoa(i)
+	key := randString(30)
 
-			value, err := redisRepository.GetDefault(key, "abc")
-			assert.Nil(t, err)
+	value, err := cache.GetDefault(key, "abc")
+	assert.Nil(t, err)
 
-			assert.Equal(t, "abc", value.(string))
+	assert.Equal(t, "abc", value.(string))
 
-			err = redisRepository.Put(key, "def", time.Now().Add(time.Second*50))
-			assert.Nil(t, err)
+	err = cache.Put(key, "def", time.Now().Add(time.Second*50))
+	assert.Nil(t, err)
 
-			value, err = redisRepository.GetDefault(key, "abc")
-			assert.Nil(t, err)
+	value, err = cache.GetDefault(key, "abc")
+	assert.Nil(t, err)
 
-			assert.Equal(t, "def", value.(string))
-
-			wg.Done()
-		}(i)
-	}
-	wg.Wait()
+	assert.Equal(t, "def", value.(string))
 }
 
 func TestRepository_Pull_Default(t *testing.T) {
 
-	redisRepository := redisRepository()
+	cache := Default()
 
-	wg.Add(1000)
-	for i := 0; i < 1000; i++ {
-		go func(i int) {
-			key := t.Name() + randString(30) + strconv.Itoa(i)
+	key := t.Name() + randString(30)
 
-			err := redisRepository.Put(key, "def", time.Now().Add(time.Second*150))
-			assert.Nil(t, err)
+	err := cache.Put(key, "def", time.Now().Add(time.Second*150))
+	assert.Nil(t, err)
 
-			value1, err := redisRepository.PullDefault(key, "def1")
-			assert.Equal(t, "def", value1.(string))
+	value1, err := cache.PullDefault(key, "def1")
+	assert.Equal(t, "def", value1.(string))
 
-			value2, err := redisRepository.PullDefault(key, "abc")
-			assert.Equal(t, "abc", value2.(string))
+	value2, err := cache.PullDefault(key, "abc")
+	assert.Equal(t, "abc", value2.(string))
 
-			value3, err := redisRepository.PullDefault(t.Name() + randString(20), "abcd")
-			assert.Equal(t, "abcd", value3.(string))
-
-			wg.Done()
-		}(i)
-	}
-	wg.Wait()
-
+	value3, err := cache.PullDefault(t.Name() + randString(20), "abcd")
+	assert.Equal(t, "abcd", value3.(string))
 }
 
 func TestRepository_Forget(t *testing.T) {
-	redisRepository := redisRepository()
+	cache := Default()
 	expire := time.Now().Add(time.Second * 10)
 
-	wg.Add(1000)
-	for i := 0; i < 1000; i++ {
-		go func(i int) {
-			key := randString(30) + strconv.Itoa(i)
+	key := randString(30)
 
-			err := redisRepository.Add(key, "a", expire)
-			assert.Nil(t, err)
+	err := cache.Add(key, "a", expire)
+	assert.Nil(t, err)
 
-			err = redisRepository.Forget(key)
-			assert.Nil(t, err)
+	err = cache.Forget(key)
+	assert.Nil(t, err)
 
-			assert.Equal(t, false, redisRepository.Has(key))
-
-			wg.Done()
-		}(i)
-	}
-	wg.Wait()
+	assert.Equal(t, false, cache.Has(key))
 }
 
 
@@ -126,19 +76,6 @@ func randString(len int) string {
 	return string(bytes)
 }
 
-func redisRepository() *Repository {
-	addr := os.Getenv(`REDIS_HOST`)
-	if addr == "" {
-		addr = "192.168.1.107"
-	}
-
-	redisStore := redis.New(goRedis.NewClient(&goRedis.Options{
-		Addr: addr + ":6379",
-		DB:   0,
-	}), "redis")
-	return NewRepository(redisStore)
-}
-
 type EncodeTest struct {
 	Name string `json:"name"`
 	Age  int    `json:"age"`
@@ -146,33 +83,33 @@ type EncodeTest struct {
 
 func TestRepository_AddEncode(t *testing.T) {
 	test := &EncodeTest{"James", 10}
-	redisRepository := redisRepository()
+	cache := Default()
 	key := randString(30)
-	err := redisRepository.AddEncode(key, test, time.Now().Add(time.Hour))
+	err := cache.AddEncode(key, test, time.Now().Add(time.Hour))
 	if err != nil {
-		fmt.Printf("%s\n", err.Error())
+		fmt.Errorf("%s\n", err.Error())
 		t.Fail()
 	}
 }
 
 func TestRepository_PutEncode(t *testing.T) {
 	test := &EncodeTest{"James", 10}
-	redisRepository := redisRepository()
+	cache := Default()
 	key := randString(30)
-	err := redisRepository.PutEncode(key, test, time.Now().Add(time.Hour))
+	err := cache.PutEncode(key, test, time.Now().Add(time.Hour))
 	if err != nil {
-		fmt.Printf("%s\n", err.Error())
+		fmt.Errorf("%s\n", err.Error())
 		t.Fail()
 	}
 }
 
 func TestRepository_ForeverEncode(t *testing.T) {
 	test := &EncodeTest{"James", 10}
-	redisRepository := redisRepository()
+	cache := Default()
 	key := randString(30)
-	err := redisRepository.ForeverEncode(key, test)
+	err := cache.ForeverEncode(key, test)
 	if err != nil {
-		fmt.Printf("%s\n", err.Error())
+		fmt.Errorf("%s\n", err.Error())
 		t.Fail()
 	}
 }
@@ -180,15 +117,15 @@ func TestRepository_ForeverEncode(t *testing.T) {
 func TestRepository_GetDecode(t *testing.T) {
 
 	test := &EncodeTest{"James", 10}
-	redisRepository := redisRepository()
+	cache := Default()
 	key := randString(30)
-	err := redisRepository.AddEncode(key, test, time.Now().Add(time.Hour))
+	err := cache.AddEncode(key, test, time.Now().Add(time.Hour))
 	if err != nil {
-		fmt.Printf("%s\n", err.Error())
+		fmt.Errorf("%s\n", err.Error())
 		t.Fail()
 	}
 
-	value, err := redisRepository.GetDecode(key, &EncodeTest{})
+	value, err := cache.GetDecode(key, &EncodeTest{})
 	if err != nil {
 		t.Fail()
 	}
@@ -198,7 +135,7 @@ func TestRepository_GetDecode(t *testing.T) {
 }
 
 func TestRepository_Increment(t *testing.T) {
-	cache := redisRepository()
+	cache := Default()
 	key := randString(50)
 	err := cache.Increment(key)
 	if err != nil {
@@ -241,7 +178,7 @@ func TestRepository_Increment(t *testing.T) {
 }
 
 func TestRepository_Decrement(t *testing.T) {
-	cache := redisRepository()
+	cache := Default()
 	key := randString(50)
 
 	err := cache.Put(key, 100, time.Now().Add(time.Second*1000))
@@ -300,71 +237,40 @@ func TestRepository_Decrement(t *testing.T) {
 }
 
 func TestRepository_Pull(t *testing.T) {
-	redisRepository := redisRepository()
+	cache := Default()
 
 	key := randString(30)
 
-	err := redisRepository.Put(key, "def", time.Now().Add(time.Second*50))
+	err := cache.Put(key, "def", time.Now().Add(time.Second*50))
 	if err != nil {
 		t.Fail()
 	}
 
-	value, err := redisRepository.Pull(key)
+	value, err := cache.PullDefault(key,"")
 	assert.Nil(t, err)
 	assert.Equal(t, "def", value.(string))
 }
 
-func TestRepository_Pull_Error(t *testing.T) {
-	redisRepository := redisRepository()
-
-	//test := struct {
-	//	A string
-	//	B int
-	//}{
-	//	"A",10,
-	//}
-
-	_, err := redisRepository.Pull("fdasf!@#$%")
-	assert.NotNil(t, err)
-}
-
 // -------------------- cache ---------------------------
 
-func TestNewCache(t *testing.T) {
-	c1 := Default()
-	c2 := Default()
-	assert.Equal(t,c1,c2)
-}
-
-func TestManager_Driver(t *testing.T) {
-	var driver Cacheable
-	driver, err2 := Default().Driver(`redis`)
-	if err2 != nil {
-		fmt.Println("error:", err2.Error())
-		t.Fail()
-	}
-
-	cacheInterface := new(redis.Repository)
-	assert.IsType(t, cacheInterface, driver)
-}
-
 func TestManager_Driver_Error(t *testing.T) {
-	_, err2 := Default().Driver(`redis2`)
-	assert.NotNil(t, err2)
+	assert.Panics(t, func() {
+		Default().Driver(`redis2`)
+	},"driver not found")
 }
 
 
 func TestRepository_Flush(t *testing.T) {
-	redisRepository := redisRepository()
+	cache := Default()
 
-	_ = redisRepository.Put("abc", "1", time.Now().Add(time.Hour))
+	_ = cache.Put("abc", "1", time.Now().Add(time.Hour))
 
-	err := redisRepository.Flush()
+	err := cache.Flush()
 	if err != nil {
 		t.Fail()
 	}
 
-	result := redisRepository.Has("abc")
+	result := cache.Has("abc")
 	if result {
 		t.Fail()
 	}
@@ -372,7 +278,7 @@ func TestRepository_Flush(t *testing.T) {
 
 
 func TestProvider_Register(t *testing.T) {
-	firmeve := firmeve2.New()
+	firmeve := firmeve2.Instance()
 	firmeve.Boot()
 	assert.Equal(t, true, firmeve.HasProvider("cache"))
 	assert.Equal(t,true,firmeve.Has(`cache`))

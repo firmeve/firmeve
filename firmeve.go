@@ -21,7 +21,7 @@ type Firmeve struct {
 	booted    bool
 }
 
-type firmeveOption struct {
+type option struct {
 	registerForce bool
 }
 
@@ -82,16 +82,16 @@ func (f *Firmeve) Boot() {
 // Register force param
 func WithRegisterForce(force bool) support.Option {
 	return func(object support.Object) {
-		object.(*firmeveOption).registerForce = force
+		object.(*option).registerForce = force
 	}
 }
 
 // Register a service provider
 func (f *Firmeve) Register(name string, provider Provider, options ...support.Option) {
 	// Parameter analysis
-	firmeveOption := support.ApplyOption(newFirmeveOption(), options...).(*firmeveOption)
+	option := support.ApplyOption(newOption(), options...).(*option)
 
-	if f.HasProvider(name) && !firmeveOption.registerForce {
+	if f.HasProvider(name) && !option.registerForce {
 		return
 	}
 
@@ -145,8 +145,8 @@ func (f *Firmeve) GetProvider(name string) Provider {
 //	return f.bashPath
 //}
 
-// ---------------------------- firmeveOption ------------------------
+// ---------------------------- option ------------------------
 
-func newFirmeveOption() *firmeveOption {
-	return &firmeveOption{registerForce: false}
+func newOption() *option {
+	return &option{registerForce: false}
 }

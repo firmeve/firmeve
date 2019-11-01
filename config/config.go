@@ -12,9 +12,7 @@ import (
 
 // Package global variable
 var (
-	instance Configurator
 	mutex  sync.Mutex
-	once   sync.Once
 )
 
 // Configurator interface
@@ -63,19 +61,6 @@ func New(directory string) Configurator {
 	config.loadAll()
 
 	return config
-}
-
-func Instance(params ...string) Configurator  {
-	// singleton
-	if instance != nil {
-		return instance
-	}
-
-	once.Do(func() {
-		instance = New(params[0])
-	})
-
-	return instance
 }
 
 //---------------------- config ------------------------

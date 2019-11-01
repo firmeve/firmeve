@@ -39,28 +39,12 @@ type bindingOption struct {
 	prototype interface{}
 }
 
-var (
-	instance Container
-	once     sync.Once
-)
-
 // Create a new container instance
 func New() *baseContainer {
 	return &baseContainer{
 		bindings: make(map[string]*binding),
 		types:    make(map[reflect.Type]string),
 	}
-}
-
-func Instance() Container {
-	if instance != nil {
-		return instance
-	}
-	once.Do(func() {
-		instance = New()
-	})
-
-	return instance
 }
 
 // Determine whether the specified name object is included in the container

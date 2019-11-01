@@ -10,15 +10,16 @@ import (
 	"sync"
 )
 
-type LoggerInterface interface {
+type Loggable interface {
 	Debug(message string, context ...interface{})
 	Info(message string, context ...interface{})
 	Warn(message string, context ...interface{})
 	Error(message string, context ...interface{})
 	Fatal(message string, context ...interface{})
+	Channel(stack string) Loggable
 }
 
-type Logger struct {
+type logger struct {
 	channels channels
 	config   *Config
 }
@@ -43,9 +44,7 @@ const (
 )
 
 var (
-	logger  *Logger
 	mu       sync.Mutex
-	once     sync.Once
 	levelMap = map[Level]zapcore.Level{
 		Debug: zapcore.DebugLevel,
 		Info:  zapcore.InfoLevel,
@@ -59,22 +58,14 @@ var (
 	}
 )
 
-func New(config *Config) *Logger {
-	if logger != nil {
-		return logger
+func New(config *Config) Loggable {
+	return &logger{
+		config:   config,
+		channels: make(channels, 0),
 	}
-
-	once.Do(func() {
-		logger = &Logger{
-			config:   config,
-			channels: make(channels, 0),
-		}
-	})
-
-	return logger
 }
 
-func Default() *Logger {
+func Default() Loggable {
 	config := &Config{
 		Current: `console`,
 		Channels: ConfigChannelType{
@@ -95,33 +86,42 @@ func Default() *Logger {
 	return New(config)
 }
 
-func (l *Logger) Config(config *Config) *Logger {
-	l.config = config
-	return l
-}
+//func (l *logger) Config(config *Config) Loggable {
+//	l.config = config
+//	return l
+//}
 
-func (l *Logger) Debug(message string, context ...interface{}) {
+func (l *logger) Debug(message string, context ...interface{}) {
 	l.channel(l.config.Current).Debugw(message, context...)
 }
 
-func (l *Logger) Info(message string, context ...interface{}) {
+func (l *logger) Info(message string, context ...interface{}) {
 	l.channel(l.config.Current).Infow(message, context...)
 }
 
-func (l *Logger) Warn(message string, context ...interface{}) {
+func (l *logger) Warn(message string, context ...interface{}) {
 	l.channel(l.config.Current).Warnw(message, context...)
 }
 
-func (l *Logger) Error(message string, context ...interface{}) {
+func (l *logger) Error(message string, context ...interface{}) {
 	l.channel(l.config.Current).Errorw(message, context...)
 }
 
-func (l *Logger) Fatal(message string, context ...interface{}) {
+func (l *logger) Fatal(message string, context ...interface{}) {
 	l.channel(l.config.Current).Fatalw(message, context...)
 }
 
+// Return a new Logger instance
+// But still using internal channels
+func (l *logger) Channel(stack string) Loggable {
+	return &logger{
+		config:   l.config,
+		channels: l.channels,
+	}
+}
+
 // Get designated channel
-func (l *Logger) channel(stack string) internalLogger {
+func (l *logger) channel(stack string) internalLogger {
 	if channel, ok := l.channels[stack]; ok {
 		return channel
 	}
@@ -131,15 +131,6 @@ func (l *Logger) channel(stack string) internalLogger {
 
 	l.channels[stack] = factory(stack, l.config)
 	return l.channels[stack]
-}
-
-// Return a new Logger instance
-// But still using internal channels
-func (l *Logger) Channel(stack string) LoggerInterface {
-	return &Logger{
-		config:   l.config,
-		channels: l.channels,
-	}
 }
 
 // ---------------------------------------------- func --------------------------------------------------
