@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	firmeve2 "github.com/firmeve/firmeve"
+	"github.com/firmeve/firmeve/support/path"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"sync"
@@ -11,30 +12,9 @@ import (
 )
 
 var (
-	directory = "../testdata/config"
+	directory = path.RunRelative("../testdata/config")
 	wg        sync.WaitGroup
 )
-
-func TestNew(t *testing.T) {
-
-	config := New(directory)
-
-	wg.Add(1000)
-	for i := 0; i < 1000; i++ {
-		go func(directory string) {
-			New(directory)
-			wg.Done()
-		}(directory)
-	}
-
-	wg.Wait()
-
-	// 单例测试
-	config2 := New(directory)
-
-	assert.Equal(t, config, config2)
-	config = nil
-}
 
 
 func TestConfig_Set(t *testing.T) {
