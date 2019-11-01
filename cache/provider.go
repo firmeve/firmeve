@@ -20,6 +20,5 @@ func (p *Provider) Boot() {
 }
 
 func init() {
-	firmeve := firmeve.New()
-	firmeve.Register(`cache`, firmeve.Resolve(new(Provider)).(*Provider))
+	firmeve.Instance().Register(`cache`, firmeve.Instance().Resolve(new(Provider)).(*Provider))
 }

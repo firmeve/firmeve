@@ -4,6 +4,7 @@ import (
 	"fmt"
 	firmeve2 "github.com/firmeve/firmeve"
 	"github.com/firmeve/firmeve/cache/redis"
+	"github.com/firmeve/firmeve/event"
 	goRedis "github.com/go-redis/redis"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
@@ -30,7 +31,7 @@ func TestNewRepository(t *testing.T) {
 	repository := NewRepository(redisStore)
 
 	assert.IsType(t, repository, &Repository{})
-	assert.Implements(t, new(CacheInterface), repository)
+	assert.Implements(t, new(Cacheable), repository)
 	assert.Implements(t, new(Serialization), repository)
 }
 
@@ -336,7 +337,7 @@ func TestNewCache(t *testing.T) {
 }
 
 func TestManager_Driver(t *testing.T) {
-	var driver CacheInterface
+	var driver Cacheable
 	driver, err2 := Default().Driver(`redis`)
 	if err2 != nil {
 		fmt.Println("error:", err2.Error())

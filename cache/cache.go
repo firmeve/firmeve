@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-type CacheInterface interface {
+type Cacheable interface {
 	Get(key string) (interface{}, error)
 
 	Add(key string, value interface{}, expire time.Time) error
@@ -42,7 +42,7 @@ type Serialization interface {
 }
 
 type Repository struct {
-	store CacheInterface
+	store Cacheable
 }
 
 type ConfigRepositoryType map[string]interface{}
@@ -55,7 +55,7 @@ type Config struct {
 
 type Cache struct {
 	config       *Config
-	repositories map[string]CacheInterface
+	repositories map[string]Cacheable
 }
 
 type Error struct {
@@ -63,13 +63,13 @@ type Error struct {
 }
 
 var (
-	cache *Cache
+	instance *Cache
 	once  sync.Once
 	mutex sync.Mutex
 )
 
 // Create a new cache repository
-func NewRepository(store CacheInterface) *Repository {
+func NewRepository(store Cacheable) *Repository {
 	return &Repository{
 		store: store,
 	}
@@ -224,18 +224,22 @@ func gobDecode(data []byte, value interface{}) error {
 
 // Create a cache manager
 func New(config *Config) *Cache {
-	if cache != nil {
-		return cache
+	return &Cache{
+		config:       config,
+		repositories: make(map[string]Cacheable, 0),
+	}
+}
+
+func Instance(params ...interface{}) *Cache {
+	if instance != nil {
+		return instance
 	}
 
 	once.Do(func() {
-		cache = &Cache{
-			config:       config,
-			repositories: make(map[string]CacheInterface, 0),
-		}
+		instance = New(params[0].(*Config))
 	})
 
-	return cache
+	return instance
 }
 
 // Create a cache manager
@@ -247,15 +251,15 @@ func Default() *Cache {
 			`redis`: ConfigRepositoryType{
 				`host`: `localhost`,
 				`port`: `6379`,
-				`db`: 0,
+				`db`:   0,
 			},
 		},
 	})
 }
 
 // Get the cache driver of the finger
-func (c *Cache) Driver(driver string) (CacheInterface, error) {
-	var repository CacheInterface
+func (c *Cache) Driver(driver string) (Cacheable, error) {
+	var repository Cacheable
 	var err error
 	var ok bool
 
@@ -280,7 +284,7 @@ func (c *Cache) Driver(driver string) (CacheInterface, error) {
 }
 
 // Create a redis cache driver
-func (c *Cache) createRedisDriver() CacheInterface {
+func (c *Cache) createRedisDriver() Cacheable {
 	var (
 		host   = c.config.Repositories[`redis`].(ConfigRepositoryType)[`host`].(string)
 		port   = c.config.Repositories[`redis`].(ConfigRepositoryType)[`port`].(string)

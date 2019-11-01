@@ -17,7 +17,7 @@ type Container interface {
 	Remove(name string)
 }
 
-type BaseContainer struct {
+type baseContainer struct {
 	bindings map[string]*binding
 	types    map[reflect.Type]string
 }
@@ -40,28 +40,31 @@ type bindingOption struct {
 }
 
 var (
-	container     *BaseContainer
-	containerOnce sync.Once
+	instance Container
+	once     sync.Once
 )
 
 // Create a new container instance
-func NewContainer() *BaseContainer {
-	if container != nil {
-		return container
+func New() *baseContainer {
+	return &baseContainer{
+		bindings: make(map[string]*binding),
+		types:    make(map[reflect.Type]string),
 	}
+}
 
-	containerOnce.Do(func() {
-		container = &BaseContainer{
-			bindings: make(map[string]*binding),
-			types:    make(map[reflect.Type]string),
-		}
+func Instance() Container {
+	if instance != nil {
+		return instance
+	}
+	once.Do(func() {
+		instance = New()
 	})
 
-	return container
+	return instance
 }
 
 // Determine whether the specified name object is included in the container
-func (c *BaseContainer) Has(name string) bool {
+func (c *baseContainer) Has(name string) bool {
 	if _, ok := c.bindings[strings.ToLower(name)]; ok {
 		return true
 	}
@@ -70,7 +73,7 @@ func (c *BaseContainer) Has(name string) bool {
 }
 
 // Get a object from container
-func (c *BaseContainer) Get(name string) interface{} {
+func (c *baseContainer) Get(name string) interface{} {
 	if !c.Has(name) {
 		panic(fmt.Errorf("object[%s] that does not exist", name))
 	}
@@ -93,7 +96,7 @@ func WithCover(cover bool) support.Option {
 }
 
 // Bind a object to container
-func (c *BaseContainer) Bind(name string, prototype interface{}, options ...support.Option) { //, value interface{}
+func (c *baseContainer) Bind(name string, prototype interface{}, options ...support.Option) { //, value interface{}
 	// Parameter analysis
 	bindingOption := support.ApplyOption(newBindingOption(name, prototype), options...).(*bindingOption)
 
@@ -107,7 +110,7 @@ func (c *BaseContainer) Bind(name string, prototype interface{}, options ...supp
 }
 
 // Parsing various objects
-func (c *BaseContainer) Resolve(abstract interface{}, params ...interface{}) interface{} {
+func (c *baseContainer) Resolve(abstract interface{}, params ...interface{}) interface{} {
 	reflectType := reflect.TypeOf(abstract)
 	reflectValue := reflect.ValueOf(abstract)
 
@@ -125,7 +128,7 @@ func (c *BaseContainer) Resolve(abstract interface{}, params ...interface{}) int
 }
 
 // Remove a binding
-func (c *BaseContainer) Remove(name string) {
+func (c *baseContainer) Remove(name string) {
 	var mutex sync.Mutex
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -143,7 +146,7 @@ func (c *BaseContainer) Remove(name string) {
 }
 
 // Set a item to types and bindings
-func (c *BaseContainer) setBindingItem(b *binding) {
+func (c *baseContainer) setBindingItem(b *binding) {
 	var mutex sync.Mutex
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -164,7 +167,7 @@ func (c *BaseContainer) setBindingItem(b *binding) {
 	}
 }
 
-func (c *BaseContainer) resolveFunc(reflectType reflect.Type, reflectValue reflect.Value, params ...interface{}) interface{} {
+func (c *baseContainer) resolveFunc(reflectType reflect.Type, reflectValue reflect.Value, params ...interface{}) interface{} {
 	if len(params) == 0 {
 		params = reflect2.CallParameterType(reflectType, func(i int, param reflect.Type) interface{} {
 			if name, ok := c.types[param]; ok {
@@ -185,7 +188,7 @@ func (c *BaseContainer) resolveFunc(reflectType reflect.Type, reflectValue refle
 }
 
 // Resolve struct fields and auto binding field
-func (c *BaseContainer) resolveStruct(reflectType reflect.Type, reflectValue reflect.Value) interface{} {
+func (c *baseContainer) resolveStruct(reflectType reflect.Type, reflectValue reflect.Value) interface{} {
 	reflect2.CallFieldType(reflectType, func(i int, field reflect.StructField) interface{} {
 		tag := field.Tag.Get("inject")
 		fieldValue := reflectValue.Field(i)

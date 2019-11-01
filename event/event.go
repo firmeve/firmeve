@@ -5,48 +5,57 @@ import (
 	"sync"
 )
 
-type eventFunc func(params ...interface{}) interface{}
-type eventsFunc []eventFunc
+type listenFunc func(params ...interface{}) interface{}
+type listenFuncs []listenFunc
+
+type ListenDispatcher interface {
+	Listen(name string, df listenFunc)
+	Dispatch(name string, params ...interface{}) []interface{}
+}
 
 type Event struct {
-	listeners map[string]eventsFunc
+	listeners map[string]listenFuncs
 }
 
 var (
-	event *Event
+	instance ListenDispatcher
 	once  sync.Once
-	mu    sync.Mutex
+	mutex    sync.Mutex
 )
 
-func New() *Event {
-	if event != nil {
-		return event
+func New() ListenDispatcher {
+	return &Event{
+		listeners: make(map[string]listenFuncs, 0),
+	}
+}
+
+func Instance() ListenDispatcher {
+	if instance != nil {
+		return instance
 	}
 
 	once.Do(func() {
-		event = &Event{
-			listeners: make(map[string]eventsFunc, 0),
-		}
+		instance = New()
 	})
 
-	return event
+	return instance
 }
 
-func (e *Event) listen(name string, df eventFunc) {
-	mu.Lock()
+func (e *Event) Listen(name string, df listenFunc) {
+	mutex.Lock()
+	defer mutex.Unlock()
 	if _, ok := e.listeners[name]; !ok {
-		e.listeners[name] = make(eventsFunc, 0)
+		e.listeners[name] = make(listenFuncs, 0)
 	}
 
 	e.listeners[name] = append(e.listeners[name], df)
-	mu.Unlock()
 }
 
-func (e *Event) dispatch(name string, params ...interface{}) []interface{} {
-	var listeners eventsFunc
+func (e *Event) Dispatch(name string, params ...interface{}) []interface{} {
+	var listeners listenFuncs
 	var ok bool
 	if listeners, ok = e.listeners[name]; !ok {
-		panic(fmt.Sprintf("the event %s not exists", name))
+		panic(fmt.Errorf("the event %s not exists", name))
 	}
 
 	results := make([]interface{}, 0)

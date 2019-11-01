@@ -12,7 +12,7 @@ import (
 
 // Package global variable
 var (
-	config *Config
+	instance Configurator
 	mutex  sync.Mutex
 	once   sync.Once
 )
@@ -20,12 +20,25 @@ var (
 // Configurator interface
 type Configurator interface {
 	Get(key string) interface{}
-	Set(key string, value interface{})
+	GetBool(key string) bool
+	GetFloat(key string) float64
+	GetInt(key string) int
+	GetIntSlice(key string) []int
+	GetString(key string) string
+	GetStringMap(key string) map[string]interface{}
+	GetStringMapString(key string) map[string]string
+	GetStringSlice(key string) []string
+	GetTime(key string) time.Time
+	GetDuration(key string) time.Duration
 	Exists(key string) bool
+	Set(key string, value interface{})
+	SetDefault(key string, value interface{})
+	Item(item string) Configurator
+	Load(file string)
 }
 
 // Config struct
-type Config struct {
+type config struct {
 	directory string
 	items     map[string]*viper.Viper
 	current   *viper.Viper
@@ -34,50 +47,41 @@ type Config struct {
 }
 
 // Create a new config instance
-func New(directory string) *Config {
-	// singleton
-	if config != nil {
-		return config
+func New(directory string) Configurator {
+	directory, err := filepath.Abs(directory)
+	if err != nil {
+		panic(err)
 	}
 
-	//直接使用once，其实就是调用mu.Lock和Unlock
-	once.Do(func() {
-		directory, err := filepath.Abs(directory)
-		if err != nil {
-			panic(err)
-		}
-
-		config = &Config{
-			directory: directory,
-			current:   nil,
-			delimiter: `.`,
-			extension: `.yaml`,
-			items:     make(map[string]*viper.Viper),
-		}
-
-		// loadAll
-		err = config.loadAll()
-		if err != nil {
-			panic(err)
-		}
-	})
+	config := &config{
+		directory: directory,
+		current:   nil,
+		delimiter: `.`,
+		extension: `.yaml`,
+		items:     make(map[string]*viper.Viper),
+	}
+	config.loadAll()
 
 	return config
 }
 
-func Get() *Config {
+func Instance(params ...string) Configurator  {
 	// singleton
-	if config != nil {
-		return config
+	if instance != nil {
+		return instance
 	}
 
-	panic(fmt.Errorf(`config instance not exists`))
+	once.Do(func() {
+		instance = New(params[0])
+	})
+
+	return instance
 }
 
 //---------------------- config ------------------------
 
 // Get the current file node
-func (c *Config) Item(item string) *Config {
+func (c *config) Item(item string) Configurator {
 	mutex.Lock()
 	defer mutex.Unlock()
 	if itemConfig, ok := c.items[item]; ok {
@@ -89,67 +93,67 @@ func (c *Config) Item(item string) *Config {
 }
 
 // Get the value of the specified key
-func (c *Config) Get(key string) interface{} {
+func (c *config) Get(key string) interface{} {
 	return c.current.Get(key)
 }
 
 // Get the bool value of the specified key
-func (c *Config) GetBool(key string) bool {
+func (c *config) GetBool(key string) bool {
 	return c.current.GetBool(key)
 }
 
 // Get the float value of the specified key
-func (c *Config) GetFloat64(key string) float64 {
+func (c *config) GetFloat(key string) float64 {
 	return c.current.GetFloat64(key)
 }
 
 // Get the int value of the specified key
-func (c *Config) GetInt(key string) int {
+func (c *config) GetInt(key string) int {
 	return c.current.GetInt(key)
 }
 
 // Get the int slice value of the specified key
-func (c *Config) GetIntSlice(key string) []int {
+func (c *config) GetIntSlice(key string) []int {
 	return c.current.GetIntSlice(key)
 }
 
 // Get the string value of the specified key
-func (c *Config) GetString(key string) string {
+func (c *config) GetString(key string) string {
 	return c.current.GetString(key)
 }
 
 // Get the string map value of the specified key
-func (c *Config) GetStringMap(key string) map[string]interface{} {
+func (c *config) GetStringMap(key string) map[string]interface{} {
 	return c.current.GetStringMap(key)
 }
 
 // Get the string map string value of the specified key
-func (c *Config) GetStringMapString(key string) map[string]string {
+func (c *config) GetStringMapString(key string) map[string]string {
 	return c.current.GetStringMapString(key)
 }
 
 // Get the string slice value of the specified key
-func (c *Config) GetStringSlice(key string) []string {
+func (c *config) GetStringSlice(key string) []string {
 	return c.current.GetStringSlice(key)
 }
 
 // Get the time type value of the specified key
-func (c *Config) GetTime(key string) time.Time {
+func (c *config) GetTime(key string) time.Time {
 	return c.current.GetTime(key)
 }
 
 // Get the time duration value of the specified key
-func (c *Config) GetDuration(key string) time.Duration {
+func (c *config) GetDuration(key string) time.Duration {
 	return c.current.GetDuration(key)
 }
 
 // Determine if the specified key exists
-func (c *Config) Exists(key string) bool {
+func (c *config) Exists(key string) bool {
 	return c.current.IsSet(key)
 }
 
 // Set configuration value
-func (c *Config) Set(key string, value interface{}) {
+func (c *config) Set(key string, value interface{}) {
 	// map加锁
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -158,7 +162,7 @@ func (c *Config) Set(key string, value interface{}) {
 }
 
 // Set item default value if not exists
-func (c *Config) SetDefault(key string, value interface{}) {
+func (c *config) SetDefault(key string, value interface{}) {
 	// map加锁
 	mutex.Lock()
 	defer mutex.Unlock()
@@ -167,7 +171,7 @@ func (c *Config) SetDefault(key string, value interface{}) {
 }
 
 // Load all configuration files at once
-func (c *Config) loadAll() error {
+func (c *config) loadAll() {
 	err := filepath.Walk(c.directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -181,13 +185,11 @@ func (c *Config) loadAll() error {
 	})
 
 	if err != nil {
-		return err
+		panic(err)
 	}
-
-	return nil
 }
 
-func (c *Config) Load(file string) {
+func (c *config) Load(file string) {
 	mutex.Lock()
 	defer mutex.Unlock()
 

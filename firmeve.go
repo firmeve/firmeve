@@ -26,15 +26,13 @@ type firmeveOption struct {
 }
 
 var (
-	firmeve     *Firmeve
-	firmeveOnce sync.Once
+	instance *Firmeve
+	once    sync.Once
 )
 
 // Create a new firmeve container
 func New() *Firmeve {
-	if firmeve != nil {
-		return firmeve
-	}
+
 	//basePath := os.Getenv("FIRMEVE_BASE_PATH")
 
 	//basePath, err := filepath.Abs(basePath)
@@ -42,20 +40,30 @@ func New() *Firmeve {
 	//	panic(err)
 	//}
 
-	firmeveOnce.Do(func() {
-		firmeve = &Firmeve{
-			bashPath:  "",
-			providers: make(map[string]Provider),
-			booted:    false,
-			Container: container.NewContainer(),
-		}
+	firmeve := &Firmeve{
+		bashPath:  "",
+		providers: make(map[string]Provider),
+		booted:    false,
+		Container: container.New(),
+	}
 
-		// binding self
-		firmeve.Bind("firmeve", firmeve)
-		//firmeve.bingingBaseInstance()
-	})
+	// binding self
+	firmeve.Bind("firmeve", firmeve)
 
 	return firmeve
+}
+
+// A singleton firmeve expose func
+func Instance() *Firmeve {
+	if instance != nil {
+		return instance
+	}
+
+	once.Do(func() {
+		instance = New()
+	})
+
+	return instance
 }
 
 // Start all service providers at once
