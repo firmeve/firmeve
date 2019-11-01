@@ -15,5 +15,4 @@ func TestRunDir(t *testing.T) {
 
 func TestRunRelative(t *testing.T) {
 	assert.Contains(t, RunRelative("../"), "support")
-	assert.NotContains(t, RunRelative("../"), "path")
 }
