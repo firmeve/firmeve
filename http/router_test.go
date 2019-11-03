@@ -9,8 +9,9 @@ type abcd func(name string) string
 func (a *abcd) c() {
 	fmt.Printf("%#v",a)
 }
-func (a abcd) d() {
+func (a abcd) d() string {
 	fmt.Printf("%#v",a)
+	return "a"
 }
 
 type HandlerFunc2 func(a string,r string)
@@ -65,5 +66,23 @@ func (f HandlerFunc2) ServeHTTP(a string,r string) {
 //		ctx.Next()
 //	})
 //
-//	netHttp.ListenAndServe("127.0.0.1:28082",router)
+//	router.NotFound(func(ctx *Context) {
+//		ctx.Write([]byte("NotFound"))
+//	})
+//
+//	v1 := router.Group("/v1").After(func(ctx *Context) {
+//		ctx.Write([]byte("Group v1 After"))
+//		ctx.Next()
+//	}).Before(func(ctx *Context) {
+//		ctx.Write([]byte("Group v1 Before"))
+//		ctx.Next()
+//	})
+//	{
+//		v1.GET("/sss", func(ctx *Context) {
+//			ctx.Write([]byte("bdc"))
+//			ctx.Next()
+//		})
+//	}
+//
+//	http.ListenAndServe("127.0.0.1:28082",router)
 //}

@@ -10,6 +10,7 @@ type Router struct {
 	router    *httprouter.Router
 	routes    map[string]*Route
 	routeKeys []string
+	notFound  HandlerFunc
 }
 
 func New() *Router {
@@ -19,10 +20,6 @@ func New() *Router {
 		routeKeys: make([]string, 0),
 	}
 }
-
-// 只是用到httpRouter的存储路由以及查找方法，因为暂时不会前缀树算法
-// 其它router,middleware这些都是我自己实现，惟一对接的就是无缝的写入一套httprouter规则的路由（后期替换为自己的路由）
-// 通过ServerHttp去查找匹配路由
 
 func (r *Router) GET(path string, handler HandlerFunc) *Route {
 	return r.createRoute(http.MethodGet, path, handler)
@@ -47,16 +44,16 @@ func (r *Router) DELETE(path string, handler HandlerFunc) *Route {
 func (r *Router) OPTIONS(path string, handler HandlerFunc) *Route {
 	return r.createRoute(http.MethodOptions, path, handler)
 }
+
+func (r *Router) NotFound(handler HandlerFunc) *Router {
+	r.notFound = handler
+	return r
+}
+
 //
-//func (r *Router) Group(method string, path string, handler HandlerFunc) *Route {
-//	key := r.routeKey(method, path)
-//	r.routes[key] = newRoute(path, handler)
-//
-//	//Only http router
-//	r.router.Handler(method, path, r)
-//
-//	return r.routes[key]
-//}
+func (r *Router) Group(prefix string) *Group {
+	return newGroup(r).Prefix(prefix)
+}
 
 func (r *Router) createRoute(method string, path string, handler HandlerFunc) *Route {
 	key := r.routeKey(method, path)
@@ -72,12 +69,16 @@ func (r *Router) routeKey(method, path string) string {
 	return strings.Join([]string{method, path}, `.`)
 }
 
+// 只是用到httpRouter的存储路由以及查找方法，因为暂时不会前缀树算法
+// 其它router,middleware这些都是我自己实现，惟一对接的就是无缝的写入一套httprouter规则的路由（后期替换为自己的路由）
+// 通过ServerHttp去查找匹配路由
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
+	var handlers = make([]HandlerFunc, 0)
 	if route, ok := r.routes[r.routeKey(req.Method, req.URL.Path)]; ok {
-		handlers := append(append(route.beforeHandlers, route.handler), route.afterHandlers...)
+		handlers = append(append(route.beforeHandlers, route.handler), route.afterHandlers...)
 		newContext(w, req, handlers...).Next()
 		return
 	}
 
-	r.router.NotFound.ServeHTTP(w, req)
+	newContext(w, req, r.notFound).Next()
 }
