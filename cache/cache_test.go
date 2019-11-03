@@ -39,7 +39,7 @@ func TestRepository_Pull_Default(t *testing.T) {
 	err := cache.Put(key, "def", time.Now().Add(time.Second*150))
 	assert.Nil(t, err)
 
-	value1, err := cache.PullDefault(key, "def1")
+	value1, err := cache.Pull(key)
 	assert.Equal(t, "def", value1.(string))
 
 	value2, err := cache.PullDefault(key, "abc")
@@ -204,9 +204,6 @@ func TestRepository_Decrement(t *testing.T) {
 	}
 
 	num, err := strconv.Atoi(value.(string))
-	fmt.Println("=============")
-	fmt.Println(num)
-	fmt.Println("=============")
 	assert.Equal(t, 99, num)
 
 	err = cache.Decrement(key)
@@ -275,7 +272,6 @@ func TestRepository_Flush(t *testing.T) {
 		t.Fail()
 	}
 }
-
 
 func TestProvider_Register(t *testing.T) {
 	firmeve := firmeve2.Instance()
