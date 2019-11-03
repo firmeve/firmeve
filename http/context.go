@@ -11,7 +11,7 @@ type Context struct {
 	request  *http.Request
 	response http.ResponseWriter
 	handlers []HandlerFunc
-	index int
+	index    int
 }
 
 func newContext(writer http.ResponseWriter, r *http.Request, handlers ...HandlerFunc) *Context {
@@ -19,7 +19,7 @@ func newContext(writer http.ResponseWriter, r *http.Request, handlers ...Handler
 		request:  r,
 		response: writer,
 		handlers: handlers,
-		index: 0,
+		index:    0,
 	}
 }
 
@@ -31,16 +31,28 @@ func (ctx *Context) Form(key string) string {
 	return ctx.request.FormValue(key)
 }
 
+func (ctx *Context) StatusCode(code int) *Context {
+	ctx.response.WriteHeader(500)
+	return ctx
+}
+
+func (ctx *Context) SetHeader(key, value string) *Context {
+	ctx.response.Header().Set(key, value)
+	return ctx
+}
+
 func (ctx *Context) Post(key string) string {
 	return ctx.request.Form.Get(key)
 }
 
-func (ctx *Context) Write(bytes []byte) {
+func (ctx *Context) Write(bytes []byte) *Context {
 	ctx.response.Write(bytes)
+	return ctx
 }
 
-func (ctx *Context) Flush()  {
+func (ctx *Context) Flush() *Context {
 	ctx.response.(http.Flusher).Flush()
+	return ctx
 }
 
 func (ctx *Context) Next() {

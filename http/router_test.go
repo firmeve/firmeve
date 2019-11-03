@@ -20,7 +20,7 @@ type HandlerFunc2 func(a string,r string)
 func (f HandlerFunc2) ServeHTTP(a string,r string) {
 	f(a, r)
 }
-//
+
 //func TestRouter_Use(t *testing.T) {
 //
 //	//abc := abc("a")
@@ -51,6 +51,7 @@ func (f HandlerFunc2) ServeHTTP(a string,r string) {
 //		ctx.Next()
 //	}).Before(func(ctx *Context) {
 //		ctx.Write([]byte("abcBefore"))
+//		panic("abc")
 //		ctx.Next()
 //	})
 //
@@ -73,12 +74,13 @@ func (f HandlerFunc2) ServeHTTP(a string,r string) {
 //	v1 := router.Group("/v1").After(func(ctx *Context) {
 //		ctx.Write([]byte("Group v1 After"))
 //		ctx.Next()
-//	}).Before(func(ctx *Context) {
-//		ctx.Write([]byte("Group v1 Before"))
+//	}).Before(ServerError,func(ctx *Context) {
+//		//ctx.Write([]byte("Group v1 Before"))
 //		ctx.Next()
 //	})
 //	{
 //		v1.GET("/sss", func(ctx *Context) {
+//			panic("abc")
 //			ctx.Write([]byte("bdc"))
 //			ctx.Next()
 //		})
