@@ -260,6 +260,20 @@ func TestManager_Driver_Error(t *testing.T) {
 	}, "driver not found")
 }
 
+func TestCache_Forever(t *testing.T) {
+	Default().Forever("a", "b")
+	v,_ := Default().Get("a")
+	assert.Equal(t, v.(string), "b")
+}
+
+func TestCache_Driver(t *testing.T) {
+	assert.Implements(t, (*repository.Serializable)(nil), Default().Driver("redis"))
+}
+
+func TestCache_Store(t *testing.T) {
+	assert.Implements(t, (*repository.Cacheable)(nil), Default().Store())
+}
+
 func TestRepository_Flush(t *testing.T) {
 	cache := Default()
 
