@@ -51,7 +51,7 @@ channel := logger.Channel(`console`)
 | file | 写入到指定的文件日志 |
 | stack | 多种类型通道合并记录 |
 
-###　错误级别
+### 错误级别
 - Debug
 - Info
 - Notice
