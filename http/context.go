@@ -46,7 +46,14 @@ func (ctx *Context) Post(key string) string {
 }
 
 func (ctx *Context) Write(bytes []byte) *Context {
+	ctx.response.WriteHeader(http.StatusOK)
 	ctx.response.Write(bytes)
+	return ctx
+}
+
+func (ctx *Context) String(content string) *Context {
+	ctx.response.WriteHeader(http.StatusOK)
+	ctx.response.Write([]byte(content))
 	return ctx
 }
 

@@ -32,7 +32,7 @@ func (g *Group) GET(path string, handler HandlerFunc) *Route {
 }
 
 func (g *Group) POST(path string, handler HandlerFunc) *Route {
-	return g.createRoute(http.MethodPost, g.prefix+path, handler)
+	return g.createRoute(http.MethodPost, path, handler)
 }
 
 func (g *Group) PUT(path string, handler HandlerFunc) *Route {
@@ -49,6 +49,10 @@ func (g *Group) DELETE(path string, handler HandlerFunc) *Route {
 
 func (g *Group) OPTIONS(path string, handler HandlerFunc) *Route {
 	return g.createRoute(http.MethodOptions, path, handler)
+}
+
+func (g *Group) Group(prefix string) *Group {
+	return newGroup(g.router).Prefix(strings.Join([]string{g.prefix, prefix}, ``)).After(g.afterHandlers...).Before(g.beforeHandlers...)
 }
 
 func (g *Group) createRoute(method string, path string, handler HandlerFunc) *Route {
