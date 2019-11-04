@@ -3,21 +3,24 @@
 
 ## 基本用法
 
+### 获取实例
+```go
+// Get firmeve container event
+event := firmeve.Instance().Get(`event`)
+// Create a new event
+event := event.New()
+```
+
 ### 注册事件
 ```go
-dispatcher := event.NewDispatcher()
-// or 
-f := New()
-dispatcher := f.Get(`dispatcher`).(*event.Dispatcher)
-
-dispatcher.listen("eventName", func (params ...interface{}) interface{}{
-	...
+event.Listen("name", func (params ...interface{}) interface{}{
+	// ...
 })
 ```
 
 ### 触发事件
 ```go
-results := dispatcher.dispatch("eventName")
+results := event.Dispatch("eventName")
 fmt.Println(results)
 ```
 

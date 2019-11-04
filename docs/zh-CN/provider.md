@@ -13,7 +13,6 @@ type ServiceProvider struct {
 }
 
 func (csp *ServiceProvider) Boot() {
-
 }
 
 func (csp *ServiceProvider) Register() {
@@ -24,7 +23,9 @@ func (csp *ServiceProvider) Register() {
 
 ## Provider挂载
 ```go
-firmeve.GetFirmeve().Register(`cache`, new(CacheServiceProvider))
+func init() {
+	firmeve.Instance().Register(`cache`, firmeve.Instance().Resolve(new(Provider)).(*Provider))
+}
 ```
 
 ## Register方法
