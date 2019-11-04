@@ -29,17 +29,7 @@ type Cacheable interface {
 type CacheSerializable interface {
 	Cacheable
 
-	GetDefault(key string, defaultValue interface{}) (interface{}, error)
-
-	PullDefault(key string, defaultValue interface{}) (interface{}, error)
-
-	GetDecode(key string, to interface{}) (interface{}, error)
-
-	AddEncode(key string, value interface{}, expire time.Time) error
-
-	ForeverEncode(key string, value interface{}) error
-
-	PutEncode(key string, value interface{}, expire time.Time) error
+	Serializable
 }
 
 type Serializable interface {

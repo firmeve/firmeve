@@ -3,12 +3,17 @@ package cache
 import (
 	"fmt"
 	firmeve2 "github.com/firmeve/firmeve"
+	"github.com/firmeve/firmeve/cache/repository"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"strconv"
 	"testing"
 	"time"
 )
+
+func TestCache_Implement(t *testing.T) {
+	assert.Implements(t, (*repository.CacheSerializable)(nil), Default())
+}
 
 func TestRepository_Get(t *testing.T) {
 
@@ -45,7 +50,7 @@ func TestRepository_Pull_Default(t *testing.T) {
 	value2, err := cache.PullDefault(key, "abc")
 	assert.Equal(t, "abc", value2.(string))
 
-	value3, err := cache.PullDefault(t.Name() + randString(20), "abcd")
+	value3, err := cache.PullDefault(t.Name()+randString(20), "abcd")
 	assert.Equal(t, "abcd", value3.(string))
 }
 
@@ -63,7 +68,6 @@ func TestRepository_Forget(t *testing.T) {
 
 	assert.Equal(t, false, cache.Has(key))
 }
-
 
 // RandString 生成随机字符串
 func randString(len int) string {
@@ -243,7 +247,7 @@ func TestRepository_Pull(t *testing.T) {
 		t.Fail()
 	}
 
-	value, err := cache.PullDefault(key,"")
+	value, err := cache.PullDefault(key, "")
 	assert.Nil(t, err)
 	assert.Equal(t, "def", value.(string))
 }
@@ -253,9 +257,8 @@ func TestRepository_Pull(t *testing.T) {
 func TestManager_Driver_Error(t *testing.T) {
 	assert.Panics(t, func() {
 		Default().Driver(`redis2`)
-	},"driver not found")
+	}, "driver not found")
 }
-
 
 func TestRepository_Flush(t *testing.T) {
 	cache := Default()
@@ -277,5 +280,5 @@ func TestProvider_Register(t *testing.T) {
 	firmeve := firmeve2.Instance()
 	firmeve.Boot()
 	assert.Equal(t, true, firmeve.HasProvider("cache"))
-	assert.Equal(t,true,firmeve.Has(`cache`))
+	assert.Equal(t, true, firmeve.Has(`cache`))
 }

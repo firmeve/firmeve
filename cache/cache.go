@@ -94,6 +94,10 @@ func (c *Cache) createRedisDriver() repository.Cacheable {
 	}), prefix)
 }
 
+func (c *Cache) Store() repository.Cacheable {
+	return c.current.Store()
+}
+
 func (c *Cache) Get(key string) (interface{}, error) {
 	return c.current.Store().Get(key)
 }
