@@ -80,9 +80,9 @@ func (f *Firmeve) Boot() {
 }
 
 // Register force param
-func WithRegisterForce(force bool) support.Option {
+func WithRegisterForce() support.Option {
 	return func(object support.Object) {
-		object.(*option).registerForce = force
+		object.(*option).registerForce = true
 	}
 }
 
