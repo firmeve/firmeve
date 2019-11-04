@@ -29,10 +29,6 @@ func RunDir() string {
 
 // Get current directory relative path
 func RunRelative(rpath string) string {
-	rpath, err := filepath.Abs(filepath.Join(path.Dir(callerStepFile(2)), rpath))
-	if err != nil {
-		panic(err)
-	}
-
+	rpath, _ = filepath.Abs(filepath.Join(path.Dir(callerStepFile(2)), rpath))
 	return rpath
 }
