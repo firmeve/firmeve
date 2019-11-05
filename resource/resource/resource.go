@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"fmt"
 	"github.com/firmeve/firmeve/resource"
 	reflect2 "github.com/firmeve/firmeve/support/reflect"
 	strings2 "github.com/firmeve/firmeve/support/strings"
@@ -9,14 +10,9 @@ import (
 	"strings"
 )
 
-func New(source interface{}) *Resource {
-	return &Resource{
-		//source:      source,
-		source: source,
-	}
-}
-
 type mapCache map[string]map[string]string
+
+type meta map[string]interface{}
 
 var (
 	resourcesFields  = make(map[reflect.Type]mapCache, 0)
@@ -24,22 +20,33 @@ var (
 )
 
 type Resolver interface {
-	Resolve()
+	Resolve() map[string]interface{}
 }
 
 type Resource struct {
-	source      interface{}
-	fields      []string
-	chunks      []string
+	source interface{}
+	fields []string
+	chunks []string
+	key    string
+	meta   meta
 	//transformer interface{}
 }
 
-func (r *Resource) Fields(fields []string) *Resource {
+func New(source interface{}) *Resource {
+	return &Resource{
+		//source:      source,
+		source: source,
+		key:    `data`,
+		meta:   make(meta, 0),
+	}
+}
+
+func (r *Resource) Fields(fields ...string) *Resource {
 	r.fields = fields
 	return r
 }
 
-func (r *Resource) Chunks(chunks []string) *Resource  {
+func (r *Resource) Chunks(chunks []string) *Resource {
 	r.chunks = chunks
 	return r
 }
@@ -48,21 +55,22 @@ func (r *Resource) resolveFields() []string {
 	return r.fields
 }
 
-func (r *Resource) Resolve() interface{} {
+func (r *Resource) Resolve() map[string]interface{} {
 	reflectType := reflect.TypeOf(r.source)
 	reflectValue := reflect.ValueOf(r.source)
-
+	kindType := reflect2.KindType(reflectType)
+	var data interface{}
 	if _, ok := r.source.(resource.Transformer); ok {
-		return r.resolveTransformer(reflectType, reflectValue)
+		data = r.resolveTransformer(reflectType, reflectValue)
+	} else if kindType == reflect.Map {
+		data = r.resolveMap(reflectType, reflectValue)
+	} else if kindType == reflect.Struct {
+		data = r.resolveStruct(reflectType, reflectValue)
 	} else {
-		// support map
-		// but only support map[string]interface{}
-		if reflect2.KindType(reflectType) == reflect.Map {
-			return r.resolveMap(reflectType, reflectValue)
-		}
-
-		panic(`Type error`)
+		panic(`type error`)
 	}
+
+	return map[string]interface{}{r.key: data}
 }
 
 func (r *Resource) resolveMap(reflectType reflect.Type, reflectValue reflect.Value) interface{} {
@@ -71,7 +79,7 @@ func (r *Resource) resolveMap(reflectType reflect.Type, reflectValue reflect.Val
 	for _, field := range r.resolveFields() {
 		for k, v := range r.source.(map[string]interface{}) {
 			alias = strings2.SnakeCase(k)
-			if field != alias{
+			if field != alias {
 				continue
 			}
 			if reflect2.KindType(reflect.TypeOf(v)) == reflect.Func {
@@ -84,8 +92,7 @@ func (r *Resource) resolveMap(reflectType reflect.Type, reflectValue reflect.Val
 	return collection
 }
 
-func (r *Resource) resolveTransformer(reflectType reflect.Type, reflectValue reflect.Value) map[string]interface{} {
-
+func (r *Resource) resolveTransformer(reflectType reflect.Type, reflectValue reflect.Value) interface{} {
 	fields := r.transpositionFields(reflectType)
 	methods := r.transpositionMethods(reflectType)
 	collection := make(map[string]interface{}, 0)
@@ -99,6 +106,24 @@ func (r *Resource) resolveTransformer(reflectType reflect.Type, reflectValue ref
 			} else {
 				collection[v[`alias`]] = reflect2.CallMethodValue(reflectValue, v[`method`])[0]
 			}
+		} else {
+			collection[field] = ``
+		}
+	}
+
+	return collection
+}
+
+func (r *Resource) resolveStruct(reflectType reflect.Type, reflectValue reflect.Value) interface{} {
+	fields := r.transpositionFields(reflectType)
+	collection := make(map[string]interface{}, 0)
+	for _, field := range r.resolveFields() {
+		// method 优先
+		if v, ok := fields[field]; ok {
+			//fmt.Println(reflectValue.Field(0).Interface())
+			//fmt.Println(reflect.Indirect(reflectValue).FieldByName(v[`name`]).Interface())
+			fmt.Println(reflect2.CallFieldValue(reflectValue,v[`name`]))
+			collection[v[`alias`]] = reflectValue.FieldByName(v[`name`]).Interface()//reflect2.CallFieldValue(reflectValue, v[`name`]) // reflect2.InterfaceValue(reflect.Indirect(reflectValue).FieldByName(v[`name`])) //utils.ReflectValueInterface(utils.ReflectCallMethod(source, v[`method`])[0])
 		} else {
 			collection[field] = ``
 		}
