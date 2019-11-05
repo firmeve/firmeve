@@ -43,3 +43,28 @@ func CallFuncValue(reflectValue reflect.Value, params ...interface{}) []interfac
 
 	return results
 }
+
+func CallMethodValue(reflectValue reflect.Value, name string, params ...interface{}) []interface{} {
+	return CallFuncValue(reflectValue.MethodByName(name), params...)
+}
+
+// FieldByName returns the struct field with the given name.
+// It returns the zero Value if no field was found.
+// It panics if v's Kind is not struct.
+func CallFieldValue(reflectValue reflect.Value, name string) interface{} {
+	return InterfaceValue(reflect.Indirect(reflectValue).FieldByName(name))
+}
+
+
+//// It panics if the type's Kind is not Struct.
+//func StructFieldsValue(reflectValue reflect.Value) map[string]reflect.StructField {
+//	reflectType = IndirectType(reflectType)
+//
+//	fields := make(map[string]reflect.StructField, 0)
+//	for i := 0; i < reflectValue.NumField(); i++ {
+//		reflectField := reflectValue.Field(i)
+//		fields[reflectField.Name] = reflectField
+//	}
+//
+//	return fields
+//}

@@ -16,7 +16,7 @@ func IndirectType(reflectType reflect.Type) reflect.Type {
 }
 
 func KindType(reflectType reflect.Type) reflect.Kind {
-	return reflectType.Kind()
+	return IndirectType(reflectType).Kind()
 }
 
 //func KindType(object interface{}) reflect.Kind {
@@ -27,11 +27,12 @@ func KindType(reflectType reflect.Type) reflect.Kind {
 //	return reflect.TypeOf(object).Kind()
 //}
 
-type CallParameterFunc func(i int, param reflect.Type) interface{}
+type CallInParameterFunc func(i int, param reflect.Type) interface{}
 
-// Call func params
+// Call in func params
 // It panics if the type's Kind is not Func.
-func CallParameterType(reflectType reflect.Type, paramFunc CallParameterFunc) []interface{} {
+func CallInParameterType(reflectType reflect.Type, paramFunc CallInParameterFunc) []interface{} {
+	reflectType = IndirectType(reflectType)
 
 	results := make([]interface{}, 0)
 	for i := 0; i < reflectType.NumIn(); i++ {
@@ -45,12 +46,89 @@ type CallFieldFunc func(i int, field reflect.StructField) interface{}
 
 // Call struct fields
 // It panics if the type's Kind is not Struct.
-func CallFieldType(reflectType reflect.Type, fieldFunc CallFieldFunc) []interface{} {
+func CallFieldType(reflectType reflect.Type, fieldFunc CallFieldFunc) map[string]interface{} {
+	reflectType = IndirectType(reflectType)
 
-	results := make([]interface{}, 0)
+	results := make(map[string]interface{}, 0)
 	for i := 0; i < reflectType.NumField(); i++ {
-		results = append(results, fieldFunc(i, reflectType.Field(i)))
+		reflectField := reflectType.Field(i)
+		results[reflectField.Name] = fieldFunc(i, reflectField)
 	}
 
 	return results
 }
+
+type CallMethodFunc func(i int, method reflect.Method) interface{}
+
+func CallMethodType(reflectType reflect.Type, methodFunc CallMethodFunc) map[string]interface{} {
+	reflectType = IndirectType(reflectType)
+
+	results := make(map[string]interface{}, 0)
+	for i := 0; i < reflectType.NumMethod(); i++ {
+		reflectMethod := reflectType.Method(i)
+		results[reflectMethod.Name] = methodFunc(i, reflectMethod)
+	}
+
+	return results
+}
+
+func Methods(reflectType reflect.Type) map[string]reflect.Method {
+	reflectType = IndirectType(reflectType)
+
+	methods := make(map[string]reflect.Method, 0)
+	for i := 0; i < reflectType.NumMethod(); i++ {
+		method := reflectType.Method(i)
+		methods[method.Name] = method
+	}
+
+	return methods
+}
+
+// It panics if the type's Kind is not Struct.
+func StructFields(reflectType reflect.Type) map[string]reflect.StructField {
+	reflectType = IndirectType(reflectType)
+
+	fields := make(map[string]reflect.StructField, 0)
+	for i := 0; i < reflectType.NumField(); i++ {
+		reflectField := reflectType.Field(i)
+		fields[reflectField.Name] = reflectField
+	}
+
+	return fields
+}
+//
+//func ReflectStructFields(object interface{}, onlyPublic bool) map[string]map[string]interface{} {
+//	reflectType := ReflectTypeIndirect(reflect.TypeOf(object))
+//	reflectValue := reflect.Indirect(reflect.ValueOf(object))
+//	nums := reflectType.NumField()
+//	fields := make(map[string]map[string]interface{}, 0)
+//
+//	for i := 0; i < nums; i++ {
+//		typeField := reflectType.Field(i)
+//		valueField := reflectValue.Field(i)
+//		fieldName := typeField.Name
+//		fieldTag := typeField.Tag
+//
+//		if onlyPublic && reflectValue.Field(i).CanSet() {
+//			fields[fieldName] = map[string]interface{}{`tag`:fieldTag,`value`:valueField}
+//		} else if !onlyPublic {
+//			fields[fieldName] = map[string]interface{}{`tag`:fieldTag,`value`:valueField}
+//		}
+//	}
+//
+//	return fields
+//}
+//
+// It panics if the type's Kind is not Struct.
+//func FieldsTag(reflectType reflect.Type) map[string]reflect.StructTag {
+//	reflectType = IndirectType(reflectType)
+//	nums := reflectType.NumField()
+//	fields := make(map[string]reflect.StructTag, 0)
+//
+//	for i := 0; i < nums; i++ {
+//		typeField := reflectType.Field(i)
+//		fields[typeField.Name] = typeField.Tag
+//	}
+//
+//	return fields
+//}

@@ -103,7 +103,7 @@ func (c *baseContainer) Resolve(abstract interface{}, params ...interface{}) int
 	if kind == reflect.Func {
 		return c.resolveFunc(reflectType, reflectValue, params...)
 	} else if kind == reflect.Ptr || kind == reflect.Struct {
-		return c.resolveStruct(reflect2.IndirectType(reflectType), reflect.Indirect(reflectValue))
+		return c.resolveStruct(reflectType, reflect.Indirect(reflectValue))
 	} else if kind == reflect.String {
 		return c.Get(abstract.(string))
 	}
@@ -153,7 +153,7 @@ func (c *baseContainer) setBindingItem(b *binding) {
 
 func (c *baseContainer) resolveFunc(reflectType reflect.Type, reflectValue reflect.Value, params ...interface{}) interface{} {
 	if len(params) == 0 {
-		params = reflect2.CallParameterType(reflectType, func(i int, param reflect.Type) interface{} {
+		params = reflect2.CallInParameterType(reflectType, func(i int, param reflect.Type) interface{} {
 			if name, ok := c.types[param]; ok {
 				return c.Get(name)
 			} else {
