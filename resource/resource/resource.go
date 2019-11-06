@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"regexp"
 	"strings"
+	"sync"
 )
 
 type mapCache map[string]map[string]string
@@ -16,6 +17,7 @@ type meta map[string]interface{}
 var (
 	resourcesFields  = make(map[reflect.Type]mapCache, 0)
 	resourcesMethods = make(map[reflect.Type]mapCache, 0)
+	mutex sync.Mutex
 )
 
 type ResolveMap map[string]interface{}
@@ -60,7 +62,8 @@ func (r *Resource) Resolve() ResolveMap {
 	reflectType := reflect.TypeOf(r.source)
 	reflectValue := reflect.ValueOf(r.source)
 	kindType := reflect2.KindType(reflectType)
-	var data interface{}
+	var data ResolveMap
+
 	if _, ok := r.source.(resource.Transformer); ok {
 		data = r.resolveTransformer(reflectType, reflectValue)
 	} else if kindType == reflect.Map {
@@ -97,6 +100,7 @@ func (r *Resource) resolveTransformer(reflectType reflect.Type, reflectValue ref
 	fields := r.transpositionFields(reflectType)
 	methods := r.transpositionMethods(reflectType)
 	collection := make(ResolveMap, 0)
+
 	for _, field := range r.resolveFields() {
 		// method 优先
 		if v, ok := methods[field]; ok {
@@ -127,7 +131,6 @@ func (r *Resource) resolveStruct(reflectType reflect.Type, reflectValue reflect.
 			collection[field] = ``
 		}
 	}
-
 	return collection
 }
 

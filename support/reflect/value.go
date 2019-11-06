@@ -10,7 +10,9 @@ func CanSetValue(reflectValue reflect.Value) bool {
 }
 
 func InterfaceValue(reflectValue reflect.Value) interface{} {
-	if reflectValue.CanAddr() && reflectValue.Kind() == reflect.Ptr {
+	//@todo 这里可能会有问题
+	//@todo 需要仔细研究CanAddr
+	if reflectValue.CanAddr() {//&& KindValue(reflectValue) <= reflect.Complex128
 		return reflectValue.Addr().Interface()
 	}
 
@@ -18,10 +20,6 @@ func InterfaceValue(reflectValue reflect.Value) interface{} {
 }
 
 func KindValue(reflectValue reflect.Value) reflect.Kind {
-	//if v, ok := object.(reflect.Value); ok {
-	//	return v.Kind()
-	//}
-
 	return reflectValue.Kind()
 }
 
@@ -52,9 +50,17 @@ func CallMethodValue(reflectValue reflect.Value, name string, params ...interfac
 // It returns the zero Value if no field was found.
 // It panics if v's Kind is not struct.
 func CallFieldValue(reflectValue reflect.Value, name string) interface{} {
-	return InterfaceValue(reflect.Indirect(reflectValue).FieldByName(name))
-}
+	// 如果父级是指针，结构体字段则也是支持CanAddr()
+	// 所以需要再包装
+	var fieldValue reflect.Value
+	if KindValue(reflectValue) == reflect.Ptr {
+		return reflect.Indirect(reflectValue).FieldByName(name).Interface()
+	} else {
+		fieldValue = reflect.Indirect(reflectValue).FieldByName(name)
+	}
 
+	return InterfaceValue(fieldValue)
+}
 
 //// It panics if the type's Kind is not Struct.
 //func StructFieldsValue(reflectValue reflect.Value) map[string]reflect.StructField {

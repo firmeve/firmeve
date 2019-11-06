@@ -6,6 +6,6 @@ type Item struct {
 
 func NewItem(source interface{}) *Item {
 	return &Item{
-		Resource:New(source),
+		Resource: New(source),
 	}
 }
