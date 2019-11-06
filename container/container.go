@@ -2,11 +2,12 @@ package container
 
 import (
 	"fmt"
-	"github.com/firmeve/firmeve/support"
-	reflect2 "github.com/firmeve/firmeve/support/reflect"
 	"reflect"
 	"strings"
 	"sync"
+
+	"github.com/firmeve/firmeve/support"
+	reflect2 "github.com/firmeve/firmeve/support/reflect"
 )
 
 type Container interface {
@@ -98,7 +99,7 @@ func (c *baseContainer) Resolve(abstract interface{}, params ...interface{}) int
 	reflectType := reflect.TypeOf(abstract)
 	reflectValue := reflect.ValueOf(abstract)
 
-	kind := reflect2.KindType(reflectType)
+	kind := reflect2.KindElemType(reflectType)
 
 	if kind == reflect.Func {
 		return c.resolveFunc(reflectType, reflectValue, params...)
@@ -141,7 +142,7 @@ func (c *baseContainer) setBindingItem(b *binding) {
 	// Set type
 	// Only support prt,struct and func type
 	// No support string,float,int... scalar type
-	originalKind := reflect2.KindType(b.reflectType)
+	originalKind := reflect2.KindElemType(b.reflectType)
 	if originalKind == reflect.Ptr || originalKind == reflect.Struct {
 		c.types[b.reflectType] = b.name
 	} else if originalKind == reflect.Func {
@@ -180,7 +181,7 @@ func (c *baseContainer) resolveStruct(reflectType reflect.Type, reflectValue ref
 			if _, ok := c.bindings[tag]; ok {
 				result := c.Resolve(c.Get(tag))
 				// Non-same type of direct skip
-				if reflect2.KindType(reflect.TypeOf(result)) == reflect2.KindType(field.Type) {
+				if reflect2.KindElemType(reflect.TypeOf(result)) == reflect2.KindElemType(field.Type) {
 					fieldValue.Set(reflect.ValueOf(result))
 				}
 			}
@@ -188,8 +189,8 @@ func (c *baseContainer) resolveStruct(reflectType reflect.Type, reflectValue ref
 
 		return nil
 	})
-
-	return reflect2.InterfaceValue(reflectValue)
+	fmt.Println(reflectType.Kind())
+	return reflect2.InterfaceValue(reflectType, reflectValue)
 }
 
 // ---------------------------- bindingOption ------------------------
@@ -226,7 +227,7 @@ func (b *binding) getShare(share bool) bool {
 func (b *binding) getPrototypeFunc(prototype interface{}) prototypeFunc {
 	var prototypeFunction prototypeFunc
 
-	if reflect2.KindType(b.reflectType) == reflect.Func {
+	if reflect2.KindElemType(b.reflectType) == reflect.Func {
 		prototypeFunction = func(container Container, params ...interface{}) interface{} {
 			return container.Resolve(prototype, params...)
 		}

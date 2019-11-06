@@ -34,7 +34,7 @@ func TestNewItem(t *testing.T) {
 	//fmt.Println(reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").Addr().Interface())
 	//fmt.Println(reflect.ValueOf(reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID")).Interface())
 
-	v := NewItem(m).Fields(`id`, `title`).Resolve()
+	v := NewItem(m).Fields(`id`, `title`, `inner_mock`).Resolve()
 
 	for k, value := range v[`data`].(ResolveMap) {
 		fmt.Println(k, value)
@@ -46,7 +46,10 @@ func TestNewItem(t *testing.T) {
 	vs, _ := json.Marshal(v)
 	fmt.Println(string(vs))
 	////
-	//fmt.Printf("%s", v[`data`].(ResolveMap)[`title`])
+	fmt.Println("################################")
+	fmt.Printf("%#v\n", v[`data`].(ResolveMap)[`title`])
+	fmt.Println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
+	fmt.Printf("%#v\n", v[`data`].(ResolveMap)[`inner_mock`])
 
 	//fmt.Println(v[`data`].(ResolveMap)[`id`].(uint))
 	//fmt.Printf("%p", v[`data`].(ResolveMap)[`title`])

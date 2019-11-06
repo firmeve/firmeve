@@ -15,7 +15,7 @@ func IndirectType(reflectType reflect.Type) reflect.Type {
 	return reflectType
 }
 
-func KindType(reflectType reflect.Type) reflect.Kind {
+func KindElemType(reflectType reflect.Type) reflect.Kind {
 	return IndirectType(reflectType).Kind()
 }
 

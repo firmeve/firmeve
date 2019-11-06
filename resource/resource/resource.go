@@ -1,13 +1,14 @@
 package resource
 
 import (
-	"github.com/firmeve/firmeve/resource"
-	reflect2 "github.com/firmeve/firmeve/support/reflect"
-	strings2 "github.com/firmeve/firmeve/support/strings"
 	"reflect"
 	"regexp"
 	"strings"
 	"sync"
+
+	"github.com/firmeve/firmeve/resource"
+	reflect2 "github.com/firmeve/firmeve/support/reflect"
+	strings2 "github.com/firmeve/firmeve/support/strings"
 )
 
 type mapCache map[string]map[string]string
@@ -61,7 +62,7 @@ func (r *Resource) resolveFields() []string {
 func (r *Resource) Resolve() ResolveMap {
 	reflectType := reflect.TypeOf(r.source)
 	reflectValue := reflect.ValueOf(r.source)
-	kindType := reflect2.KindType(reflectType)
+	kindType := reflect2.KindElemType(reflectType)
 	var data ResolveMap
 
 	if _, ok := r.source.(resource.Transformer); ok {
@@ -86,7 +87,7 @@ func (r *Resource) resolveMap(reflectType reflect.Type, reflectValue reflect.Val
 			if field != alias {
 				continue
 			}
-			if reflect2.KindType(reflect.TypeOf(v)) == reflect.Func {
+			if reflect2.KindElemType(reflect.TypeOf(v)) == reflect.Func {
 				collection[alias] = reflect2.CallFuncValue(reflect.ValueOf(v))[0]
 			} else {
 				collection[alias] = v
@@ -122,10 +123,10 @@ func (r *Resource) resolveTransformer(reflectType reflect.Type, reflectValue ref
 func (r *Resource) resolveStruct(reflectType reflect.Type, reflectValue reflect.Value) ResolveMap {
 	fields := r.transpositionFields(reflectType)
 	collection := make(ResolveMap, 0)
-	for _, field := range r.resolveFields() {
 
+	for _, field := range r.resolveFields() {
 		// method 优先
-		if v, ok := fields[field]; ok {
+		if v, ok := fields[field]; ok { //reflect.Indirect(reflectValue).FieldByName(v[`name`]).Interface() //
 			collection[v[`alias`]] = reflect2.CallFieldValue(reflectValue, v[`name`]) // reflect2.InterfaceValue(reflect.Indirect(reflectValue).FieldByName(v[`name`])) //utils.ReflectValueInterface(utils.ReflectCallMethod(source, v[`method`])[0])
 		} else {
 			collection[field] = ``

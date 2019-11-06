@@ -9,21 +9,18 @@ func CanSetValue(reflectValue reflect.Value) bool {
 	return reflectValue.CanSet()
 }
 
-func InterfaceValue(reflectValue reflect.Value) interface{} {
-	//@todo 这里可能会有问题
-	//@todo 需要仔细研究CanAddr
-	// 如果是prt或struct的prt类型，那么所有的fields的CanAddr()都是可引用的，调用Addr()将会返回地址
-	// 所以如果是标量（reflect.Complex128）则直接返回Interface()
-	if reflectValue.CanAddr() { // && KindValue(reflectValue) > reflect.Complex128 {
+func InterfaceValue(reflectType reflect.Type, reflectValue reflect.Value) interface{} {
+	if reflectType.Kind() == reflect.Ptr {
 		return reflectValue.Addr().Interface()
 	}
 
 	return reflectValue.Interface()
 }
 
-func KindValue(reflectValue reflect.Value) reflect.Kind {
-	return reflectValue.Kind()
-}
+//
+//func KindValue(reflectValue reflect.Value) reflect.Kind {
+//	return reflectValue.Kind()
+//}
 
 func CallFuncValue(reflectValue reflect.Value, params ...interface{}) []interface{} {
 	newParams := make([]reflect.Value, 0)
@@ -33,7 +30,7 @@ func CallFuncValue(reflectValue reflect.Value, params ...interface{}) []interfac
 
 	results := make([]interface{}, 0)
 	for _, value := range reflectValue.Call(newParams) {
-		current := InterfaceValue(value)
+		current := InterfaceValue(reflect.TypeOf(value), value)
 		if err, ok := current.(error); ok && err != nil {
 			panic(fmt.Errorf("call func execute result error. %w", err))
 		}
@@ -52,7 +49,8 @@ func CallMethodValue(reflectValue reflect.Value, name string, params ...interfac
 // It returns the zero Value if no field was found.
 // It panics if v's Kind is not struct.
 func CallFieldValue(reflectValue reflect.Value, name string) interface{} {
-	return InterfaceValue(reflect.Indirect(reflectValue).FieldByName(name))
+	fieldValue := reflect.Indirect(reflectValue).FieldByName(name)
+	return InterfaceValue(reflect.TypeOf(fieldValue), fieldValue)
 }
 
 //// It panics if the type's Kind is not Struct.
