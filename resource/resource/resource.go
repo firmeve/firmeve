@@ -1,7 +1,6 @@
 package resource
 
 import (
-	"fmt"
 	"github.com/firmeve/firmeve/resource"
 	reflect2 "github.com/firmeve/firmeve/support/reflect"
 	strings2 "github.com/firmeve/firmeve/support/strings"
@@ -19,8 +18,10 @@ var (
 	resourcesMethods = make(map[reflect.Type]mapCache, 0)
 )
 
+type ResolveMap map[string]interface{}
+
 type Resolver interface {
-	Resolve() map[string]interface{}
+	Resolve() ResolveMap
 }
 
 type Resource struct {
@@ -55,7 +56,7 @@ func (r *Resource) resolveFields() []string {
 	return r.fields
 }
 
-func (r *Resource) Resolve() map[string]interface{} {
+func (r *Resource) Resolve() ResolveMap {
 	reflectType := reflect.TypeOf(r.source)
 	reflectValue := reflect.ValueOf(r.source)
 	kindType := reflect2.KindType(reflectType)
@@ -70,12 +71,12 @@ func (r *Resource) Resolve() map[string]interface{} {
 		panic(`type error`)
 	}
 
-	return map[string]interface{}{r.key: data}
+	return ResolveMap{r.key: data}
 }
 
-func (r *Resource) resolveMap(reflectType reflect.Type, reflectValue reflect.Value) interface{} {
+func (r *Resource) resolveMap(reflectType reflect.Type, reflectValue reflect.Value) ResolveMap {
 	var alias string
-	collection := make(map[string]interface{}, 0)
+	collection := make(ResolveMap, 0)
 	for _, field := range r.resolveFields() {
 		for k, v := range r.source.(map[string]interface{}) {
 			alias = strings2.SnakeCase(k)
@@ -92,10 +93,10 @@ func (r *Resource) resolveMap(reflectType reflect.Type, reflectValue reflect.Val
 	return collection
 }
 
-func (r *Resource) resolveTransformer(reflectType reflect.Type, reflectValue reflect.Value) interface{} {
+func (r *Resource) resolveTransformer(reflectType reflect.Type, reflectValue reflect.Value) ResolveMap {
 	fields := r.transpositionFields(reflectType)
 	methods := r.transpositionMethods(reflectType)
-	collection := make(map[string]interface{}, 0)
+	collection := make(ResolveMap, 0)
 	for _, field := range r.resolveFields() {
 		// method 优先
 		if v, ok := methods[field]; ok {
@@ -114,16 +115,14 @@ func (r *Resource) resolveTransformer(reflectType reflect.Type, reflectValue ref
 	return collection
 }
 
-func (r *Resource) resolveStruct(reflectType reflect.Type, reflectValue reflect.Value) interface{} {
+func (r *Resource) resolveStruct(reflectType reflect.Type, reflectValue reflect.Value) ResolveMap {
 	fields := r.transpositionFields(reflectType)
-	collection := make(map[string]interface{}, 0)
+	collection := make(ResolveMap, 0)
 	for _, field := range r.resolveFields() {
+
 		// method 优先
 		if v, ok := fields[field]; ok {
-			//fmt.Println(reflectValue.Field(0).Interface())
-			//fmt.Println(reflect.Indirect(reflectValue).FieldByName(v[`name`]).Interface())
-			fmt.Println(reflect2.CallFieldValue(reflectValue,v[`name`]))
-			collection[v[`alias`]] = reflectValue.FieldByName(v[`name`]).Interface()//reflect2.CallFieldValue(reflectValue, v[`name`]) // reflect2.InterfaceValue(reflect.Indirect(reflectValue).FieldByName(v[`name`])) //utils.ReflectValueInterface(utils.ReflectCallMethod(source, v[`method`])[0])
+			collection[v[`alias`]] = reflect2.CallFieldValue(reflectValue, v[`name`]) // reflect2.InterfaceValue(reflect.Indirect(reflectValue).FieldByName(v[`name`])) //utils.ReflectValueInterface(utils.ReflectCallMethod(source, v[`method`])[0])
 		} else {
 			collection[field] = ``
 		}

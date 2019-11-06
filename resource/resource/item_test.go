@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"encoding/json"
 	"fmt"
 	"testing"
 )
@@ -29,6 +30,10 @@ func TestNewItem(t *testing.T) {
 			content:"inner content",
 		},
 	}
-	v:=NewItem(m).Fields(`id`,`title`,).Resolve()
-	fmt.Printf("%v",v[`data`].(map[string]interface{})[`id`].(*uint))
+	v:=NewItem(m).Fields(`id`,`title`).Resolve()
+	vs,_ := json.Marshal(v)
+	fmt.Println(string(vs))
+
+	//fmt.Println(v[`data`].(ResolveMap)[`id`].(uint))
+	fmt.Printf("%v",len(v[`data`].(ResolveMap)[`title`].(string)))
 }
