@@ -1,8 +1,8 @@
 package resource
 
 import (
+	"encoding/json"
 	"fmt"
-	"reflect"
 	"testing"
 )
 
@@ -31,15 +31,22 @@ func TestNewItem(t *testing.T) {
 		},
 	}
 
-	//fmt.Println(reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").CanAddr())
+	//fmt.Println(reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").Addr().Interface())
 	//fmt.Println(reflect.ValueOf(reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID")).Interface())
 
-	//v := NewItem(m).Fields(`id`, `title`).Resolve()
+	v := NewItem(m).Fields(`id`, `title`).Resolve()
+
+	for k, value := range v[`data`].(ResolveMap) {
+		fmt.Println(k,value)
+	}
+
+	fmt.Println("==========================")
+
 	//fmt.Printf("%#v",v)
-	//vs, _ := json.Marshal(m)
-	//fmt.Println(string(vs))
+	vs, _ := json.Marshal(v)
+	fmt.Println(string(vs))
 	////
-	//fmt.Println(v[`data`].(ResolveMap)[`title`].(string))
+	//fmt.Printf("%s", v[`data`].(ResolveMap)[`title`])
 
 	//fmt.Println(v[`data`].(ResolveMap)[`id`].(uint))
 	//fmt.Printf("%p", v[`data`].(ResolveMap)[`title`])

@@ -12,7 +12,9 @@ func CanSetValue(reflectValue reflect.Value) bool {
 func InterfaceValue(reflectValue reflect.Value) interface{} {
 	//@todo 这里可能会有问题
 	//@todo 需要仔细研究CanAddr
-	if reflectValue.CanAddr() {//&& KindValue(reflectValue) <= reflect.Complex128
+	// 如果是prt或struct的prt类型，那么所有的fields的CanAddr()都是可引用的，调用Addr()将会返回地址
+	// 所以如果是标量（reflect.Complex128）则直接返回Interface()
+	if reflectValue.CanAddr() {// && KindValue(reflectValue) > reflect.Complex128 {
 		return reflectValue.Addr().Interface()
 	}
 
@@ -50,16 +52,7 @@ func CallMethodValue(reflectValue reflect.Value, name string, params ...interfac
 // It returns the zero Value if no field was found.
 // It panics if v's Kind is not struct.
 func CallFieldValue(reflectValue reflect.Value, name string) interface{} {
-	// 如果父级是指针，结构体字段则也是支持CanAddr()
-	// 所以需要再包装
-	var fieldValue reflect.Value
-	if KindValue(reflectValue) == reflect.Ptr {
-		return reflect.Indirect(reflectValue).FieldByName(name).Interface()
-	} else {
-		fieldValue = reflect.Indirect(reflectValue).FieldByName(name)
-	}
-
-	return InterfaceValue(fieldValue)
+	return InterfaceValue(reflect.Indirect(reflectValue).FieldByName(name))
 }
 
 //// It panics if the type's Kind is not Struct.
