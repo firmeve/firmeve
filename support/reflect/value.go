@@ -10,9 +10,7 @@ func CanSetValue(reflectValue reflect.Value) bool {
 }
 
 func InterfaceValue(reflectValue reflect.Value) interface{} {
-	fmt.Println(int(reflect.Uint64))
-	if reflectValue.CanAddr() && reflectValue.Kind() != reflect.String {
-		fmt.Println("111")
+	if reflectValue.CanAddr() && reflectValue.Kind() == reflect.Ptr {
 		return reflectValue.Addr().Interface()
 	}
 
