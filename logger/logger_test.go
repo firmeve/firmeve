@@ -66,10 +66,9 @@ func TestLogger_File(t *testing.T) {
 	logger.Warn("File")
 }
 
-
 func TestProvider_Register(t *testing.T) {
 	firmeve := firmeve2.Instance()
 	firmeve.Boot()
 	assert.Equal(t, true, firmeve.HasProvider("logger"))
-	assert.Equal(t,true,firmeve.Has(`logger`))
+	assert.Equal(t, true, firmeve.Has(`logger`))
 }

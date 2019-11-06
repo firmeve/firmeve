@@ -16,7 +16,6 @@ var (
 	wg        sync.WaitGroup
 )
 
-
 func TestConfig_Set(t *testing.T) {
 	config := New(directory)
 
@@ -168,13 +167,13 @@ func TestGetEnv(t *testing.T) {
 	// 当使用GetEnv函数时会自动转换为大写
 	assert.Equal(t, "abc", GetEnv("abc"))
 
-	os.Setenv("lower","lower")
-	assert.Equal(t,"",GetEnv("lower"))
+	os.Setenv("lower", "lower")
+	assert.Equal(t, "", GetEnv("lower"))
 }
 
 func TestProvider_Register(t *testing.T) {
 	firmeve := firmeve2.Instance()
 	firmeve.Boot()
 	assert.Equal(t, true, firmeve.HasProvider("config"))
-	assert.Equal(t,true,firmeve.Has(`config`))
+	assert.Equal(t, true, firmeve.Has(`config`))
 }

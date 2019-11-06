@@ -105,7 +105,6 @@ func TestRouter_Group(t *testing.T) {
 		assertBaseRoute(t, router, http.MethodOptions, "/v1/options", "", 2, 1)
 	}
 
-
 	v1Dep := v1.Group("/dep").Before(func(ctx *Context) {
 		ctx.Write([]byte("Group v1--dep before"))
 		ctx.Next()

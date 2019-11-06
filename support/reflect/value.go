@@ -14,7 +14,7 @@ func InterfaceValue(reflectValue reflect.Value) interface{} {
 	//@todo 需要仔细研究CanAddr
 	// 如果是prt或struct的prt类型，那么所有的fields的CanAddr()都是可引用的，调用Addr()将会返回地址
 	// 所以如果是标量（reflect.Complex128）则直接返回Interface()
-	if reflectValue.CanAddr() {// && KindValue(reflectValue) > reflect.Complex128 {
+	if reflectValue.CanAddr() { // && KindValue(reflectValue) > reflect.Complex128 {
 		return reflectValue.Addr().Interface()
 	}
 

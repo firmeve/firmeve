@@ -17,7 +17,7 @@ type meta map[string]interface{}
 var (
 	resourcesFields  = make(map[reflect.Type]mapCache, 0)
 	resourcesMethods = make(map[reflect.Type]mapCache, 0)
-	mutex sync.Mutex
+	mutex            sync.Mutex
 )
 
 type ResolveMap map[string]interface{}

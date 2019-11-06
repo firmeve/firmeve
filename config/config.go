@@ -12,7 +12,7 @@ import (
 
 // Package global variable
 var (
-	mutex  sync.Mutex
+	mutex sync.Mutex
 )
 
 // Configurator interface

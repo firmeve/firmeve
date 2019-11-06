@@ -28,7 +28,7 @@ func TestApplyOption(t *testing.T) {
 		name string = "name"
 	)
 	// Assume external calls
-	object := ApplyOption(&objectTesting{},withId(id),withName(name)).(*objectTesting)
+	object := ApplyOption(&objectTesting{}, withId(id), withName(name)).(*objectTesting)
 
 	assert.Equal(t, id, object.id)
 	assert.Equal(t, name, object.name)

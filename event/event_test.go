@@ -25,7 +25,6 @@ func TestBaseDispatcher(t *testing.T) {
 	assert.Equal(t, 3, results[0].(int))
 }
 
-
 func listenBOne(params ...interface{}) interface{} {
 	return false
 }
@@ -34,7 +33,7 @@ func listenBTwo(params ...interface{}) interface{} {
 	return params[0].(int) + params[1].(int)
 }
 
-func TestFalseDispatcher(t *testing.T)  {
+func TestFalseDispatcher(t *testing.T) {
 	dispatch := New()
 	dispatch.Listen("b", listenBOne)
 	dispatch.Listen("b", listenBTwo)
@@ -44,19 +43,16 @@ func TestFalseDispatcher(t *testing.T)  {
 	assert.Equal(t, false, results[0].(bool))
 }
 
-func TestNamePanic(t *testing.T)  {
+func TestNamePanic(t *testing.T) {
 	assert.Panics(t, func() {
 		dispatch := New()
 		dispatch.Dispatch("c", listenBOne)
-	},`the event not exists`)
+	}, `the event not exists`)
 }
-
 
 func TestProvider_Register(t *testing.T) {
 	firmeve := firmeve2.Instance()
 	firmeve.Boot()
 	assert.Equal(t, true, firmeve.HasProvider("event"))
-	assert.Equal(t,true,firmeve.Has(`event`))
+	assert.Equal(t, true, firmeve.Has(`event`))
 }
-
-

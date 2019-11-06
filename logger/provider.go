@@ -7,7 +7,7 @@ import (
 
 type Provider struct {
 	Firmeve *firmeve.Firmeve `inject:"firmeve"`
-	id int
+	id      int
 }
 
 func (p *Provider) Register() {

@@ -262,7 +262,7 @@ func TestManager_Driver_Error(t *testing.T) {
 
 func TestCache_Forever(t *testing.T) {
 	Default().Forever("a", "b")
-	v,_ := Default().Get("a")
+	v, _ := Default().Get("a")
 	assert.Equal(t, v.(string), "b")
 }
 

@@ -65,5 +65,5 @@ func TestFirmeve_GetProvider(t *testing.T) {
 
 	assert.Panics(t, func() {
 		firmeve.GetProvider("nothing")
-	},"service provider not exists")
+	}, "service provider not exists")
 }

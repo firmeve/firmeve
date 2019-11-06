@@ -1,13 +1,13 @@
 package http
 
 import (
-"github.com/firmeve/firmeve"
-"github.com/firmeve/firmeve/container"
+	"github.com/firmeve/firmeve"
+	"github.com/firmeve/firmeve/container"
 )
 
 type Provider struct {
 	Firmeve *firmeve.Firmeve `inject:"firmeve"`
-	id int
+	id      int
 }
 
 func (p *Provider) Register() {

@@ -86,7 +86,7 @@ func (c *Cache) createRedisDriver() repository.Cacheable {
 		prefix = c.config.Prefix
 	)
 
-	addr := []string{host, `:`, port,}
+	addr := []string{host, `:`, port}
 
 	return redis.New(goRedis.NewClient(&goRedis.Options{
 		Addr: strings.Join(addr, ``),

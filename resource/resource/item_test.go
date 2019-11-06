@@ -37,7 +37,7 @@ func TestNewItem(t *testing.T) {
 	v := NewItem(m).Fields(`id`, `title`).Resolve()
 
 	for k, value := range v[`data`].(ResolveMap) {
-		fmt.Println(k,value)
+		fmt.Println(k, value)
 	}
 
 	fmt.Println("==========================")

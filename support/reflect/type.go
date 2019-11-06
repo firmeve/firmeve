@@ -96,6 +96,7 @@ func StructFields(reflectType reflect.Type) map[string]reflect.StructField {
 
 	return fields
 }
+
 //
 //func ReflectStructFields(object interface{}, onlyPublic bool) map[string]map[string]interface{} {
 //	reflectType := ReflectTypeIndirect(reflect.TypeOf(object))

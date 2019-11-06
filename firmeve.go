@@ -27,7 +27,7 @@ type option struct {
 
 var (
 	instance *Firmeve
-	once    sync.Once
+	once     sync.Once
 )
 
 // Create a new firmeve container

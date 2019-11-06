@@ -15,22 +15,23 @@ type message string
 func TestContainer_Resolve_String_Alias_Type(t *testing.T) {
 	i := New()
 
-	i.Bind(t.Name() + "message", message("message bar"))
-	i.Bind(t.Name() + "string", "string value")
+	i.Bind(t.Name()+"message", message("message bar"))
+	i.Bind(t.Name()+"string", "string value")
 
 	//assert.IsType(t,message(""),f.Get("message"))
 	z := i.Get(t.Name() + "message").(message)
 	assert.Equal(t, "message bar", fmt.Sprintf("%s", z))
-	assert.Equal(t, "string value", i.Get(t.Name() + "string").(string))
+	assert.Equal(t, "string value", i.Get(t.Name()+"string").(string))
 }
 
 func TestBaseContainer_Has(t *testing.T) {
 	i := New()
-	i.Bind(t.Name() + "string", "string value")
-	assert.Equal(t, true, i.Has(t.Name() + "string"))
+	i.Bind(t.Name()+"string", "string value")
+	assert.Equal(t, true, i.Has(t.Name()+"string"))
 }
 
 type IntAlias int32
+
 //
 func TestContainer_Resolve_Number(t *testing.T) {
 	var num int32
@@ -41,14 +42,15 @@ func TestContainer_Resolve_Number(t *testing.T) {
 	IntAliasNum = 80
 
 	f := New()
-	f.Bind(t.Name()+"num", num, )
-	f.Bind(t.Name()+"fnum", fnum, )
-	f.Bind(t.Name()+"IntAliasNum", IntAliasNum, )
+	f.Bind(t.Name()+"num", num)
+	f.Bind(t.Name()+"fnum", fnum)
+	f.Bind(t.Name()+"IntAliasNum", IntAliasNum)
 
-	assert.Equal(t, num, f.Get(t.Name() + "num").(int32))
-	assert.Equal(t, fnum, f.Get(t.Name() + "fnum").(float32))
-	assert.Equal(t, IntAliasNum, f.Get(t.Name() + "IntAliasNum").(IntAlias))
+	assert.Equal(t, num, f.Get(t.Name()+"num").(int32))
+	assert.Equal(t, fnum, f.Get(t.Name()+"fnum").(float32))
+	assert.Equal(t, IntAliasNum, f.Get(t.Name()+"IntAliasNum").(IntAlias))
 }
+
 //
 func TestContainer_Resolve_Bool(t *testing.T) {
 	f := New()
@@ -56,6 +58,7 @@ func TestContainer_Resolve_Bool(t *testing.T) {
 
 	assert.Equal(t, false, f.Get("bool").(bool))
 }
+
 //
 func TestContainer_Resolve_Struct_Prt(t *testing.T) {
 	t1 := testdata.NewT1()
@@ -64,6 +67,7 @@ func TestContainer_Resolve_Struct_Prt(t *testing.T) {
 	f.Bind(t.Name()+"t1", (t1))
 	assert.Equal(t, t1, f.Get(t.Name()+"t1"))
 }
+
 //
 type FuncType func() int64
 
@@ -82,6 +86,7 @@ func TestContainer_Resolve_Func_Simple(t *testing.T) {
 	result := f.Get(t.Name() + "z").(int64)
 	fmt.Println(result)
 }
+
 //
 //
 func TestContainer_Resolve_Cover(t *testing.T) {
@@ -89,7 +94,7 @@ func TestContainer_Resolve_Cover(t *testing.T) {
 	//t3 := testdata.NewT1Sturct()
 
 	f := New()
-	f.Bind(t.Name()+"t1", (t1), )
+	f.Bind(t.Name()+"t1", (t1))
 	assert.Equal(t, t1, f.Get(t.Name()+"t1"))
 
 	f.Bind(t.Name()+"t1", (t1), WithCover(true))
@@ -99,6 +104,7 @@ func TestContainer_Resolve_Cover(t *testing.T) {
 		f.Bind(t.Name()+"t1", (t1), WithCover(false))
 	}, "binding alias type already exists")
 }
+
 //
 // 测试单例
 func TestContainer_Singleton(t *testing.T) {
@@ -143,12 +149,13 @@ func TestReflectType(t *testing.T) {
 	fmt.Println(reflect.TypeOf(t3) == reflect.TypeOf(t5))
 	// func
 }
+
 //
 // 测试struct字段反射
 func TestContainer_Resolve_Struct_Field(t *testing.T) {
 	f := New()
 	t1 := testdata.NewT1()
-	f.Bind(t.Name() + "t1", t1)
+	f.Bind(t.Name()+"t1", t1)
 
 	fmt.Printf("%#v\n", f.Resolve(testdata.NewT2))
 
@@ -156,6 +163,7 @@ func TestContainer_Resolve_Struct_Field(t *testing.T) {
 	f.Bind("t1struct", (t1struct))
 	fmt.Printf("%#v", f.Resolve(testdata.NewTStruct))
 }
+
 //
 // 测试非单例注入
 func TestContainer_Resolve_Prototype(t *testing.T) {
@@ -164,6 +172,7 @@ func TestContainer_Resolve_Prototype(t *testing.T) {
 	log.Printf("%#v\n", f.Resolve(testdata.NewT2))
 	assert.IsType(t, testdata.NewT2(f.Get("t1").(*testdata.T1)), f.Resolve(testdata.NewT2))
 }
+
 //
 //////
 func TestContainer_Bind_Struct_Prt2(t *testing.T) {
@@ -177,6 +186,7 @@ func TestContainer_Bind_Struct_Prt2(t *testing.T) {
 	result := f.Resolve(t2)
 	fmt.Printf("%#v\n", result)
 }
+
 //
 func TestContainer_Remove(t *testing.T) {
 	t1 := testdata.NewT1()
