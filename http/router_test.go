@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/stretchr/testify/mock"
+
 	"github.com/stretchr/testify/assert"
 )
 
@@ -118,6 +120,21 @@ func TestRouter_Group(t *testing.T) {
 	assertBaseRoute(t, router, http.MethodGet, "/v1/dep/gets/1", "", 3, 1)
 }
 
+type MockResponseWriter struct {
+	mock.Mock
+}
+
+func (m *MockResponseWriter) Header() http.Header {
+	return http.Header{}
+}
+
+func (m *MockResponseWriter) Write(p []byte) (int, error) {
+	return len(p), nil
+}
+
+func (m *MockResponseWriter) WriteHeader(statusCode int) {
+}
+
 func TestRouter_Static(t *testing.T) {
 	//http.Handle("/", http.FileServer(http.Dir("/tmp")))
 	//http.ListenAndServe("127.0.0.1:28084", nil)
@@ -131,6 +148,8 @@ func TestRouter_Static(t *testing.T) {
 		ctx.Write([]byte("zzzz"))
 		ctx.Next()
 	})
+	req, _ := http.NewRequest(http.MethodGet, "/gets/abc", nil)
+	router.ServeHTTP(&MockResponseWriter{}, req)
 	//router.GET("/gets/1", func(ctx *Context) {
 	//	ctx.Write([]byte("Body"))
 	//	ctx.Next()
