@@ -157,6 +157,10 @@ func TestBaseContainer_Resolve_Error(t *testing.T) {
 	assert.Panics(t, func() {
 		f.Resolve(123)
 	})
+
+	assert.Panics(t, func() {
+		f.Get("string")
+	})
 }
 
 func TestBaseContainer_Resolve_string(t *testing.T) {
