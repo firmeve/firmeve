@@ -109,7 +109,7 @@ func (c *baseContainer) Resolve(abstract interface{}, params ...interface{}) int
 		return c.Get(abstract.(string))
 	}
 
-	panic(fmt.Errorf("unsupported type %#v", abstract))
+	panic(fmt.Errorf("unsupported type %T", abstract))
 }
 
 // Remove a binding
