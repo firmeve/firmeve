@@ -154,7 +154,7 @@ func TestReflectType(t *testing.T) {
 func TestBaseContainer_Resolve_Error(t *testing.T) {
 	f := New()
 	assert.Panics(t, func() {
-		f.Resolve("nothing")
+		f.Resolve(123)
 	}, "unsupported type")
 }
 
