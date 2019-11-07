@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+
 	"github.com/firmeve/firmeve"
 	"github.com/spf13/cobra"
 )
@@ -16,28 +17,54 @@ type Command struct {
 }
 
 func New() *Command {
-	return &Command{
-		root: &cobra.Command{
-			Use:   "firmeve",
-			Short: "A generator for Cobra based Applications",
-			Long: `Cobra is a CLI library for Go that empowers applications.
+	root := &cobra.Command{
+		Use:   "firmeve",
+		Short: "A generator for Cobra based Applications",
+		Long: `Cobra is a CLI library for Go that empowers applications.
 This application is a tool to generate the needed files
 to quickly create a Cobra application.`,
-		},
+	}
+	//root.DisableSuggestions = true
+	root.SetVersionTemplate("main version 11111")
+	root.PersistentFlags().StringP("version", "v", "", "author name for copyright attribution")
+	return &Command{
+		root: root,
 	}
 }
 
 func (r *Command) Register(cmd ICmd) {
-	r.root.AddCommand(&cobra.Command{
+	c := &cobra.Command{
 		//Run: cmd.Handle,
 		Use:   "version",
-		Short: "Print the version number of Hugo",
-		Long:  `All software has versions. This is Hugo's`,
-		Run: func(cobraCmd *cobra.Command, args []string) {
-			cmd.Handle(r, args)
-			fmt.Println("Hugo Static Site Generator v0.9 -- HEAD")
+		Short: "Current version 1.0",
+		//Long:  `All software has versions. This is Hugo's`,
+		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("Inside rootCmd PersistentPreRun with args: %v\n", args)
 		},
+		PreRun: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("Inside rootCmd PreRun with args: %v\n", args)
+		},
+		PostRun: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("Inside rootCmd PostRun with args: %v\n", args)
+		},
+		PersistentPostRun: func(cmd *cobra.Command, args []string) {
+			fmt.Printf("Inside rootCmd PersistentPostRun with args: %v\n", args)
+		},
+		Run: func(cobraCmd *cobra.Command, args []string) {
+			//cmd.Handle(r, args)
+			fmt.Println("1111")
+			//fmt.Println("Hugo Static Site Generator v0.9 -- HEAD")
+		},
+	}
+	c.PersistentFlags().StringP("cccccccc", "c", "", "SSSS")
+	//c.SetHelpTemplate("ssssssssssssssssssssssssss111\nabc\n")
+	c.SetUsageFunc(func(command *cobra.Command) error {
+		fmt.Println("GGGGGG")
+		return nil
 	})
+	c.SetUsageTemplate("111111")
+	//c.SetHelpCommand(c)
+	r.root.AddCommand(c)
 }
 
 func (r *Command) Root() *cobra.Command {
@@ -47,7 +74,7 @@ func (r *Command) Root() *cobra.Command {
 func (r *Command) Execute() {
 	err := r.root.Execute()
 	if err != nil {
-		panic(err)
+		//panic(err)
 	}
 }
 
