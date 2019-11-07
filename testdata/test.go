@@ -23,6 +23,10 @@ type T2 struct {
 	Age int
 }
 
+func (t *T2) GetT1() *T1 {
+	return t.t1
+}
+
 func NewT2(f *T1) T2 {
 	return T2{t1: f, Age: 10}
 }

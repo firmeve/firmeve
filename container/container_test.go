@@ -2,12 +2,13 @@ package container
 
 import (
 	"fmt"
-	"github.com/firmeve/firmeve/testdata"
-	"github.com/stretchr/testify/assert"
 	"log"
 	"reflect"
 	"testing"
 	"time"
+
+	"github.com/firmeve/firmeve/testdata"
+	"github.com/stretchr/testify/assert"
 )
 
 type message string
@@ -150,17 +151,59 @@ func TestReflectType(t *testing.T) {
 	// func
 }
 
+func TestBaseContainer_Resolve_Error(t *testing.T) {
+	f := New()
+	assert.Panics(t, func() {
+		f.Resolve("nothing")
+	}, "unsupported type")
+}
+
+func TestBaseContainer_Resolve_string(t *testing.T) {
+	f := New()
+	f.Bind("string", "string")
+	assert.Equal(t, "string", f.Resolve("string").(string))
+}
+
+func TestBaseContainer_Resolve_Func_Error(t *testing.T) {
+	f := New()
+	t1 := testdata.NewT1()
+	f.Bind("t1", t1)
+	f1 := func(t12 *testdata.T1) *testdata.T1 {
+		fmt.Printf("%#v", t12)
+		return t12
+	}
+	assert.Equal(t, t1, f.Resolve(f1).(*testdata.T1))
+	f2 := func(t12 *testdata.T1, str string) *testdata.T1 {
+		fmt.Printf("%#v", t12)
+		return t12
+	}
+	assert.Panics(t, func() {
+		f.Resolve(f2)
+	}, `unable to find reflection parameter`)
+	f3 := func(t12 *testdata.T1) (*testdata.T1, string) {
+		fmt.Printf("%#v", t12)
+		return t12, "abc"
+	}
+	v := f.Resolve(f3).([]interface{})
+	assert.Equal(t, t1, v[0].(*testdata.T1))
+	assert.Equal(t, "abc", v[1])
+}
+
 //
 // 测试struct字段反射
 func TestContainer_Resolve_Struct_Field(t *testing.T) {
 	f := New()
 	t1 := testdata.NewT1()
-	f.Bind(t.Name()+"t1", t1)
-
+	f.Bind("t1", t1)
+	//v := f.Resolve(testdata.NewT2)
+	//assert.Equal(t, v.(testdata.T2).GetT1(), t1)
 	fmt.Printf("%#v\n", f.Resolve(testdata.NewT2))
+	t2 := f.Resolve(testdata.NewT2).(testdata.T2)
+
+	assert.Equal(t, t1, t2.GetT1())
 
 	t1struct := testdata.NewT1Sturct()
-	f.Bind("t1struct", (t1struct))
+	f.Bind("t1struct", t1struct)
 	fmt.Printf("%#v", f.Resolve(testdata.NewTStruct))
 }
 
@@ -179,12 +222,13 @@ func TestContainer_Bind_Struct_Prt2(t *testing.T) {
 	t1 := testdata.NewT1()
 
 	f := New()
-	f.Bind(t.Name()+"t1", (t1))
+	f.Bind("t1", t1)
 
 	t2 := new(testdata.T2)
 	//fmt.Printf("%#v\n", t2)
 	result := f.Resolve(t2)
 	fmt.Printf("%#v\n", result)
+	assert.Equal(t, t1, result.(*testdata.T2).S1)
 }
 
 //

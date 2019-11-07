@@ -189,7 +189,7 @@ func (c *baseContainer) resolveStruct(reflectType reflect.Type, reflectValue ref
 
 		return nil
 	})
-	fmt.Println(reflectType.Kind())
+
 	return reflect2.InterfaceValue(reflectType, reflectValue)
 }
 
