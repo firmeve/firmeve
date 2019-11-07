@@ -4,6 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"testing"
+
+	resource2 "github.com/firmeve/firmeve/resource"
+
+	"github.com/magiconair/properties/assert"
 )
 
 type innerMock struct {
@@ -19,38 +23,74 @@ type mock struct {
 	SubMock *innerMock `resource:"inner_mock"`
 }
 
-func TestNewItem(t *testing.T) {
+func TestPrtStruct(t *testing.T) {
+	subM := &innerMock{
+		IId:     11,
+		ITitle:  "inner title",
+		content: "inner content",
+	}
 	m := &mock{
 		ID:      10,
 		Title:   "main title",
 		Content: "content",
-		SubMock: &innerMock{
-			IId:     11,
-			ITitle:  "inner title",
-			content: "inner content",
-		},
+		SubMock: subM,
 	}
 
-	//fmt.Println(reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID").Addr().Interface())
-	//fmt.Println(reflect.ValueOf(reflect.Indirect(reflect.ValueOf(m)).FieldByName("ID")).Interface())
-
-	v := NewItem(m).Fields(`id`, `title`, `inner_mock`).Resolve()
-
-	for k, value := range v[`data`].(ResolveMap) {
-		fmt.Println(k, value)
-	}
-
-	fmt.Println("==========================")
-
+	v := NewItem(m).Fields(`id`, `title`, `inner_mock`, `_content`).Resolve()
 	//fmt.Printf("%#v",v)
+	//vs, _ := json.Marshal(v)
+	//fmt.Println(string(vs))
+
+	assert.Equal(t, "main title", v[`data`].(ResolveMap)[`title`].(string))
+	assert.Equal(t, "content", v[`data`].(ResolveMap)[`_content`].(string))
+	assert.Equal(t, uint(10), v[`data`].(ResolveMap)[`id`].(uint))
+	assert.Equal(t, subM, v[`data`].(ResolveMap)[`inner_mock`])
+}
+
+func TestStruct(t *testing.T) {
+	subM := &innerMock{
+		IId:     11,
+		ITitle:  "inner title",
+		content: "inner content",
+	}
+	m := mock{
+		ID:      10,
+		Title:   "main title",
+		Content: "content",
+		SubMock: subM,
+	}
+
+	v := NewItem(m).Fields(`id`, `title`, `inner_mock`, `_content`).Resolve()
 	vs, _ := json.Marshal(v)
 	fmt.Println(string(vs))
-	////
-	fmt.Println("################################")
-	fmt.Printf("%#v\n", v[`data`].(ResolveMap)[`title`])
-	fmt.Println("$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$")
-	fmt.Printf("%#v\n", v[`data`].(ResolveMap)[`inner_mock`])
 
-	//fmt.Println(v[`data`].(ResolveMap)[`id`].(uint))
-	//fmt.Printf("%p", v[`data`].(ResolveMap)[`title`])
+	assert.Equal(t, "main title", v[`data`].(ResolveMap)[`title`].(string))
+	assert.Equal(t, "content", v[`data`].(ResolveMap)[`_content`].(string))
+	assert.Equal(t, uint(10), v[`data`].(ResolveMap)[`id`].(uint))
+	assert.Equal(t, subM, v[`data`].(ResolveMap)[`inner_mock`])
+}
+
+type AppTransformer struct {
+	resource2.Transformer
+}
+
+func (t *AppTransformer) IdField() uint {
+	return t.Resource().(Source).ID + 1
+}
+
+type Source struct {
+	ID      uint `resource:"id"`
+	Title   string
+	Content string `resource:"_content"`
+}
+
+func TestTransformer(t *testing.T) {
+	source := Source{
+		ID:      10,
+		Title:   "main title",
+		Content: "content",
+	}
+
+	v := NewItem(resource2.New(source, &AppTransformer{})).Fields(`id`, `title`).Resolve()
+	fmt.Println(v[`data`].(ResolveMap)[`id`].(uint))
 }

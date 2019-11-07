@@ -1,20 +1,36 @@
 package resource
 
-type Transformer interface {
-	Source() interface{}
+type Resource interface {
+	Resource() interface{}
+	SetResource(resource interface{})
 }
 
-type BaseTransformer struct {
+//type Transformer interface {
+//	Transformer() Transformer
+//}
+//
+type Transformer struct {
+	resource interface{}
 }
 
-func (t *BaseTransformer) t1Field() string {
-	return `abc`
+//
+func (t *Transformer) Resource() interface{} {
+	return t.resource
 }
 
-func (t *BaseTransformer) t2Field() int {
-	return 2
+func (t *Transformer) SetResource(resource interface{}) {
+	t.resource = resource
 }
 
-func (t *BaseTransformer) t3Field() map[string]string {
-	return map[string]string{"a": "a", "b": "b"}
+//
+//func New(resource interface{}, transformer Transformer) Resource {
+//	return Transformer
+//	return &Transformer{
+//		resource: resource,
+//	}
+//}
+
+func New(resource interface{}, transformer Resource) Resource {
+	transformer.SetResource(resource)
+	return transformer
 }

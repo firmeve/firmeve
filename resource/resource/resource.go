@@ -62,17 +62,19 @@ func (r *Resource) resolveFields() []string {
 func (r *Resource) Resolve() ResolveMap {
 	reflectType := reflect.TypeOf(r.source)
 	reflectValue := reflect.ValueOf(r.source)
-	kindType := reflect2.KindElemType(reflectType)
 	var data ResolveMap
 
-	if _, ok := r.source.(resource.Transformer); ok {
+	if _, ok := r.source.(resource.Resource); ok {
 		data = r.resolveTransformer(reflectType, reflectValue)
-	} else if kindType == reflect.Map {
-		data = r.resolveMap(reflectType, reflectValue)
-	} else if kindType == reflect.Struct {
-		data = r.resolveStruct(reflectType, reflectValue)
 	} else {
-		panic(`type error`)
+		kindType := reflect2.KindElemType(reflectType)
+		if kindType == reflect.Map {
+			data = r.resolveMap(reflectType, reflectValue)
+		} else if kindType == reflect.Struct {
+			data = r.resolveStruct(reflectType, reflectValue)
+		} else {
+			panic(`type error`)
+		}
 	}
 
 	return ResolveMap{r.key: data}
@@ -98,17 +100,19 @@ func (r *Resource) resolveMap(reflectType reflect.Type, reflectValue reflect.Val
 }
 
 func (r *Resource) resolveTransformer(reflectType reflect.Type, reflectValue reflect.Value) ResolveMap {
-	fields := r.transpositionFields(reflectType)
+	resourceReflectType := reflect.TypeOf(r.source.(resource.Resource).Resource())
+	resourceReflectValue := reflect.ValueOf(r.source.(resource.Resource).Resource())
+	fields := r.transpositionFields(resourceReflectType)
 	methods := r.transpositionMethods(reflectType)
 	collection := make(ResolveMap, 0)
 
 	for _, field := range r.resolveFields() {
 		// method 优先
 		if v, ok := methods[field]; ok {
-			collection[v[`alias`]] = reflect2.CallMethodValue(reflectValue, v[`method`])[0] //utils.ReflectValueInterface(utils.ReflectCallMethod(source, v[`method`])[0])
+			collection[v[`alias`]] = reflect2.CallMethodValue(reflectValue, v[`method`])[0]
 		} else if v, ok := fields[field]; ok {
 			if v[`method`] == `` {
-				collection[v[`alias`]] = reflect2.CallFieldValue(reflectValue, v[`name`]) // reflect2.InterfaceValue(reflect.Indirect(reflectValue).FieldByName(v[`name`])) //utils.ReflectValueInterface(utils.ReflectCallMethod(source, v[`method`])[0])
+				collection[v[`alias`]] = reflect2.CallFieldValue(resourceReflectValue, v[`name`])
 			} else {
 				collection[v[`alias`]] = reflect2.CallMethodValue(reflectValue, v[`method`])[0]
 			}
@@ -126,8 +130,8 @@ func (r *Resource) resolveStruct(reflectType reflect.Type, reflectValue reflect.
 
 	for _, field := range r.resolveFields() {
 		// method 优先
-		if v, ok := fields[field]; ok { //reflect.Indirect(reflectValue).FieldByName(v[`name`]).Interface() //
-			collection[v[`alias`]] = reflect2.CallFieldValue(reflectValue, v[`name`]) // reflect2.InterfaceValue(reflect.Indirect(reflectValue).FieldByName(v[`name`])) //utils.ReflectValueInterface(utils.ReflectCallMethod(source, v[`method`])[0])
+		if v, ok := fields[field]; ok {
+			collection[v[`alias`]] = reflect2.CallFieldValue(reflectValue, v[`name`])
 		} else {
 			collection[field] = ``
 		}
@@ -145,18 +149,11 @@ func (r *Resource) transpositionMethods(reflectType reflect.Type) mapCache {
 	reflect2.CallMethodType(reflectType, func(i int, method reflect.Method) interface{} {
 		name := method.Name
 		if regexp.MustCompile("^(.+)Field$").MatchString(name) {
-			exceptFieldName := name[0 : len(name)-5]
-			methods[exceptFieldName] = map[string]string{`alias`: strings2.SnakeCase(exceptFieldName), `method`: name}
+			alias := strings2.SnakeCase(name[0 : len(name)-5])
+			methods[alias] = map[string]string{`alias`: alias, `method`: name}
 		}
 		return nil
 	})
-
-	//for name := range reflect2.Methods(reflectType) {
-	//	if regexp.MustCompile("^(.+)Field$").MatchString(name) {
-	//		exceptFieldName := name[0 : len(name)-5]
-	//		methods[exceptFieldName] = map[string]string{`alias`: strings2.SnakeCase(exceptFieldName), `method`: name}
-	//	}
-	//}
 
 	resourcesMethods[reflectType] = methods
 
@@ -188,9 +185,6 @@ func (r *Resource) transpositionFields(reflectType reflect.Type) mapCache {
 
 		return nil
 	})
-	//for name, field := range reflect2.StructFields(reflectType) {
-	//
-	//}
 
 	resourcesFields[reflectType] = fields
 
