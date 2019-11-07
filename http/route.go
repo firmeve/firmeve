@@ -22,6 +22,10 @@ func (r *Route) After(handlers ...HandlerFunc) *Route {
 	return r
 }
 
+func (r *Route) Handlers() []HandlerFunc {
+	return append(append(r.beforeHandlers, r.handler), r.afterHandlers...)
+}
+
 func newRoute(path string, handler HandlerFunc) *Route {
 	return &Route{
 		path:           path,

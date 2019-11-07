@@ -7,11 +7,15 @@ import (
 
 type HandlerFunc func(ctx *Context)
 
+type Params map[string]string
+
 type Context struct {
 	request  *http.Request
 	response http.ResponseWriter
 	handlers []HandlerFunc
 	index    int
+	params   Params
+	route    *Route
 }
 
 func newContext(writer http.ResponseWriter, r *http.Request, handlers ...HandlerFunc) *Context {
@@ -20,7 +24,31 @@ func newContext(writer http.ResponseWriter, r *http.Request, handlers ...Handler
 		response: writer,
 		handlers: handlers,
 		index:    0,
+		params:   make(Params, 0),
 	}
+}
+
+func (ctx *Context) SetParams(params Params) *Context {
+	ctx.params = params
+	return ctx
+}
+
+func (ctx *Context) SetRoute(route *Route) *Context {
+	ctx.route = route
+	return ctx
+}
+
+func (ctx *Context) Param(key string) string {
+	value, _ := ctx.params[key]
+	return value
+}
+
+func (ctx *Context) Request() *http.Request {
+	return ctx.request
+}
+
+func (ctx *Context) Response(key string) http.ResponseWriter {
+	return ctx.response
 }
 
 func (ctx *Context) Query(key string) interface{} {

@@ -1,9 +1,10 @@
 package http
 
 import (
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func assertBaseRoute(t *testing.T, router *Router, method, path, name string, beforeHandlerLen int, afterHandlerLen int) {
@@ -115,4 +116,36 @@ func TestRouter_Group(t *testing.T) {
 		})
 	}
 	assertBaseRoute(t, router, http.MethodGet, "/v1/dep/gets/1", "", 3, 1)
+}
+
+func TestRouter_Static(t *testing.T) {
+	//http.Handle("/", http.FileServer(http.Dir("/tmp")))
+	//http.ListenAndServe("127.0.0.1:28084", nil)
+	router := New()
+	router.Static("/file", "/tmp")
+	router.GET("/gets/:name", func(ctx *Context) {
+		ctx.Write([]byte(ctx.Param("name")))
+		ctx.Next()
+	})
+	router.NotFound(func(ctx *Context) {
+		ctx.Write([]byte("zzzz"))
+		ctx.Next()
+	})
+	//router.GET("/gets/1", func(ctx *Context) {
+	//	ctx.Write([]byte("Body"))
+	//	ctx.Next()
+	//}).After(func(ctx *Context) {
+	//	ctx.Write([]byte("After 1"))
+	//	ctx.Next()
+	//}).After(func(ctx *Context) {
+	//	ctx.Write([]byte("After 2"))
+	//	ctx.Next()
+	//}).Before(func(ctx *Context) {
+	//	ctx.Write([]byte("Before 1"))
+	//	ctx.Next()
+	//}).Name("gets.1")
+	//err := http.ListenAndServe("127.0.0.1:28084", router)
+	//if err != nil {
+	//	fmt.Println(err)
+	//}
 }

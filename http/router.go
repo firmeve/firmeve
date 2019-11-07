@@ -1,16 +1,16 @@
 package http
 
 import (
-	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"strings"
+
+	"github.com/julienschmidt/httprouter"
 )
 
 type Router struct {
 	router    *httprouter.Router
 	routes    map[string]*Route
 	routeKeys []string
-	notFound  HandlerFunc
 }
 
 func New() *Router {
@@ -45,8 +45,16 @@ func (r *Router) OPTIONS(path string, handler HandlerFunc) *Route {
 	return r.createRoute(http.MethodOptions, path, handler)
 }
 
+// serve static files
+func (r *Router) Static(path string, root string) *Router {
+	r.router.ServeFiles(strings.Join([]string{path, `/*filepath`}, ``), http.Dir(root))
+	return r
+}
+
 func (r *Router) NotFound(handler HandlerFunc) *Router {
-	r.notFound = handler
+	r.router.NotFound = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		newContext(w, req, handler).Next()
+	})
 	return r
 }
 
@@ -60,7 +68,18 @@ func (r *Router) createRoute(method string, path string, handler HandlerFunc) *R
 	r.routes[key] = newRoute(path, handler)
 
 	//Only http router
-	r.router.Handler(method, path, r)
+	//r.router.Handler(method, path, r)
+	r.router.Handle(method, path, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
+		ctxParams := make(Params, 0)
+		for _, param := range params {
+			ctxParams[param.Key] = param.Value
+		}
+
+		newContext(w, req, r.routes[key].Handlers()...).
+			SetParams(ctxParams).
+			SetRoute(r.routes[key]).
+			Next()
+	})
 
 	return r.routes[key]
 }
@@ -73,12 +92,14 @@ func (r *Router) routeKey(method, path string) string {
 // 其它router,middleware这些都是我自己实现，惟一对接的就是无缝的写入一套httprouter规则的路由（后期替换为自己的路由）
 // 通过ServerHttp去查找匹配路由
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	var handlers = make([]HandlerFunc, 0)
-	if route, ok := r.routes[r.routeKey(req.Method, req.URL.Path)]; ok {
-		handlers = append(append(route.beforeHandlers, route.handler), route.afterHandlers...)
-		newContext(w, req, handlers...).Next()
-		return
-	}
 
-	newContext(w, req, r.notFound).Next()
+	r.router.ServeHTTP(w, req)
+
+	// r.routes[r.routeKey(req.Method, req.URL.Path)]也可以使用
+	// r.router.Lookup(req.Method, req.URL.Path+"/") 来实现
+	//if _, ok := r.routes[r.routeKey(req.Method, req.URL.Path)]; !ok && r.notFound != nil {
+	//	newContext(w, req, r.notFound).Next()
+	//} else {
+	//	r.router.ServeHTTP(w, req)
+	//}
 }
