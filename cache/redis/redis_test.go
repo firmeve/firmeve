@@ -2,13 +2,14 @@ package redis
 
 import (
 	"fmt"
-	"github.com/go-redis/redis"
-	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"os"
 	"strconv"
 	"testing"
 	"time"
+
+	"github.com/go-redis/redis"
+	"github.com/stretchr/testify/assert"
 )
 
 // RandString 生成随机字符串
@@ -72,11 +73,11 @@ func TestRepository_Put_Int(t *testing.T) {
 			key   string
 			value int
 		}{
-			{key: t.Name() + randString(5), value: rand.Int()},
-			{key: t.Name() + randString(5), value: rand.Int()},
-			{key: t.Name() + randString(5), value: rand.Int()},
-			{key: t.Name() + randString(5), value: rand.Int()},
-			{key: t.Name() + randString(5), value: rand.Int()},
+			{key: t.Name() + randString(20), value: rand.Int()},
+			{key: t.Name() + randString(20), value: rand.Int()},
+			{key: t.Name() + randString(20), value: rand.Int()},
+			{key: t.Name() + randString(20), value: rand.Int()},
+			{key: t.Name() + randString(20), value: rand.Int()},
 		}
 
 		for _, v := range tests {
