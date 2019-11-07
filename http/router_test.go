@@ -150,6 +150,8 @@ func TestRouter_Static(t *testing.T) {
 	})
 	req, _ := http.NewRequest(http.MethodGet, "/gets/abc", nil)
 	router.ServeHTTP(&MockResponseWriter{}, req)
+	req2, _ := http.NewRequest(http.MethodGet, "/ssssss", nil)
+	router.ServeHTTP(&MockResponseWriter{}, req2)
 	//router.GET("/gets/1", func(ctx *Context) {
 	//	ctx.Write([]byte("Body"))
 	//	ctx.Next()
