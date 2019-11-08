@@ -12,11 +12,14 @@ require (
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/spf13/pflag v1.0.5
+	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.4.1-0.20191016082920-40e41dd2240a
 	github.com/stretchr/testify v1.4.0
+	github.com/takama/daemon v0.11.0
+	go.uber.org/multierr v1.4.0 // indirect
 	go.uber.org/zap v1.12.0
 	golang.org/x/sys v0.0.0-20191029155521-f43be2a4598c // indirect
 	golang.org/x/text v0.3.2 // indirect
+	golang.org/x/tools v0.0.0-20191107235519-f7ea15e60b12 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
