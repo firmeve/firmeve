@@ -13,8 +13,6 @@ import (
 
 type mapCache map[string]map[string]string
 
-type meta map[string]interface{}
-
 var (
 	resourcesFields  = make(map[reflect.Type]mapCache, 0)
 	resourcesMethods = make(map[reflect.Type]mapCache, 0)
@@ -22,6 +20,7 @@ var (
 )
 
 type ResolveMap map[string]interface{}
+type Meta map[string]interface{}
 
 type Resolver interface {
 	Resolve() ResolveMap
@@ -32,31 +31,20 @@ type Resource struct {
 	fields []string
 	chunks []string
 	key    string
-	meta   meta
-	//transformer interface{}
+	meta   Meta
 }
 
 func New(source interface{}) *Resource {
 	return &Resource{
-		//source:      source,
 		source: source,
 		key:    `data`,
-		meta:   make(meta, 0),
+		meta:   make(Meta, 0),
 	}
 }
 
 func (r *Resource) Fields(fields ...string) *Resource {
 	r.fields = fields
 	return r
-}
-
-func (r *Resource) Chunks(chunks []string) *Resource {
-	r.chunks = chunks
-	return r
-}
-
-func (r *Resource) resolveFields() []string {
-	return r.fields
 }
 
 func (r *Resource) Resolve() ResolveMap {
@@ -78,6 +66,15 @@ func (r *Resource) Resolve() ResolveMap {
 	}
 
 	return ResolveMap{r.key: data}
+	//if len(r.meta) > 0 {
+	//	return ResolveMap{r.key: data, "meta": r.meta}
+	//} else {
+	//	return ResolveMap{r.key: data}
+	//}
+}
+
+func (r *Resource) resolveFields() []string {
+	return r.fields
 }
 
 func (r *Resource) resolveMap(reflectType reflect.Type, reflectValue reflect.Value) ResolveMap {
