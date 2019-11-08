@@ -12,7 +12,7 @@ require (
 	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
-	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.4.1-0.20191016082920-40e41dd2240a
 	github.com/stretchr/testify v1.4.0
 	go.uber.org/zap v1.12.0
