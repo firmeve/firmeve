@@ -9,6 +9,10 @@ import (
 	"syscall"
 	"time"
 
+	logging "github.com/firmeve/firmeve/logger"
+
+	"github.com/firmeve/firmeve"
+
 	"github.com/spf13/cobra"
 )
 
@@ -16,12 +20,14 @@ func NewCmd(router *Router) *cmd {
 	return &cmd{
 		router:  router,
 		command: new(cobra.Command),
+		logger:  firmeve.Instance().Get(`logger`).(logging.Loggable),
 	}
 }
 
 type cmd struct {
 	router  *Router
 	command *cobra.Command
+	logger  logging.Loggable
 }
 
 func (c *cmd) Cmd() *cobra.Command {
@@ -55,7 +61,8 @@ func (c *cmd) run(cmd *cobra.Command, args []string) {
 	// kill -9 is syscall.SIGKILL but can't be catch, so don't need add it
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	log.Println("Shutdown Server ...")
+	//log.Println("Shutdown Server ...")
+	c.logger.Info("Shutdown Server ...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
@@ -63,5 +70,5 @@ func (c *cmd) run(cmd *cobra.Command, args []string) {
 		log.Fatal("Server Shutdown: ", err)
 	}
 
-	log.Println("Server exiting")
+	c.logger.Info("Server exiting")
 }

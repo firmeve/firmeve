@@ -2,12 +2,13 @@ package logging
 
 import (
 	"fmt"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
-	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"os"
 	"sync"
+
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 type Loggable interface {
@@ -67,7 +68,7 @@ func New(config *Config) Loggable {
 
 func Default() Loggable {
 	config := &Config{
-		Current: `console`,
+		Current: `stack`,
 		Channels: ConfigChannelType{
 			`stack`: []string{`file`, `console`},
 			`console`: ConfigChannelType{
@@ -137,22 +138,30 @@ func (l *logger) channel(stack string) internalLogger {
 
 // Default internal logger
 func zapLogger(config *Config, writers writers) internalLogger {
+	//zapcore.EncoderConfig{
+	//	TimeKey:        "time",
+	//	LevelKey:       "level",
+	//	NameKey:        "logger",
+	//	CallerKey:      "caller",
+	//	MessageKey:     "message",
+	//	StacktraceKey:  "stacktrace",
+	//	LineEnding:     zapcore.DefaultLineEnding,
+	//	EncodeLevel:    zapcore.LowercaseLevelEncoder,
+	//	EncodeTime:     zapcore.ISO8601TimeEncoder,
+	//	EncodeDuration: zapcore.StringDurationEncoder,
+	//	EncodeCaller:   zapcore.FullCallerEncoder,
+	//}
 	cores := make([]zapcore.Core, 0)
+	var zapEncoder zapcore.Encoder
 	for stack, write := range writers {
+		if stack == `console` {
+			zapEncoder = zapcore.NewConsoleEncoder(zap.NewProductionEncoderConfig())
+		} else {
+			zapEncoder = zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
+		}
+
 		core := zapcore.NewCore(
-			zapcore.NewJSONEncoder(zapcore.EncoderConfig{
-				TimeKey:        "time",
-				LevelKey:       "level",
-				NameKey:        "logger",
-				CallerKey:      "caller",
-				MessageKey:     "message",
-				StacktraceKey:  "stacktrace",
-				LineEnding:     zapcore.DefaultLineEnding,
-				EncodeLevel:    zapcore.LowercaseLevelEncoder,
-				EncodeTime:     zapcore.EpochTimeEncoder,
-				EncodeDuration: zapcore.SecondsDurationEncoder,
-				EncodeCaller:   zapcore.FullCallerEncoder,
-			}),
+			zapEncoder,
 			zapcore.Lock(zapcore.AddSync(write)), //writer(option)
 			zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
 				return lvl >= levelMap[Level(config.Channels[stack].(ConfigChannelType)[`level`].(string))]
@@ -162,7 +171,7 @@ func zapLogger(config *Config, writers writers) internalLogger {
 		cores = append(cores, core)
 	}
 
-	return zap.New(zapcore.NewTee(cores...), zap.AddCaller(), zap.AddStacktrace(zap.DebugLevel)).Sugar()
+	return zap.New(zapcore.NewTee(cores...), zap.AddCallerSkip(2), zap.AddStacktrace(zap.WarnLevel)).Sugar()
 }
 
 // Channel factory

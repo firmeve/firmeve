@@ -1,9 +1,10 @@
 package logging
 
 import (
+	"testing"
+
 	firmeve2 "github.com/firmeve/firmeve"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestDefault(t *testing.T) {
@@ -22,7 +23,7 @@ func TestLogger_Channel(t *testing.T) {
 
 func TestLogger_Logger_Config(t *testing.T) {
 	logger := New(&Config{
-		Current: `stack`,
+		Current: `console`,
 		Channels: ConfigChannelType{
 			`stack`: []string{`file`, `console`},
 			`console`: ConfigChannelType{
