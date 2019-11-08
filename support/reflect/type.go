@@ -78,6 +78,11 @@ func Methods(reflectType reflect.Type) map[string]reflect.Method {
 	return methods
 }
 
+func MethodExists(reflectType reflect.Type, name string) bool {
+	_, ok := reflectType.MethodByName(name)
+	return ok
+}
+
 // It panics if the type's Kind is not Struct.
 func StructFields(reflectType reflect.Type) map[string]reflect.StructField {
 	reflectType = IndirectType(reflectType)
