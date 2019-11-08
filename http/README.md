@@ -1,0 +1,2 @@
+每个context的处理,都会对应
+一个Action以及一个ActionStruct(就是这个Action需要的Struct,这个struct也可以是匿名的)
