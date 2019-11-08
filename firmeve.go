@@ -2,9 +2,14 @@ package firmeve
 
 import (
 	"fmt"
+	"sync"
+
 	"github.com/firmeve/firmeve/container"
 	"github.com/firmeve/firmeve/support"
-	"sync"
+)
+
+const (
+	Version = "1.0.0"
 )
 
 type Provider interface {
