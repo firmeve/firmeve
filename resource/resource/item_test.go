@@ -36,7 +36,7 @@ func TestPrtStruct(t *testing.T) {
 		SubMock: subM,
 	}
 
-	v := NewItem(m).Fields(`id`, `title`, `inner_mock`, `_content`).Resolve()
+	v := NewItem(m).SetFields(`id`, `title`, `inner_mock`, `_content`).Resolve()
 	//fmt.Printf("%#v",v)
 	//vs, _ := json.Marshal(v)
 	//fmt.Println(string(vs))
@@ -60,7 +60,7 @@ func TestStruct(t *testing.T) {
 		SubMock: subM,
 	}
 
-	v := NewItem(m).Fields(`id`, `title`, `inner_mock`, `_content`).Resolve()
+	v := NewItem(m).SetFields(`id`, `title`, `inner_mock`, `_content`).Resolve()
 	vs, _ := json.Marshal(v)
 	fmt.Println(string(vs))
 
@@ -91,6 +91,7 @@ func TestTransformer(t *testing.T) {
 		Content: "content",
 	}
 
-	v := NewItem(resource2.New(source, &AppTransformer{})).Fields(`id`, `title`).Resolve()
+	v := NewItem(resource2.New(source, &AppTransformer{})).SetFields(`id`, `title`).Resolve()
 	fmt.Println(v[`data`].(ResolveMap)[`id`].(uint))
+	assert.Equal(t, uint(11), v[`data`].(ResolveMap)[`id`].(uint))
 }

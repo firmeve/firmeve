@@ -1,23 +1,15 @@
 package resource
 
 import (
-	"reflect"
-	"regexp"
-	"strings"
-	"sync"
-
 	"github.com/firmeve/firmeve/resource"
 	reflect2 "github.com/firmeve/firmeve/support/reflect"
 	strings2 "github.com/firmeve/firmeve/support/strings"
+	"reflect"
+	"regexp"
+	"strings"
 )
 
 type mapCache map[string]map[string]string
-
-var (
-	resourcesFields  = make(map[reflect.Type]mapCache, 0)
-	resourcesMethods = make(map[reflect.Type]mapCache, 0)
-	mutex            sync.Mutex
-)
 
 type ResolveMap map[string]interface{}
 type Meta map[string]interface{}
@@ -26,33 +18,50 @@ type Resolver interface {
 	Resolve() ResolveMap
 }
 
-type Resource struct {
-	source interface{}
-	fields []string
-	chunks []string
-	key    string
-	meta   Meta
+type baseResource struct {
+	//source   Resolver
+	resource interface{}
+	fields   []string
+	key      string
+	meta     Meta
 }
 
-func New(source interface{}) *Resource {
-	return &Resource{
-		source: source,
-		key:    `data`,
-		meta:   make(Meta, 0),
+var (
+	resourcesFields  = make(map[reflect.Type]mapCache, 0)
+	resourcesMethods = make(map[reflect.Type]mapCache, 0)
+	//mutex            sync.Mutex
+)
+
+func newBaseResource(resource interface{}) *baseResource {
+	return &baseResource{
+		//source:   source,
+		resource: resource,
+		key:      `data`,
+		meta:     make(Meta, 0),
 	}
 }
 
-func (r *Resource) Fields(fields ...string) *Resource {
-	r.fields = fields
-	return r
-}
+//func (r *baseResource) Fields(fields ...string) *baseResource {
+//	r.fields = fields
+//	return r
+//}
+//
+//func (r *baseResource) Meta(meta Meta) *baseResource {
+//	r.meta = meta
+//	return r
+//}
+//
+//func (r *baseResource) Key(key string) *baseResource {
+//	r.key = key
+//	return r
+//}
 
-func (r *Resource) Resolve() ResolveMap {
-	reflectType := reflect.TypeOf(r.source)
-	reflectValue := reflect.ValueOf(r.source)
+func (r *baseResource) Resolve() ResolveMap {
+	reflectType := reflect.TypeOf(r.resource)
+	reflectValue := reflect.ValueOf(r.resource)
 	var data ResolveMap
 
-	if _, ok := r.source.(resource.Resource); ok {
+	if _, ok := r.resource.(resource.Resource); ok {
 		data = r.resolveTransformer(reflectType, reflectValue)
 	} else {
 		kindType := reflect2.KindElemType(reflectType)
@@ -65,23 +74,27 @@ func (r *Resource) Resolve() ResolveMap {
 		}
 	}
 
-	return ResolveMap{r.key: data}
+	if r.key != `` {
+		return ResolveMap{r.key: data}
+	}
+
+	return data
 	//if len(r.meta) > 0 {
 	//	return ResolveMap{r.key: data, "meta": r.meta}
 	//} else {
-	//	return ResolveMap{r.key: data}
+
 	//}
 }
 
-func (r *Resource) resolveFields() []string {
+func (r *baseResource) resolveFields() []string {
 	return r.fields
 }
 
-func (r *Resource) resolveMap(reflectType reflect.Type, reflectValue reflect.Value) ResolveMap {
+func (r *baseResource) resolveMap(reflectType reflect.Type, reflectValue reflect.Value) ResolveMap {
 	var alias string
 	collection := make(ResolveMap, 0)
 	for _, field := range r.resolveFields() {
-		for k, v := range r.source.(map[string]interface{}) {
+		for k, v := range r.resource.(map[string]interface{}) {
 			alias = strings2.SnakeCase(k)
 			if field != alias {
 				continue
@@ -96,9 +109,9 @@ func (r *Resource) resolveMap(reflectType reflect.Type, reflectValue reflect.Val
 	return collection
 }
 
-func (r *Resource) resolveTransformer(reflectType reflect.Type, reflectValue reflect.Value) ResolveMap {
-	resourceReflectType := reflect.TypeOf(r.source.(resource.Resource).Resource())
-	resourceReflectValue := reflect.ValueOf(r.source.(resource.Resource).Resource())
+func (r *baseResource) resolveTransformer(reflectType reflect.Type, reflectValue reflect.Value) ResolveMap {
+	resourceReflectType := reflect.TypeOf(r.resource.(resource.Resource).Resource())
+	resourceReflectValue := reflect.ValueOf(r.resource.(resource.Resource).Resource())
 	fields := r.transpositionFields(resourceReflectType)
 	methods := r.transpositionMethods(reflectType)
 	collection := make(ResolveMap, 0)
@@ -121,7 +134,7 @@ func (r *Resource) resolveTransformer(reflectType reflect.Type, reflectValue ref
 	return collection
 }
 
-func (r *Resource) resolveStruct(reflectType reflect.Type, reflectValue reflect.Value) ResolveMap {
+func (r *baseResource) resolveStruct(reflectType reflect.Type, reflectValue reflect.Value) ResolveMap {
 	fields := r.transpositionFields(reflectType)
 	collection := make(ResolveMap, 0)
 
@@ -136,7 +149,7 @@ func (r *Resource) resolveStruct(reflectType reflect.Type, reflectValue reflect.
 	return collection
 }
 
-func (r *Resource) transpositionMethods(reflectType reflect.Type) mapCache {
+func (r *baseResource) transpositionMethods(reflectType reflect.Type) mapCache {
 	if v, ok := resourcesMethods[reflectType]; ok {
 		return v
 	}
@@ -157,7 +170,7 @@ func (r *Resource) transpositionMethods(reflectType reflect.Type) mapCache {
 	return methods
 }
 
-func (r *Resource) transpositionFields(reflectType reflect.Type) mapCache {
+func (r *baseResource) transpositionFields(reflectType reflect.Type) mapCache {
 	if v, ok := resourcesFields[reflectType]; ok {
 		return v
 	}

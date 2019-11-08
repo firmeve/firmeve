@@ -17,6 +17,20 @@ func InterfaceValue(reflectType reflect.Type, reflectValue reflect.Value) interf
 	return reflectValue.Interface()
 }
 
+func SliceInterface(reflectValue reflect.Value) []interface{} {
+	kind := reflectValue.Kind()
+	if kind != reflect.Slice && kind != reflect.Array {
+		panic(`only support slice or array type`)
+	}
+
+	newInterfaces := make([]interface{}, reflectValue.Len())
+	for i := 0; i < reflectValue.Len(); i++ {
+		newInterfaces[i] = reflectValue.Index(i).Interface()
+	}
+
+	return newInterfaces
+}
+
 //
 //func KindValue(reflectValue reflect.Value) reflect.Kind {
 //	return reflectValue.Kind()

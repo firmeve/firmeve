@@ -1,18 +1,38 @@
 package resource
 
-import "fmt"
-
 type Item struct {
-	*Resource
+	*baseResource
 }
 
-func NewItem(source interface{}) *Item {
+func NewItem(resource interface{}) *Item {
 	return &Item{
-		Resource: New(source),
+		baseResource: newBaseResource(resource),
 	}
 }
 
+func (i *Item) SetFields(fields ...string) *Item {
+	i.fields = fields
+	return i
+}
+
+func (i *Item) SetMeta(meta Meta) *Item {
+	i.meta = meta
+	return i
+}
+
+func (i *Item) SetKey(key string) *Item {
+	i.key = key
+	return i
+}
+
+func (i *Item) Key() string {
+	return i.key
+}
+
 func (i *Item) Resolve() ResolveMap {
-	fmt.Println("111")
-	return i.Resource.Resolve()
+	resolveMap := i.baseResource.Resolve()
+	if len(i.meta) > 0 {
+		resolveMap[`meta`] = i.meta
+	}
+	return resolveMap
 }
