@@ -70,5 +70,6 @@ func (c *cmd) run(cmd *cobra.Command, args []string) {
 		log.Fatal("Server Shutdown: ", err)
 	}
 
+	logging.Logger = logging.Default()
 	c.logger.Info("Server exiting")
 }

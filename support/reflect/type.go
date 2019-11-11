@@ -7,10 +7,13 @@ import (
 func IndirectType(reflectType reflect.Type) reflect.Type {
 	kind := reflectType.Kind()
 
-	// type's Kind is Array, Chan, Map, Ptr, or Slice.
-	if kind == reflect.Array || kind == reflect.Ptr || kind == reflect.Chan || kind == reflect.Map || kind == reflect.Slice {
+	if kind == reflect.Ptr {
 		return reflectType.Elem()
 	}
+	//// type's Kind is Array, Chan, Map, Ptr, or Slice.
+	//if kind == reflect.Array || kind == reflect.Ptr || kind == reflect.Chan || kind == reflect.Map || kind == reflect.Slice {
+	//	return reflectType.Elem()
+	//}
 
 	return reflectType
 }

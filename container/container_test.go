@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -32,6 +33,31 @@ func TestBaseContainer_Has(t *testing.T) {
 }
 
 type IntAlias int32
+
+type any struct {
+	ID      int
+	Title   string
+	content string
+}
+
+func resolveAnyPtr(t1 *testdata.T1, any *any) string {
+	any.Title = `title`
+	return strings.Join([]string{t1.Name, any.Title}, ``)
+}
+
+func resolveAny(t1 *testdata.T1, any any) string {
+	any.Title = `title`
+	return strings.Join([]string{t1.Name, any.Title}, ``)
+}
+
+func TestBaseContainer_Resolve_Func(t *testing.T) {
+	f := New()
+	t1 := testdata.NewT1()
+	f.Bind("t1", t1)
+	fmt.Printf("%s", f.Resolve(resolveAnyPtr))
+	//fmt.Printf("%s", f.Resolve(resolveAny))
+	//f.Resolve(resolveAny)
+}
 
 //
 func TestContainer_Resolve_Number(t *testing.T) {
