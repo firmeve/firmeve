@@ -2,29 +2,43 @@ package container
 
 import (
 	"fmt"
-	"github.com/firmeve/firmeve/testdata/structs"
 	"reflect"
 	"testing"
+
+	"github.com/firmeve/firmeve/testdata/structs"
 )
 
-//type Account struct {
-//	Id     uint32
-//	Name   string
-//	Nested *struct {
-//		Age uint8
-//	}
-//}
+type Account struct {
+	Id     uint32
+	Name   string
+	Nested *struct {
+		Age uint8
+	}
+}
+
+func ParseOne(main *structs.Main, maps map[string]string, slices []string, account *Account) {
+
+}
+
+func TestBaseContainer_Resolve_Func2(t *testing.T) {
+	c := New()
+	parseFunc := ParseOne
+	c.resolveFunc(reflect.TypeOf(parseFunc), reflect.ValueOf(parseFunc))
+}
 
 func TestBaseContainer_Resolve_struct(t *testing.T) {
 	c := New()
 	c.Bind("sub", &structs.Sub{
-		SubPublicKey: "SubPublicKey2",
+		SubPublicKey: "SubPublicKey2...###",
 	})
 
 	main := new(structs.Main)
 	//sub := new(structs.Sub)
-	m := c.resolveStruct2(reflect.TypeOf(main), reflect.ValueOf(main))
-	fmt.Printf("%#v", m)
+	m := c.resolveStruct2(reflect.TypeOf(main), reflect.ValueOf(main)).(*structs.Main)
+	fmt.Printf("%#v\n", m)
+	fmt.Println("==================")
+	fmt.Println(m.PrtSub.SubPublicKey)
+	fmt.Println("==================")
 	//c.resolveStruct2(reflect.TypeOf(sub), reflect.ValueOf(sub))
 }
 
@@ -46,7 +60,7 @@ func TestBaseContainer_Bind(t *testing.T) {
 	// resolve("string") -> 表示直接读取容器key Get()
 	// 01 resolve(new(struct)|ptr) // ptr类型的struct
 	// 02 resolve(func) // func 是有多种类型的参数
-	// 03 resolve(slice|array|struct) 创建一个新的slice|array|struct
+	// 03 resolve(slice|array|struct|map) 创建一个新的slice|array|struct
 	// 如果 反射类型在container中存在并且是singleton那么则返回已存在的类型
 
 	fmt.Println(reflect.TypeOf(a) == reflect.TypeOf(a))

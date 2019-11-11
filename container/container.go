@@ -55,6 +55,17 @@ func New() *baseContainer {
 	}
 }
 
+//func (c *baseContainer) inTypeShare(reflectType reflect.Type) bool {
+//	name, ok := c.types[reflectType]
+//	if ok {
+//		bind, bindOk := c.bindings[name]
+//		if bindOk {
+//			return bind.share
+//		}
+//	}
+//	return false
+//}
+
 // Determine whether the specified name object is included in the container
 func (c *baseContainer) Has(name string) bool {
 	if _, ok := c.bindings[strings.ToLower(name)]; ok {
@@ -104,23 +115,61 @@ func (c *baseContainer) Bind(name string, prototype interface{}, options ...supp
 	bindingOption := support.ApplyOption(newBindingOption(name, prototype), options...).(*bindingOption)
 
 	// set binding item
-	c.setBindingItem(newBinding(bindingOption), bindingOption.cover)
+	c.setBindingItem(newBinding(bindingOption, c), bindingOption.cover)
 }
 
 // Parsing various objects
+// resolve
 func (c *baseContainer) Resolve(abstract interface{}, params ...interface{}) interface{} {
 	reflectType := reflect.TypeOf(abstract)
 	reflectValue := reflect.ValueOf(abstract)
+	kind := reflectType.Kind()
 
-	kind := reflect2.KindElemType(reflectType)
-
-	if kind == reflect.Func {
-		return c.resolveFunc(reflectType, reflectValue, params...)
-	} else if kind == reflect.Ptr || kind == reflect.Struct {
-		return c.resolveStruct(reflectType, reflect.Indirect(reflectValue))
-	} else if kind == reflect.String {
+	if kind == reflect.String && c.Has(abstract.(string)) {
 		return c.Get(abstract.(string))
+		//} else if name, ok := c.types[reflectType]; ok {
+		//	return c.Get(name)
+
+	} else if kind == reflect.Struct || reflect2.KindElemType(reflectType) == reflect.Struct {
+		//struct不一定需要解析,可能已经是instance了
+		//func是每次都需要解析
+		return c.resolveStruct2(reflectType, reflectValue)
+	} else if kind == reflect.Func {
+		return c.resolveFunc(reflectType, reflectValue, params...)
 	}
+
+	//// 基本常数
+	//if kind <= reflect.Complex128 {
+	//	return abstract
+	//} else if kind == reflect.String {
+	//	if c.Has(abstract.(string)) {
+	//		return c.Get(abstract.(string))
+	//	} else {
+	//		return abstract
+	//	}
+	//} else if kind == reflect.Slice {
+	//	return reflect.MakeSlice(reflectType, 0, 0)
+	//} else if kind == reflect.Map {
+	//	return reflect.MakeMapWithSize(reflectType, 0)
+	//}
+	//
+	//if name, ok := c.types[reflectType]; ok {
+	//	return c.bindings[name]
+	//}
+	//switch kind = reflectType.Kind() {
+	//case kind <
+	//
+	//}
+	//
+	//kind := reflect2.KindElemType(reflectType)
+	//
+	//if kind == reflect.Func {
+	//	return c.resolveFunc(reflectType, reflectValue, params...)
+	//} else if kind == reflect.Ptr || kind == reflect.Struct {
+	//	return c.resolveStruct(reflectType, reflect.Indirect(reflectValue))
+	//} else if kind == reflect.String {
+	//	return c.Get(abstract.(string))
+	//}
 
 	// bind exists instance
 	//if name, ok := c.types[reflectType]; ok {
@@ -193,27 +242,62 @@ func (c *baseContainer) setBindingItem(b *binding, cover bool) {
 	//}
 }
 
+//func (c *baseContainer) resolveFunc2(reflectType reflect.Type, reflectValue reflect.Value, params ...interface{}) interface{} {
+//	params = reflect2.CallInParameterType(reflectType, func(i int, param reflect.Type) interface{} {
+//		//for _, givenParams := range params {
+//		//
+//		//}
+//		if name, ok := c.types[param]; ok {
+//			return c.Get(name)
+//		} else {
+//			fmt.Println(reflect.Indirect(reflect.New(param)).Interface())
+//			return reflect.Indirect(reflect.New(param.Elem())).Interface()
+//			//return reflect2.InterfaceValue(param)
+//			fmt.Println(reflect.New(param).Elem().Interface())
+//			return reflect.New(param).Elem().Interface()
+//			//kindType := reflect2.KindElemType(param)
+//			//kindType := param.Kind()
+//			//if kindType == reflect.New() {
+//			//
+//			//}
+//			//return param.
+//			//panic(`unable to find reflection parameter`)
+//		}
+//	})
+//
+//	results := reflect2.CallFuncValue(reflectValue, params...)
+//
+//	if reflectType.NumOut() == 1 {
+//		return results[0]
+//	}
+//
+//	return results
+//}
+
 func (c *baseContainer) resolveFunc(reflectType reflect.Type, reflectValue reflect.Value, params ...interface{}) interface{} {
-	if len(params) == 0 {
-		params = reflect2.CallInParameterType(reflectType, func(i int, param reflect.Type) interface{} {
-			if name, ok := c.types[param]; ok {
-				return c.Get(name)
-			} else {
-				fmt.Println(reflect.Indirect(reflect.New(param)).Interface())
-				return reflect.Indirect(reflect.New(param.Elem())).Interface()
-				//return reflect2.InterfaceValue(param)
-				fmt.Println(reflect.New(param).Elem().Interface())
-				return reflect.New(param).Elem().Interface()
-				//kindType := reflect2.KindElemType(param)
-				//kindType := param.Kind()
-				//if kindType == reflect.New() {
-				//
-				//}
-				//return param.
-				//panic(`unable to find reflection parameter`)
+	params = reflect2.CallInParameterType(reflectType, func(i int, param reflect.Type) interface{} {
+		for _, inputParam := range params {
+			inputParamType := reflect.TypeOf(inputParam)
+			if param == inputParamType { // 如果参数类型相等
+				return reflect.ValueOf(param)
 			}
-		})
-	}
+		}
+		// 没有指定参数
+		if name, ok := c.types[param]; ok {
+			return reflect.ValueOf(c.Get(name))
+		} else {
+			valueKind := param.Kind()
+			if valueKind == reflect.Slice {
+				return reflect.MakeSlice(param, 0, 0)
+			} else if valueKind == reflect.Map {
+				return reflect.MakeMap(param)
+			} else if valueKind == reflect.Struct || valueKind == reflect.Ptr {
+				return c.resolveStruct2(param, reflect.ValueOf(param))
+			} else {
+				panic(`unable to find reflection parameter`)
+			}
+		}
+	})
 
 	results := reflect2.CallFuncValue(reflectValue, params...)
 
@@ -243,25 +327,17 @@ func (c *baseContainer) resolveStruct2(reflectType reflect.Type, reflectValue re
 					fieldValue.Set(reflect.MakeSlice(field.Type, 0, 0))
 				} else if valueKind == reflect.Map {
 					fieldValue.Set(reflect.MakeMap(field.Type))
+				} else if valueKind == reflect.Array {
+					fieldValue.Set(reflect.New(reflect.ArrayOf(0, field.Type)).Elem())
 				} else if valueKind == reflect.Struct || valueKind == reflect.Ptr {
 					if valueKind == reflect.Ptr {
 						fieldValue = reflect.New(field.Type.Elem())
 					}
 					c.resolveStruct2(field.Type, reflect.Indirect(fieldValue))
+					fieldValue.Set(fieldValue)
 				}
 			}
-
-			//
 		}
-		//if tag != `` && reflect2.CanSetValue(fieldValue) {
-		//	if _, ok := c.bindings[tag]; ok {
-		//		result := c.Resolve(c.Get(tag))
-		//		// Non-same type of direct skip
-		//		if reflect2.KindElemType(reflect.TypeOf(result)) == reflect2.KindElemType(field.Type) {
-		//			fieldValue.Set(reflect.ValueOf(result))
-		//		}
-		//	}
-		//}
 
 		return nil
 	})
@@ -269,8 +345,18 @@ func (c *baseContainer) resolveStruct2(reflectType reflect.Type, reflectValue re
 	return reflect2.InterfaceValue(reflectType, reflectValue)
 }
 
-//func (c *baseContainer) resolveStatic(reflectType reflect.Type, reflectValue reflect.Value) {
-//
+//func (c *baseContainer) resolveStatic(reflectType reflect.Type, reflectValue reflect.Value) reflect.Value {
+//	valueKind := reflectType.Kind()
+//	if valueKind == reflect.Slice {
+//		return reflect.MakeSlice(reflectType, 0, 0)
+//	} else if valueKind == reflect.Map {
+//		return reflect.MakeMap(reflectType)
+//	} else if valueKind == reflect.Struct || valueKind == reflect.Ptr {
+//		if valueKind == reflect.Ptr {
+//			fieldValue = reflect.New(field.Type.Elem())
+//		}
+//		c.resolveStruct2(field.Type, reflect.Indirect(fieldValue))
+//	}
 //}
 
 // Resolve struct fields and auto binding field
@@ -304,14 +390,18 @@ func newBindingOption(name string, prototype interface{}) *bindingOption {
 // ---------------------------- binding ------------------------
 
 // Create a new binding struct
-func newBinding(option *bindingOption) *binding {
+func newBinding(option *bindingOption, container Container) *binding {
 	binding := &binding{
 		name:        option.name,
 		reflectType: reflect.TypeOf(option.prototype),
 	}
-	binding.share = binding.getShare(option.share)
 	//binding.prototype = binding.getPrototypeFunc(option.prototype)
 	binding.prototype = option.prototype
+
+	binding.share = binding.getShare(option.share)
+	if binding.share {
+		binding.instance = container.Resolve(option.prototype)
+	}
 
 	return binding
 }

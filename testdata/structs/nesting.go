@@ -9,7 +9,7 @@ type Main struct {
 	hideSub   hideSub
 	sub       Sub
 	PublicKey string
-	prtSub    *Sub
+	PrtSub    *Sub
 }
 type Sub struct {
 	id           int

@@ -39,7 +39,11 @@ func SliceInterface(reflectValue reflect.Value) []interface{} {
 func CallFuncValue(reflectValue reflect.Value, params ...interface{}) []interface{} {
 	newParams := make([]reflect.Value, 0)
 	for _, param := range params {
-		newParams = append(newParams, reflect.ValueOf(param))
+		if v, ok := param.(reflect.Value); ok {
+			newParams = append(newParams, v)
+		} else {
+			newParams = append(newParams, reflect.ValueOf(param))
+		}
 	}
 
 	results := make([]interface{}, 0)
