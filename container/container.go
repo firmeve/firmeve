@@ -291,8 +291,10 @@ func (c *baseContainer) resolveFunc(reflectType reflect.Type, reflectValue refle
 				return reflect.MakeSlice(param, 0, 0)
 			} else if valueKind == reflect.Map {
 				return reflect.MakeMap(param)
+			} else if valueKind == reflect.Array {
+				return reflect.New(reflect.ArrayOf(0, param)).Elem()
 			} else if valueKind == reflect.Struct || valueKind == reflect.Ptr {
-				return c.resolveStruct2(param, reflect.ValueOf(param))
+				return reflect.ValueOf(c.resolveStruct2(param, reflect.Indirect(reflect.New(param))))
 			} else {
 				panic(`unable to find reflection parameter`)
 			}
@@ -322,20 +324,16 @@ func (c *baseContainer) resolveStruct2(reflectType reflect.Type, reflectValue re
 				fieldValue.Set(reflect.ValueOf(c.Get(tag)))
 			} else if bindName, ok := c.types[field.Type]; ok {
 				fieldValue.Set(reflect.ValueOf(c.Get(bindName)))
-			} else {
-				if valueKind == reflect.Slice {
-					fieldValue.Set(reflect.MakeSlice(field.Type, 0, 0))
-				} else if valueKind == reflect.Map {
-					fieldValue.Set(reflect.MakeMap(field.Type))
-				} else if valueKind == reflect.Array {
-					fieldValue.Set(reflect.New(reflect.ArrayOf(0, field.Type)).Elem())
-				} else if valueKind == reflect.Struct || valueKind == reflect.Ptr {
-					if valueKind == reflect.Ptr {
-						fieldValue = reflect.New(field.Type.Elem())
-					}
-					c.resolveStruct2(field.Type, reflect.Indirect(fieldValue))
-					fieldValue.Set(fieldValue)
-				}
+			} else if valueKind == reflect.Struct {
+				fieldValue.Set(reflect.ValueOf(c.resolveStruct2(field.Type, fieldValue)))
+			} else if valueKind == reflect.Ptr {
+				fieldValue.Set(reflect.ValueOf(c.resolveStruct2(field.Type, reflect.Indirect(reflect.New(field.Type.Elem())))))
+			} else if valueKind == reflect.Slice {
+				fieldValue.Set(reflect.MakeSlice(field.Type, 0, 0))
+			} else if valueKind == reflect.Array {
+				fieldValue.Set(reflect.New(reflect.ArrayOf(0, field.Type)).Elem())
+			} else if valueKind == reflect.Map {
+				fieldValue.Set(reflect.MakeMap(field.Type))
 			}
 		}
 
@@ -343,6 +341,20 @@ func (c *baseContainer) resolveStruct2(reflectType reflect.Type, reflectValue re
 	})
 
 	return reflect2.InterfaceValue(reflectType, reflectValue)
+}
+
+func (c *baseContainer) newBasicDynamicType(reflectType reflect.Type) reflect.Value {
+	valueKind := reflectType.Kind()
+
+	if valueKind == reflect.Slice {
+		return reflect.MakeSlice(reflectType, 0, 0)
+	} else if valueKind == reflect.Array {
+		return reflect.New(reflect.ArrayOf(0, reflectType)).Elem()
+	} else if valueKind == reflect.Map {
+		return reflect.MakeMap(reflectType)
+	}
+
+	panic(fmt.Errorf("type error %s", reflectType.Kind()))
 }
 
 //func (c *baseContainer) resolveStatic(reflectType reflect.Type, reflectValue reflect.Value) reflect.Value {

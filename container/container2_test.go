@@ -63,6 +63,11 @@ func TestBaseContainer_Bind(t *testing.T) {
 	// 03 resolve(slice|array|struct|map) 创建一个新的slice|array|struct
 	// 如果 反射类型在container中存在并且是singleton那么则返回已存在的类型
 
+	v1 := [2]int{0, 1}
+	v2 := [3]int{0, 1}
+	fmt.Println(reflect.TypeOf(v1) == reflect.TypeOf(v2))
+	fmt.Println("!!!!!!!!!!!!!!!!!!!")
+
 	fmt.Println(reflect.TypeOf(a) == reflect.TypeOf(a))
 	fmt.Println(reflect.TypeOf(a) == reflect.TypeOf(b))
 	fmt.Println(reflect.TypeOf(a) == reflect.TypeOf(c))

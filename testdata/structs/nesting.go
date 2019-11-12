@@ -7,9 +7,13 @@ type Main struct {
 	title     string
 	show      bool
 	hideSub   hideSub
-	sub       Sub
+	Sub       Sub
 	PublicKey string
 	PrtSub    *Sub
+	PrtSub2   *Sub `inject:"sub"`
+	//Array     [2]int
+	Slice []string
+	Map   map[string]string
 }
 type Sub struct {
 	id           int
