@@ -327,10 +327,9 @@ func (c *baseContainer) resolveStruct2(reflectType reflect.Type) interface{} {
 			} else if v, ok := c.instances[field.Type]; ok {
 				fieldValue.Set(reflect.ValueOf(v))
 			} else if kind == reflect.Struct || kind == reflect.Ptr {
-				fieldValue.Set(reflect.ValueOf(c.resolveStruct2(reflect2.IndirectType(field.Type))))
+				fieldValue.Set(reflect.ValueOf(c.resolveStruct2(field.Type)))
 			} else {
-				//fieldValue.Set(c.initZero(reflectType))
-				fieldValue.Set(reflect.Zero(field.Type))
+				fieldValue.Set(c.initZero(field.Type))
 			}
 		}
 
@@ -342,18 +341,13 @@ func (c *baseContainer) resolveStruct2(reflectType reflect.Type) interface{} {
 
 func (c *baseContainer) initZero(reflectType reflect.Type) reflect.Value {
 	kind := reflectType.Kind()
-	//fmt.Println("===========")
-	//fmt.Println(kind)
-	//fmt.Println(reflectType.Elem().Name())
-	//fmt.Println("===========")
 	if kind == reflect.Slice {
 		return reflect.MakeSlice(reflectType, 0, 0)
 	} else if kind == reflect.Array {
-		return reflect.New(reflect.ArrayOf(0, reflectType)).Elem()
+		return reflect.New(reflect.ArrayOf(reflectType.Len(), reflectType.Elem())).Elem()
 	} else if kind == reflect.Map {
-		return reflect.MakeMap(reflectType)
-	} else if kind <= reflect.Complex128 {
-		//return reflect.New(reflect2.IndirectType(reflectType)).Elem()
+		return reflect.MakeMapWithSize(reflectType, 0)
+	} else if kind <= reflect.Complex128 || kind == reflect.String {
 		return reflect.Zero(reflectType)
 	}
 

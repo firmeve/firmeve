@@ -47,6 +47,66 @@ func TestBaseContainer_Resolve_Func2(t *testing.T) {
 	//c.resolveStruct2(reflect.TypeOf(m), reflect.New(reflect.TypeOf(m).Elem()))
 }
 
+func TestBaseContainer_Resolve_Struct_Sample(t *testing.T) {
+	c := New()
+	sample := new(structs.Sample)
+	value := c.resolveStruct2(reflect.TypeOf(sample))
+	fmt.Printf("%#v\n", value)
+	value1 := c.resolveStruct2(reflect.TypeOf(structs.Sample{}))
+	fmt.Printf("%#v\n", value1)
+}
+func initializeStruct2(t reflect.Type, v reflect.Value) {
+	for i := 0; i < v.NumField(); i++ {
+		f := v.Field(i)
+		ft := t.Field(i)
+		switch ft.Type.Kind() {
+		case reflect.Map:
+			f.Set(reflect.MakeMap(ft.Type))
+		case reflect.Slice:
+			f.Set(reflect.MakeSlice(ft.Type, 0, 0))
+		case reflect.Chan:
+			f.Set(reflect.MakeChan(ft.Type, 0))
+		case reflect.Struct:
+			initializeStruct(ft.Type, f)
+		case reflect.Ptr:
+			fv := reflect.New(ft.Type.Elem())
+			initializeStruct(ft.Type.Elem(), fv.Elem())
+			f.Set(fv)
+		default:
+		}
+	}
+}
+func TestBaseContainer_Resolve_Struct_Sample_NestingPrt(t *testing.T) {
+	//var arr [3]int
+	//fmt.Println(reflect.TypeOf(arr).Elem().Kind())
+	//fmt.Println(reflect.New(reflect.ArrayOf(0, reflect.TypeOf(arr))).Elem().Kind())
+	//sp := new(structs.SampleNestingPtr)
+	//initializeStruct2(reflect.TypeOf(sp).Elem(), reflect.ValueOf(sp).Elem())
+	//sp.MapString[`z`] = `z`
+	//fmt.Printf("%#v\n", sp)
+	//
+	//var g map[string]string
+	//
+	//v := reflect.MakeMapWithSize(reflect.TypeOf(g), 0).Interface().(map[string]string)
+	//v[`a`] = `a`
+	//fmt.Printf("%#v", v)
+	////v["a"] = "a"
+	//
+	//fmt.Println("===============")
+	c := New()
+	samplePrt := new(structs.SampleNestingPtr)
+	////samplePrt.Nesting = &structs.Nesting{}
+	////fmt.Printf("%#v\n", samplePrt)
+	value := c.resolveStruct2(reflect.TypeOf(samplePrt)).(*structs.SampleNestingPtr)
+	fmt.Printf("%#v\n", value)
+	//z := make(value.MapString.(map[string]string), 0)
+	//z[`c`] = `c`
+	//fmt.Printf("%#v", z)
+	//fmt.Printf("%#v\n", value.(*structs.SampleNestingPtr).Nesting.NMapString)
+	value1 := c.resolveStruct2(reflect.TypeOf(structs.SampleNesting{}))
+	fmt.Printf("%#v\n", value1)
+}
+
 func TestBaseContainer_Resolve_struct(t *testing.T) {
 	c := New()
 	c.Bind("sub", &structs.Sub{

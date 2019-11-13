@@ -2,6 +2,36 @@ package structs
 
 import "time"
 
+type Nesting struct {
+	NId      int
+	NTitle   string
+	NBoolean bool
+	//NArray     [3]int
+	NMapString map[string]string
+	NSlice     []string
+	nprivate   string
+}
+
+type Sample struct {
+	Id        int
+	Title     string
+	Boolean   bool
+	Array     [3]int
+	MapString map[string]string
+	Slice     []string
+	private   string
+}
+
+type SampleNesting struct {
+	Sample
+	Nesting Nesting
+}
+
+type SampleNestingPtr struct {
+	Sample
+	Nesting *Nesting
+}
+
 type Main struct {
 	id        int
 	title     string
