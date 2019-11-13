@@ -37,7 +37,16 @@ type CallInParameterFunc func(i int, param reflect.Type) interface{}
 func CallInParameterType(reflectType reflect.Type, paramFunc CallInParameterFunc) []interface{} {
 	results := make([]interface{}, 0)
 	for i := 0; i < reflectType.NumIn(); i++ {
-		results = append(results, paramFunc(i, reflectType.In(i)))
+		values := paramFunc(i, reflectType.In(i))
+		//valueKind := reflect.TypeOf(values).Kind()
+		//if valueKind == reflect.Slice {
+		//
+		//}
+		//if len(values) > 1 {
+		//	results = append(results, values...)
+		//} else {
+		results = append(results, values)
+		//}
 	}
 
 	return results

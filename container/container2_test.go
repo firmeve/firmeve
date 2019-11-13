@@ -9,21 +9,42 @@ import (
 )
 
 type Account struct {
-	Id     uint32
-	Name   string
-	Nested *struct {
-		Age uint8
-	}
+	Id   uint32
+	Name string
+	//Nested *struct {
+	//	Age uint8
+	//}
 }
 
-func ParseOne(main *structs.Main, maps map[string]string, slices []string, account *Account) {
-
+func ParseOne(main *structs.Main, maps map[string]string, slices []string, account *Account) interface{} {
+	//x := 1
+	//y := 2
+	//return x, y
+	return nil
 }
+
+type Bs map[string]string
 
 func TestBaseContainer_Resolve_Func2(t *testing.T) {
+	x := 1
+	y := "s"
+
+	fmt.Println(reflect.TypeOf(&x) == reflect.TypeOf(&y))
+	fmt.Println("#########################")
+	main := new(structs.Main)
+	fmt.Println(main)
+	fmt.Println("1111111111111111111111111")
+	z := map[string]string{"a": "a"}
+	var bs Bs
+	fmt.Println(reflect.TypeOf(z) == reflect.TypeOf(bs))
+
 	c := New()
 	parseFunc := ParseOne
 	c.resolveFunc(reflect.TypeOf(parseFunc), reflect.ValueOf(parseFunc))
+
+	//m := new(structs.Main)
+	//c := New()
+	//c.resolveStruct2(reflect.TypeOf(m), reflect.New(reflect.TypeOf(m).Elem()))
 }
 
 func TestBaseContainer_Resolve_struct(t *testing.T) {
@@ -32,17 +53,23 @@ func TestBaseContainer_Resolve_struct(t *testing.T) {
 		SubPublicKey: "SubPublicKey2...###",
 	})
 
+	//accout := new(Account)
+	//fmt.Println(c.resolveStruct2(reflect.TypeOf(accout)))
+	//
 	main := new(structs.Main)
 	//sub := new(structs.Sub)
-	m := c.resolveStruct2(reflect.TypeOf(main), reflect.ValueOf(main)).(*structs.Main)
+	m := c.resolveStruct2(reflect.TypeOf(main)).(*structs.Main)
 	fmt.Printf("%#v\n", m)
-	fmt.Println("==================")
-	fmt.Println(m.PrtSub.SubPublicKey)
-	fmt.Println("==================")
+	//fmt.Println("==================")
+	//fmt.Println(m.PrtSub.SubPublicKey)
+	//fmt.Println("==================")
 	//c.resolveStruct2(reflect.TypeOf(sub), reflect.ValueOf(sub))
 }
 
 func TestBaseContainer_Bind(t *testing.T) {
+	// 不支持静态类型的绑定
+	// types应该更改为resolveTypes，表示已解析的类型
+
 	// Bind
 	// bind("string","string") -> share
 	// bind("bool",bool) -> share
@@ -130,3 +157,16 @@ func d(c string, d int) string {
 func b(b int) int {
 	return b
 }
+
+//func Test(p1,p2,p3)  {
+//}
+//// 普通调用
+//p1 := ...
+//p2 := ...
+//p3 := ...
+//Test(p1,p2,p3)
+//
+////ioc
+//x.Resolve(Test)
+//
+//x.Resolve(Test) == Test(p1,p2,p3)

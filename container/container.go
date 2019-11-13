@@ -14,33 +14,29 @@ type Container interface {
 	Has(name string) bool
 	Get(name string) interface{}
 	Bind(name string, prototype interface{}, options ...support.Option)
-	Resolve(abstract interface{}, params ...interface{}) interface{}
+	Make(abstract interface{}, params ...interface{}) interface{}
 	Remove(name string)
 	Flush()
 }
 
 type prototypeFunc func(container Container, params ...interface{}) interface{}
 type bindingType map[string]*binding
-type typesType map[reflect.Type]string
+type instanceType map[reflect.Type]interface{}
 
 type baseContainer struct {
-	bindings bindingType
-	types    typesType
+	bindings  bindingType
+	instances instanceType
 }
 
 type binding struct {
 	name        string
-	share       bool
-	instance    interface{}
-	prototype   interface{}
+	prototype   prototypeFunc
 	reflectType reflect.Type
 }
 
 type bindingOption struct {
-	name      string
-	share     bool
-	cover     bool
-	prototype interface{}
+	share bool
+	cover bool
 }
 
 var (
@@ -50,9 +46,72 @@ var (
 // Create a new container instance
 func New() *baseContainer {
 	return &baseContainer{
-		bindings: make(bindingType),
-		types:    make(typesType),
+		bindings:  make(bindingType),
+		instances: make(instanceType),
 	}
+}
+
+// Bind method `share` param
+func WithShare(share bool) support.Option {
+	return func(option support.Object) {
+		option.(*bindingOption).share = share
+	}
+}
+
+// Bind method `cover` param
+func WithCover(cover bool) support.Option {
+	return func(option support.Object) {
+		option.(*bindingOption).cover = cover
+	}
+}
+
+// Bind a object to container
+func (c *baseContainer) Bind(name string, prototype interface{}, options ...support.Option) { //, value interface{}
+	// 检测是否允许绑定
+	reflectPrototypeType := reflect.TypeOf(prototype)
+	// KindElemType => ptr elem 转换
+	kind := reflect2.KindElemType(reflectPrototypeType)
+	if kind <= reflect.Complex128 || kind == reflect.Chan || kind == reflect.UnsafePointer || kind == reflect.Func {
+		panic(`only support array,slice,map,func,prt,struct`)
+	}
+
+	// Parameter analysis
+	bindingOption := support.ApplyOption(&bindingOption{}, options...).(*bindingOption)
+
+	_, ok := c.bindings[name]
+	if !bindingOption.cover && ok {
+		panic(fmt.Errorf("binding object %s already exists", name))
+	}
+
+	binding := &binding{
+		name: name,
+		prototype: func(container Container, params ...interface{}) interface{} {
+			return container.Make(prototype, params...)
+		},
+		reflectType: reflectPrototypeType,
+	}
+
+	c.bindings[name] = binding
+
+	// bind
+	if bindingOption.share {
+		c.instances[reflectPrototypeType] = c.resolvePrototype(binding)
+	}
+}
+
+// Get a object from container
+func (c *baseContainer) Get(name string) interface{} {
+	if !c.Has(name) {
+		panic(fmt.Errorf("object[%s] that does not exist", name))
+	}
+
+	bind := c.bindings[strings.ToLower(name)]
+	// 如果是单例
+	if v, ok := c.instances[bind.reflectType]; ok {
+		return v
+	}
+
+	return c.resolvePrototype(bind)
 }
 
 //func (c *baseContainer) inTypeShare(reflectType reflect.Type) bool {
@@ -75,112 +134,29 @@ func (c *baseContainer) Has(name string) bool {
 	return false
 }
 
-// Get a object from container
-func (c *baseContainer) Get(name string) interface{} {
-	if !c.Has(name) {
-		panic(fmt.Errorf("object[%s] that does not exist", name))
-	}
-
-	bind := c.bindings[strings.ToLower(name)]
-	// 这里bind.instance != nil可能有问题,需要测试
-	if bind.share && bind.instance != nil {
-		return bind.instance
-	}
-
-	return c.Resolve(bind.prototype)
-	//name := strings.ToLower(name)
-	//if c.bindings {
-	//
-	//}
-	//return c.bindings[strings.ToLower(name)].resolvePrototype(c)
-}
-
-// Bind method `share` param
-func WithShare(share bool) support.Option {
-	return func(option support.Object) {
-		option.(*bindingOption).share = share
-	}
-}
-
-// Bind method `cover` param
-func WithCover(cover bool) support.Option {
-	return func(option support.Object) {
-		option.(*bindingOption).cover = cover
-	}
-}
-
-// Bind a object to container
-func (c *baseContainer) Bind(name string, prototype interface{}, options ...support.Option) { //, value interface{}
-	// Parameter analysis
-	bindingOption := support.ApplyOption(newBindingOption(name, prototype), options...).(*bindingOption)
-
-	// set binding item
-	c.setBindingItem(newBinding(bindingOption, c), bindingOption.cover)
-}
-
-// Parsing various objects
-// resolve
-func (c *baseContainer) Resolve(abstract interface{}, params ...interface{}) interface{} {
+// Determine whether the specified name object is included in the container
+func (c *baseContainer) resolve(abstract interface{}, params ...interface{}) interface{} {
 	reflectType := reflect.TypeOf(abstract)
-	reflectValue := reflect.ValueOf(abstract)
-	kind := reflectType.Kind()
 
+	// 如果是单实例
+	if _type, ok := c.instances[reflectType]; ok {
+		return _type
+	}
+
+	kind := reflect2.KindElemType(reflectType)
 	if kind == reflect.String && c.Has(abstract.(string)) {
 		return c.Get(abstract.(string))
-		//} else if name, ok := c.types[reflectType]; ok {
-		//	return c.Get(name)
-
-	} else if kind == reflect.Struct || reflect2.KindElemType(reflectType) == reflect.Struct {
-		//struct不一定需要解析,可能已经是instance了
-		//func是每次都需要解析
-		return c.resolveStruct2(reflectType, reflectValue)
+	} else if kind == reflect.Struct {
+		return c.resolveStruct2(reflectType)
 	} else if kind == reflect.Func {
-		return c.resolveFunc(reflectType, reflectValue, params...)
+		return c.resolveFunc(reflectType, reflect.ValueOf(abstract), params...)
 	}
 
-	//// 基本常数
-	//if kind <= reflect.Complex128 {
-	//	return abstract
-	//} else if kind == reflect.String {
-	//	if c.Has(abstract.(string)) {
-	//		return c.Get(abstract.(string))
-	//	} else {
-	//		return abstract
-	//	}
-	//} else if kind == reflect.Slice {
-	//	return reflect.MakeSlice(reflectType, 0, 0)
-	//} else if kind == reflect.Map {
-	//	return reflect.MakeMapWithSize(reflectType, 0)
-	//}
-	//
-	//if name, ok := c.types[reflectType]; ok {
-	//	return c.bindings[name]
-	//}
-	//switch kind = reflectType.Kind() {
-	//case kind <
-	//
-	//}
-	//
-	//kind := reflect2.KindElemType(reflectType)
-	//
-	//if kind == reflect.Func {
-	//	return c.resolveFunc(reflectType, reflectValue, params...)
-	//} else if kind == reflect.Ptr || kind == reflect.Struct {
-	//	return c.resolveStruct(reflectType, reflect.Indirect(reflectValue))
-	//} else if kind == reflect.String {
-	//	return c.Get(abstract.(string))
-	//}
-
-	// bind exists instance
-	//if name, ok := c.types[reflectType]; ok {
-	//	bind := c.bindings[name]
-	//	// 这里要测试
-	//	if bind.share && bind.instance == nil {
-	//		bind.instance = ...
-	//	}
-	//}
-
 	panic(fmt.Errorf("unsupported type %T", abstract))
+}
+
+func (c *baseContainer) Make(abstract interface{}, params ...interface{}) interface{} {
+	return c.resolve(abstract, params...)
 }
 
 // Remove a binding
@@ -191,56 +167,60 @@ func (c *baseContainer) Remove(name string) {
 
 	name = strings.ToLower(name)
 
+	delete(c.instances, c.bindings[name].reflectType)
 	delete(c.bindings, name)
-
-	for key, v := range c.types {
-		if v == name {
-			delete(c.types, key)
-			break
-		}
-	}
 }
 
 // Flush container
 func (c *baseContainer) Flush() {
 	c.bindings = make(bindingType, 0)
-	c.types = make(typesType, 0)
+	//c.instances = make(typesType, 0)
 }
 
-// Set a item to types and bindings
-func (c *baseContainer) setBindingItem(b *binding, cover bool) {
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	// Coverage detection
-	// Force cover
-	// If is not force cover
-	if !cover {
-		var bindExists, typeExists bool
-		_, bindExists = c.bindings[b.name]
-		_, typeExists = c.types[b.reflectType]
-		if bindExists || typeExists {
-			panic(fmt.Errorf("binding alias type %s already exists", b.name))
-		}
-	}
-
-	// Set binding
-	c.bindings[b.name] = b
-	c.types[b.reflectType] = b.name
-
-	return
-	// Set type
-	// Only support prt,struct and func type
-	// No support string,float,int... scalar type
-	//originalKind := reflect2.KindElemType(b.reflectType)
-	//if originalKind == reflect.Ptr || originalKind == reflect.Struct {
-	//	c.types[b.reflectType] = b.name
-	//} else if originalKind == reflect.Func {
-	//	// This is mainly used as a non-singleton type, using function execution, each time returning a different instance
-	//	// When it is a function, parse the function, get the current real type, only support one parameter, the function must have only one return value
-	//	c.types[reflect.TypeOf(b.resolvePrototype(c))] = b.name
-	//}
+// Flush container
+func (c *baseContainer) resolvePrototype(binding *binding) interface{} {
+	return binding.prototype(c)
 }
+
+//
+//// Set a item to types and bindings
+//func (c *baseContainer) setBindingItem(b *binding, bindOption *bindingOption) {
+//	mutex.Lock()
+//	defer mutex.Unlock()
+//
+//	// Coverage detection
+//	// Force cover
+//	// If is not force cover
+//	if !bindOption.cover {
+//		var bindExists bool
+//		//var bindExists, typeExists bool
+//		_, bindExists = c.bindings[b.name]
+//		if bindExists {
+//			panic(fmt.Errorf("binding alias type %s already exists", b.name))
+//		}
+//		//_, typeExists = c.types[b.reflectType]
+//		//if bindExists || typeExists {
+//		//	panic(fmt.Errorf("binding alias type %s already exists", b.name))
+//		//}
+//	}
+//
+//	// Set binding
+//	c.bindings[b.name] = b
+//	//c.types[b.reflectType] = b.name
+//
+//	return
+//	// Set type
+//	// Only support prt,struct and func type
+//	// No support string,float,int... scalar type
+//	//originalKind := reflect2.KindElemType(b.reflectType)
+//	//if originalKind == reflect.Ptr || originalKind == reflect.Struct {
+//	//	c.types[b.reflectType] = b.name
+//	//} else if originalKind == reflect.Func {
+//	//	// This is mainly used as a non-singleton type, using function execution, each time returning a different instance
+//	//	// When it is a function, parse the function, get the current real type, only support one parameter, the function must have only one return value
+//	//	c.types[reflect.TypeOf(b.resolvePrototype(c))] = b.name
+//	//}
+//}
 
 //func (c *baseContainer) resolveFunc2(reflectType reflect.Type, reflectValue reflect.Value, params ...interface{}) interface{} {
 //	params = reflect2.CallInParameterType(reflectType, func(i int, param reflect.Type) interface{} {
@@ -273,35 +253,58 @@ func (c *baseContainer) setBindingItem(b *binding, cover bool) {
 //
 //	return results
 //}
+func initializeStruct(t reflect.Type, v reflect.Value) {
+	for i := 0; i < v.NumField(); i++ {
+		f := v.Field(i)
+		ft := t.Field(i)
+		switch ft.Type.Kind() {
+		case reflect.Map:
+			f.Set(reflect.MakeMap(ft.Type))
+		case reflect.Slice:
+			f.Set(reflect.MakeSlice(ft.Type, 0, 0))
+		case reflect.Chan:
+			f.Set(reflect.MakeChan(ft.Type, 0))
+		case reflect.Struct:
+			initializeStruct(ft.Type, f)
+		case reflect.Ptr:
+			fv := reflect.New(ft.Type.Elem())
+			initializeStruct(ft.Type.Elem(), fv.Elem())
+			f.Set(fv)
+		default:
+		}
+	}
+}
 
 func (c *baseContainer) resolveFunc(reflectType reflect.Type, reflectValue reflect.Value, params ...interface{}) interface{} {
-	params = reflect2.CallInParameterType(reflectType, func(i int, param reflect.Type) interface{} {
+	// 合并参数
+	reflectParams := reflect2.CallInParameterType(reflectType, func(i int, param reflect.Type) interface{} {
+		// 查找已存在的参数匹配类型
 		for _, inputParam := range params {
 			inputParamType := reflect.TypeOf(inputParam)
 			if param == inputParamType { // 如果参数类型相等
-				return reflect.ValueOf(param)
+				return reflect.ValueOf(params[i])
 			}
 		}
-		// 没有指定参数
-		if name, ok := c.types[param]; ok {
-			return reflect.ValueOf(c.Get(name))
-		} else {
-			valueKind := param.Kind()
-			if valueKind == reflect.Slice {
-				return reflect.MakeSlice(param, 0, 0)
-			} else if valueKind == reflect.Map {
-				return reflect.MakeMap(param)
-			} else if valueKind == reflect.Array {
-				return reflect.New(reflect.ArrayOf(0, param)).Elem()
-			} else if valueKind == reflect.Struct || valueKind == reflect.Ptr {
-				return reflect.ValueOf(c.resolveStruct2(param, reflect.Indirect(reflect.New(param))))
-			} else {
-				panic(`unable to find reflection parameter`)
-			}
+		// 如果是单例参数
+		if v, ok := c.instances[param]; ok {
+			return reflect.ValueOf(v)
 		}
+
+		kind := param.Kind()
+		if kind == reflect.Struct || kind == reflect.Ptr {
+			return c.resolveStruct2(param)
+		} else if kind == reflect.Func {
+			// 这里有问题
+			// 函数可能有多个返回值
+			// reflect.New(reflect2.IndirectType(param)) 可能要 reflect.New(reflect2.IndirectType(param)).Elem()
+			// @todo 暂时不支持多个返回值
+			return c.resolveFunc(param, reflect.New(reflect2.IndirectType(param)))
+		}
+
+		return c.initZero(param)
 	})
 
-	results := reflect2.CallFuncValue(reflectValue, params...)
+	results := reflect2.CallFuncValue(reflectValue, reflectParams...)
 
 	if reflectType.NumOut() == 1 {
 		return results[0]
@@ -311,29 +314,23 @@ func (c *baseContainer) resolveFunc(reflectType reflect.Type, reflectValue refle
 }
 
 // Resolve struct fields and auto binding field
-func (c *baseContainer) resolveStruct2(reflectType reflect.Type, reflectValue reflect.Value) interface{} {
-	reflectValue = reflect.Indirect(reflectValue)
-	reflect2.CallFieldType(reflectType, func(i int, field reflect.StructField) interface{} {
-		//tag := field.Tag.Get("inject")
-		fieldValue := reflectValue.Field(i)
-		valueKind := fieldValue.Kind()
+func (c *baseContainer) resolveStruct2(reflectType reflect.Type) interface{} {
+	reflectValue := reflect.Indirect(reflect.New(reflect2.IndirectType(reflectType)))
 
+	reflect2.CallFieldType(reflectType, func(i int, field reflect.StructField) interface{} {
+		fieldValue := reflectValue.Field(i)
+		kind := field.Type.Kind()
 		if reflect2.CanSetValue(fieldValue) {
 			tag := field.Tag.Get("inject")
 			if c.Has(tag) {
 				fieldValue.Set(reflect.ValueOf(c.Get(tag)))
-			} else if bindName, ok := c.types[field.Type]; ok {
-				fieldValue.Set(reflect.ValueOf(c.Get(bindName)))
-			} else if valueKind == reflect.Struct {
-				fieldValue.Set(reflect.ValueOf(c.resolveStruct2(field.Type, fieldValue)))
-			} else if valueKind == reflect.Ptr {
-				fieldValue.Set(reflect.ValueOf(c.resolveStruct2(field.Type, reflect.Indirect(reflect.New(field.Type.Elem())))))
-			} else if valueKind == reflect.Slice {
-				fieldValue.Set(reflect.MakeSlice(field.Type, 0, 0))
-			} else if valueKind == reflect.Array {
-				fieldValue.Set(reflect.New(reflect.ArrayOf(0, field.Type)).Elem())
-			} else if valueKind == reflect.Map {
-				fieldValue.Set(reflect.MakeMap(field.Type))
+			} else if v, ok := c.instances[field.Type]; ok {
+				fieldValue.Set(reflect.ValueOf(v))
+			} else if kind == reflect.Struct || kind == reflect.Ptr {
+				fieldValue.Set(reflect.ValueOf(c.resolveStruct2(reflect2.IndirectType(field.Type))))
+			} else {
+				//fieldValue.Set(c.initZero(reflectType))
+				fieldValue.Set(reflect.Zero(field.Type))
 			}
 		}
 
@@ -343,18 +340,24 @@ func (c *baseContainer) resolveStruct2(reflectType reflect.Type, reflectValue re
 	return reflect2.InterfaceValue(reflectType, reflectValue)
 }
 
-func (c *baseContainer) newBasicDynamicType(reflectType reflect.Type) reflect.Value {
-	valueKind := reflectType.Kind()
-
-	if valueKind == reflect.Slice {
+func (c *baseContainer) initZero(reflectType reflect.Type) reflect.Value {
+	kind := reflectType.Kind()
+	//fmt.Println("===========")
+	//fmt.Println(kind)
+	//fmt.Println(reflectType.Elem().Name())
+	//fmt.Println("===========")
+	if kind == reflect.Slice {
 		return reflect.MakeSlice(reflectType, 0, 0)
-	} else if valueKind == reflect.Array {
+	} else if kind == reflect.Array {
 		return reflect.New(reflect.ArrayOf(0, reflectType)).Elem()
-	} else if valueKind == reflect.Map {
+	} else if kind == reflect.Map {
 		return reflect.MakeMap(reflectType)
+	} else if kind <= reflect.Complex128 {
+		//return reflect.New(reflect2.IndirectType(reflectType)).Elem()
+		return reflect.Zero(reflectType)
 	}
 
-	panic(fmt.Errorf("type error %s", reflectType.Kind()))
+	panic(fmt.Errorf("type error %s", kind))
 }
 
 //func (c *baseContainer) resolveStatic(reflectType reflect.Type, reflectValue reflect.Value) reflect.Value {
@@ -372,78 +375,81 @@ func (c *baseContainer) newBasicDynamicType(reflectType reflect.Type) reflect.Va
 //}
 
 // Resolve struct fields and auto binding field
-func (c *baseContainer) resolveStruct(reflectType reflect.Type, reflectValue reflect.Value) interface{} {
-	reflect2.CallFieldType(reflectType, func(i int, field reflect.StructField) interface{} {
-		tag := field.Tag.Get("inject")
-		fieldValue := reflectValue.Field(i)
-		if tag != `` && reflect2.CanSetValue(fieldValue) {
-			if _, ok := c.bindings[tag]; ok {
-				result := c.Resolve(c.Get(tag))
-				// Non-same type of direct skip
-				if reflect2.KindElemType(reflect.TypeOf(result)) == reflect2.KindElemType(field.Type) {
-					fieldValue.Set(reflect.ValueOf(result))
-				}
-			}
-		}
-
-		return nil
-	})
-
-	return reflect2.InterfaceValue(reflectType, reflectValue)
-}
+//func (c *baseContainer) resolveStruct(reflectType reflect.Type, reflectValue reflect.Value) interface{} {
+//	reflect2.CallFieldType(reflectType, func(i int, field reflect.StructField) interface{} {
+//		tag := field.Tag.Get("inject")
+//		fieldValue := reflectValue.Field(i)
+//		if tag != `` && reflect2.CanSetValue(fieldValue) {
+//			if _, ok := c.bindings[tag]; ok {
+//				result := c.Resolve(c.Get(tag))
+//				// Non-same type of direct skip
+//				if reflect2.KindElemType(reflect.TypeOf(result)) == reflect2.KindElemType(field.Type) {
+//					fieldValue.Set(reflect.ValueOf(result))
+//				}
+//			}
+//		}
+//
+//		return nil
+//	})
+//
+//	return reflect2.InterfaceValue(reflectType, reflectValue)
+//}
 
 // ---------------------------- bindingOption ------------------------
 
-// Create a new binding option struct
-func newBindingOption(name string, prototype interface{}) *bindingOption {
-	return &bindingOption{share: false, cover: false, name: strings.ToLower(name), prototype: prototype}
-}
+//// Create a new binding option struct
+//func newBindingOption(name string, prototype interface{}) *bindingOption {
+//	return &bindingOption{share: false, cover: false, name: strings.ToLower(name), prototype: prototype}
+//}
 
 // ---------------------------- binding ------------------------
-
-// Create a new binding struct
-func newBinding(option *bindingOption, container Container) *binding {
-	binding := &binding{
-		name:        option.name,
-		reflectType: reflect.TypeOf(option.prototype),
-	}
-	//binding.prototype = binding.getPrototypeFunc(option.prototype)
-	binding.prototype = option.prototype
-
-	binding.share = binding.getShare(option.share)
-	if binding.share {
-		binding.instance = container.Resolve(option.prototype)
-	}
-
-	return binding
-}
-
-// Get share, If type kind is not func type
-func (b *binding) getShare(share bool) bool {
-	// Func type disabled set share status
-	if b.reflectType.Kind() == reflect.Func {
-		b.share = false
-	}
-
-	return share
-}
-
-// Parse package prototypeFunc type
-func (b *binding) getPrototypeFunc(prototype interface{}) prototypeFunc {
-	var prototypeFunction prototypeFunc
-
-	if reflect2.KindElemType(b.reflectType) == reflect.Func {
-		prototypeFunction = func(container Container, params ...interface{}) interface{} {
-			return container.Resolve(prototype, params...)
-		}
-	} else {
-		prototypeFunction = func(container Container, params ...interface{}) interface{} {
-			return prototype
-		}
-	}
-
-	return prototypeFunction
-}
+//
+//// Create a new binding struct
+//func newBinding(option *bindingOption) *binding {
+//	binding := &binding{
+//		name:        option.name,
+//		reflectType: reflect.TypeOf(option.prototype),
+//	}
+//	binding.prototype = binding.prototypeFunc(option.prototype)
+//	//binding.prototype = option.prototype
+//
+//	binding.share = binding.getShare(option.share)
+//	//if binding.share {
+//	//	binding.instance = container.Mak(option.prototype)
+//	//}
+//
+//	return binding
+//}
+//
+//// Get share, If type kind is not func type
+//func (b *binding) getShare(share bool) bool {
+//	// Func type disabled set share status
+//	if b.reflectType.Kind() == reflect.Func {
+//		b.share = false
+//	}
+//
+//	return share
+//}
+//
+//// Parse package prototypeFunc type
+//func (b *binding) prototypeFunc(prototype interface{}) prototypeFunc {
+//	return func(container Container, params ...interface{}) interface{} {
+//		return container.Make(prototype, params...)
+//	}
+//	//
+//	//var prototypeFunction prototypeFunc
+//	//if b.reflectType.Kind() == reflect.Func {
+//	//	prototypeFunction = func(container Container, params ...interface{}) interface{} {
+//	//		return container.Make(prototype, params...)
+//	//	}
+//	//} else {
+//	//	prototypeFunction = func(container Container, params ...interface{}) interface{} {
+//	//		return prototype
+//	//	}
+//	//}
+//	//
+//	//return prototypeFunction
+//}
 
 //
 //// Parse binding object prototype

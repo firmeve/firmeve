@@ -12,6 +12,7 @@ type Main struct {
 	PrtSub    *Sub
 	PrtSub2   *Sub `inject:"sub"`
 	//Array     [2]int
+	Array [3]int
 	Slice []string
 	Map   map[string]string
 }
