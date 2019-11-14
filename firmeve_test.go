@@ -1,8 +1,9 @@
 package firmeve
 
 import (
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 type MockProvider struct {
@@ -21,6 +22,16 @@ func TestInstance(t *testing.T) {
 	instance1 := Instance()
 	instance2 := Instance()
 	assert.Equal(t, instance1, instance2)
+}
+
+func TestF(t *testing.T) {
+	assert.Equal(t, Instance(), F())
+
+	Instance().Bind("testing", func() string {
+		return "testing"
+	})
+
+	assert.Equal(t, "testing", F(`testing`))
 }
 
 func TestFirmeve_Register(t *testing.T) {
