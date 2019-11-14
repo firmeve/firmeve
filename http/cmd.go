@@ -2,6 +2,7 @@ package http
 
 import (
 	"context"
+	"fmt"
 	"log"
 	http2 "net/http"
 	"os"
@@ -49,7 +50,7 @@ func (c *cmd) run(cmd *cobra.Command, args []string) {
 	go func() {
 		// service connections
 		if err := srv.ListenAndServe(); err != nil && err != http2.ErrServerClosed {
-			log.Fatalf("listen: %s\n", err)
+			c.logger.Fatal(fmt.Sprintf("listen: %s\n", err))
 		}
 	}()
 
