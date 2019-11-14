@@ -91,6 +91,10 @@ func WithRegisterForce() support.Option {
 	}
 }
 
+func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface{} {
+	return f.Make(abstract, params...)
+}
+
 // Register a service provider
 func (f *Firmeve) Register(name string, provider Provider, options ...support.Option) {
 	// Parameter analysis

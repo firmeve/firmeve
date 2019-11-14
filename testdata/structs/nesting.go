@@ -3,10 +3,10 @@ package structs
 import "time"
 
 type Nesting struct {
-	NId      int
-	NTitle   string
-	NBoolean bool
-	//NArray     [3]int
+	NId        int
+	NTitle     string
+	NBoolean   bool
+	NArray     [3]int
 	NMapString map[string]string
 	NSlice     []string
 	nprivate   string
@@ -24,7 +24,14 @@ type Sample struct {
 
 type SampleNesting struct {
 	Sample
-	Nesting Nesting
+	Nesting      *Nesting
+	NestingValue Nesting
+}
+
+type SampleNestingInject struct {
+	Sample
+	Nesting  *Nesting `inject:"nesting"`
+	Nesting2 *Nesting
 }
 
 type SampleNestingPtr struct {
