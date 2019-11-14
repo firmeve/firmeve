@@ -21,7 +21,3 @@ func (p *Provider) Boot() {
 func init() {
 	firmeve.Instance().Register(`http`, firmeve.Instance().Resolve(new(Provider)).(*Provider))
 }
-
-func Singleton() *Router {
-	return firmeve.Instance().Get(`http.router`).(*Router)
-}

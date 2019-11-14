@@ -22,7 +22,3 @@ func (p *Provider) Boot() {
 func init() {
 	firmeve.Instance().Register(`cache`, firmeve.Instance().Resolve(new(Provider)).(*Provider))
 }
-
-func Singleton() *Cache {
-	return firmeve.Instance().Get(`cache`).(*Cache)
-}
