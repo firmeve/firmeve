@@ -1,8 +1,11 @@
 package http
 
 import (
+	"encoding/json"
 	"net/http"
 	"time"
+
+	"github.com/firmeve/firmeve"
 )
 
 type HandlerFunc func(ctx *Context)
@@ -10,6 +13,7 @@ type HandlerFunc func(ctx *Context)
 type Params map[string]string
 
 type Context struct {
+	Firmeve  *firmeve.Firmeve `inject:"firmeve"`
 	request  *http.Request
 	response http.ResponseWriter
 	handlers []HandlerFunc
@@ -19,7 +23,9 @@ type Context struct {
 }
 
 func newContext(writer http.ResponseWriter, r *http.Request, handlers ...HandlerFunc) *Context {
+	firmeve := *firmeve.Instance()
 	return &Context{
+		Firmeve:  &firmeve,
 		request:  r,
 		response: writer,
 		handlers: handlers,
@@ -59,8 +65,8 @@ func (ctx *Context) Form(key string) string {
 	return ctx.request.FormValue(key)
 }
 
-func (ctx *Context) StatusCode(code int) *Context {
-	ctx.response.WriteHeader(500)
+func (ctx *Context) Status(code int) *Context {
+	ctx.response.WriteHeader(code)
 	return ctx
 }
 
@@ -74,14 +80,22 @@ func (ctx *Context) Post(key string) string {
 }
 
 func (ctx *Context) Write(bytes []byte) *Context {
-	ctx.response.WriteHeader(http.StatusOK)
 	ctx.response.Write(bytes)
 	return ctx
 }
 
 func (ctx *Context) String(content string) *Context {
-	ctx.response.WriteHeader(http.StatusOK)
-	ctx.response.Write([]byte(content))
+	ctx.Write([]byte(content))
+	return ctx
+}
+
+func (ctx *Context) Json(content interface{}) *Context {
+	ctx.SetHeader(`Content-Type`, `application/json`)
+	str, err := json.Marshal(content)
+	if err != nil {
+		panic(err)
+	}
+	ctx.Write(str)
 	return ctx
 }
 

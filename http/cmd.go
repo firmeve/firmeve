@@ -10,9 +10,11 @@ import (
 	"syscall"
 	"time"
 
-	logging "github.com/firmeve/firmeve/logger"
+	"github.com/firmeve/firmeve/container"
 
 	"github.com/firmeve/firmeve"
+	"github.com/firmeve/firmeve/config"
+	logging "github.com/firmeve/firmeve/logger"
 
 	"github.com/spf13/cobra"
 )
@@ -21,7 +23,7 @@ func NewCmd(router *Router) *cmd {
 	return &cmd{
 		router:  router,
 		command: new(cobra.Command),
-		logger:  firmeve.Instance().Get(`logger`).(logging.Loggable),
+		logger:  firmeve.F(`logger`).(logging.Loggable),
 	}
 }
 
@@ -33,7 +35,7 @@ type cmd struct {
 
 func (c *cmd) Cmd() *cobra.Command {
 	c.command.Use = "http:serve"
-	c.command.PersistentFlags().StringP("host", "", ":80", "Http serve address")
+	c.command.Flags().StringP("host", "", ":80", "Http serve address")
 	c.command.Run = func(cmd *cobra.Command, args []string) {
 		c.run(cmd, args)
 	}
@@ -42,6 +44,12 @@ func (c *cmd) Cmd() *cobra.Command {
 }
 
 func (c *cmd) run(cmd *cobra.Command, args []string) {
+	// init config
+	firmeve.Instance().Bind("config",
+		config.New(cmd.Flag("config").Value.String()),
+		container.WithCover(true),
+	)
+
 	srv := &http2.Server{
 		Addr:    cmd.Flag("host").Value.String(),
 		Handler: c.router,
@@ -71,6 +79,5 @@ func (c *cmd) run(cmd *cobra.Command, args []string) {
 		log.Fatal("Server Shutdown: ", err)
 	}
 
-	logging.Logger = logging.Default()
 	c.logger.Info("Server exiting")
 }

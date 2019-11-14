@@ -16,8 +16,12 @@ func Root() *cobra.Command {
 		Short:   "Firmeve Framework",
 		Version: firmeve.Version,
 	}
-	cmd.SetVersionTemplate(`{{with .Short}}{{printf "%s " .}}{{end}}{{printf "Version %s" .Version}}
-`)
+	cmd.PersistentFlags().StringP("config", "c", "", "Config directory path(required)")
+	//err := cmd.MarkFlagRequired("config")
+	//if err != nil {
+	//	firmeve.F(`logger`).(logging.Loggable).Fatal(err.Error())
+	//}
+	cmd.SetVersionTemplate("{{with .Short}}{{printf \"%s \" .}}{{end}}{{printf \"Version %s\" .Version}}\n")
 
 	return cmd
 }
