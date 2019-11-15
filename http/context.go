@@ -2,130 +2,176 @@ package http
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
+
+	resource2 "github.com/firmeve/firmeve/converter/resource"
+	"github.com/firmeve/firmeve/converter/transform"
+
+	"github.com/firmeve/firmeve/converter/serializer"
 
 	"github.com/firmeve/firmeve"
 )
 
-type HandlerFunc func(ctx *Context)
+type HandlerFunc func(c *Context)
 
 type Params map[string]string
 
 type Context struct {
-	Firmeve  *firmeve.Firmeve `inject:"firmeve"`
-	request  *http.Request
-	response http.ResponseWriter
-	handlers []HandlerFunc
-	index    int
-	params   Params
-	route    *Route
+	Firmeve        *firmeve.Firmeve `inject:"firmeve"`
+	request        *http.Request
+	responseWriter http.ResponseWriter
+	handlers       []HandlerFunc
+	index          int
+	params         Params
+	route          *Route
 }
 
 func newContext(writer http.ResponseWriter, r *http.Request, handlers ...HandlerFunc) *Context {
 	firmeve := *firmeve.Instance()
 	return &Context{
-		Firmeve:  &firmeve,
-		request:  r,
-		response: writer,
-		handlers: handlers,
-		index:    0,
-		params:   make(Params, 0),
+		Firmeve:        &firmeve,
+		request:        r,
+		responseWriter: writer,
+		handlers:       handlers,
+		index:          0,
+		params:         make(Params, 0),
 	}
 }
 
-func (ctx *Context) SetParams(params Params) *Context {
-	ctx.params = params
-	return ctx
+func (c *Context) SetParams(params Params) *Context {
+	c.params = params
+	return c
 }
 
-func (ctx *Context) SetRoute(route *Route) *Context {
-	ctx.route = route
-	return ctx
+func (c *Context) SetRoute(route *Route) *Context {
+	c.route = route
+	return c
 }
 
-func (ctx *Context) Param(key string) string {
-	value, _ := ctx.params[key]
+func (c *Context) Param(key string) string {
+	value, _ := c.params[key]
 	return value
 }
 
-func (ctx *Context) Request() *http.Request {
-	return ctx.request
+func (c *Context) Request() *http.Request {
+	return c.request
 }
 
-func (ctx *Context) Response(key string) http.ResponseWriter {
-	return ctx.response
+func (c *Context) Response(key string) http.ResponseWriter {
+	return c.responseWriter
 }
 
-func (ctx *Context) Query(key string) interface{} {
-	return ctx.request.URL.Query().Get(key)
+func (c *Context) Query(key string) interface{} {
+	return c.request.URL.Query().Get(key)
 }
 
-func (ctx *Context) Form(key string) string {
-	return ctx.request.FormValue(key)
+func (c *Context) Form(key string) string {
+	return c.request.FormValue(key)
 }
 
-func (ctx *Context) Status(code int) *Context {
-	ctx.response.WriteHeader(code)
-	return ctx
+func (c *Context) Status(code int) *Context {
+	c.responseWriter.WriteHeader(code)
+	return c
 }
 
-func (ctx *Context) SetHeader(key, value string) *Context {
-	ctx.response.Header().Set(key, value)
-	return ctx
+func (c *Context) SetHeader(key, value string) *Context {
+	c.responseWriter.Header().Set(key, value)
+	return c
 }
 
-func (ctx *Context) Post(key string) string {
-	return ctx.request.Form.Get(key)
+func (c *Context) Post(key string) string {
+	return c.request.Form.Get(key)
 }
 
-func (ctx *Context) Write(bytes []byte) *Context {
-	ctx.response.Write(bytes)
-	return ctx
+func (c *Context) Write(bytes []byte) *Context {
+	_, err := c.responseWriter.Write(bytes)
+	if err != nil {
+		panic(err)
+	}
+	return c
 }
 
-func (ctx *Context) String(content string) *Context {
-	ctx.Write([]byte(content))
-	return ctx
+func (c *Context) String(content string) *Context {
+	c.Write([]byte(content))
+	return c
 }
 
-func (ctx *Context) Json(content interface{}) *Context {
-	ctx.SetHeader(`Content-Type`, `application/json`)
+func (c *Context) Json(content interface{}) *Context {
+	c.SetHeader(`Content-Type`, `application/json`)
 	str, err := json.Marshal(content)
 	if err != nil {
 		panic(err)
 	}
-	ctx.Write(str)
-	return ctx
+	c.Write(str)
+	return c
 }
 
-func (ctx *Context) Flush() *Context {
-	ctx.response.(http.Flusher).Flush()
-	return ctx
+func (c *Context) Data(content interface{}) *Context {
+	return c.Json(serializer.NewData(content).Resolve())
 }
 
-func (ctx *Context) Next() {
-	if ctx.index < len(ctx.handlers) {
-		ctx.index++
-		ctx.handlers[ctx.index-1](ctx)
+func (c *Context) Item(resource interface{}, transformer transform.Transformer) *Context {
+	return c.Data(resource2.NewItem(transform.New(resource, transformer)).SetFields(`id`, `title`))
+}
+
+func (c *Context) Collection(resource interface{}, transformer transform.Transformer) *Context {
+	return c.Data(resource2.NewCollection(resource).SetFields(`id`, `title`))
+}
+
+// JSONP serializes the given struct as JSON into the responseWriter body.
+// It add padding to responseWriter body to request data from a server residing in a different domain than the client.
+// It also sets the Content-Type as "application/javascript".
+//func (c *Context) JSONP(code int, obj interface{}) {
+//	callback := c.DefaultQuery("callback", "")
+//	if callback == "" {
+//		c.Render(code, render.JSON{Data: obj})
+//		return
+//	}
+//	c.Render(code, render.JsonpJSON{Callback: callback, Data: obj})
+//}
+
+func (c *Context) Redirect(location string, code int) {
+	http.Redirect(c.responseWriter, c.request, location, code)
+}
+
+func (c *Context) File(filepath string) {
+	http.ServeFile(c.responseWriter, c.request, filepath)
+}
+
+func (c *Context) FileAttachment(filepath, filename string) {
+	c.responseWriter.Header().Set("content-disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	http.ServeFile(c.responseWriter, c.request, filepath)
+}
+
+func (c *Context) Flush() *Context {
+	c.responseWriter.(http.Flusher).Flush()
+	return c
+}
+
+func (c *Context) Next() {
+	if c.index < len(c.handlers) {
+		c.index++
+		c.handlers[c.index-1](c)
 	}
 }
 
-func (ctx *Context) Deadline() (deadline time.Time, ok bool) {
+func (c *Context) Deadline() (deadline time.Time, ok bool) {
 	panic("implement me")
 }
 
-func (ctx *Context) Done() <-chan struct{} {
+func (c *Context) Done() <-chan struct{} {
 	panic("implement me")
 }
 
-func (ctx *Context) Err() error {
+func (c *Context) Err() error {
 	panic("implement me")
 }
 
-func (ctx *Context) Value(key interface{}) interface{} {
+func (c *Context) Value(key interface{}) interface{} {
 	panic("implement me")
 }
 
-//func (ctx *Context) ServeHttp(w http.ResponseWriter, r *http.Request) {
+//func (c *Context) ServeHttp(w http.ResponseWriter, r *http.Request) {
 //}

@@ -41,7 +41,11 @@ func (c *Collection) Link() Link {
 func (c *Collection) CollectionData() DataCollection {
 	dataMaps := make(DataCollection, 0)
 	for _, source := range c.resource {
-		dataMaps = append(dataMaps, NewItem(source).SetFields(c.fields...).Data())
+		if v, ok := source.(*Item); ok {
+			dataMaps = append(dataMaps, v.SetFields(c.fields...).Data())
+		} else {
+			dataMaps = append(dataMaps, NewItem(source).SetFields(c.fields...).Data())
+		}
 	}
 
 	return dataMaps

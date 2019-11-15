@@ -2,6 +2,7 @@ package serializer
 
 import (
 	"encoding/json"
+	"encoding/xml"
 	"testing"
 
 	"fmt"
@@ -42,6 +43,10 @@ func TestNewData_Resolve(t *testing.T) {
 	collection.SetMeta(resource.Meta{"a": 1, "head": "head"})
 	//fmt.Printf("%#v", collection.CollectionData())
 	v := NewData(collection).Resolve()
+
+	b, _ := xml.Marshal(collection)
+	fmt.Println(string(b))
+
 	fmt.Printf("%#v\n", v)
 	bytes, err := json.Marshal(v)
 	if err != nil {

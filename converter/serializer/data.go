@@ -18,10 +18,16 @@ func (d *Data) Resolve() interface{} {
 	}
 
 	if meta, ok := d.resource.(resource.IMeta); ok {
-		collection[`meta`] = meta.Meta()
+		metaData := meta.Meta()
+		if len(metaData) > 0 {
+			collection[`meta`] = metaData
+		}
 	}
 	if link, ok := d.resource.(resource.ILink); ok {
-		collection[`link`] = link.Link()
+		linkData := link.Link()
+		if len(linkData) > 0 {
+			collection[`link`] = linkData
+		}
 	}
 
 	return collection
