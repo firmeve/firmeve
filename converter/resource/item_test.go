@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"testing"
 
-	resource2 "github.com/firmeve/firmeve/resource"
+	"github.com/firmeve/firmeve/converter/transform"
 
-	"github.com/magiconair/properties/assert"
+	"github.com/stretchr/testify/assert"
 )
 
 type innerMock struct {
@@ -36,15 +36,15 @@ func TestPrtStruct(t *testing.T) {
 		SubMock: subM,
 	}
 
-	v := NewItem(m).SetFields(`id`, `title`, `inner_mock`, `_content`).Resolve()
-	//fmt.Printf("%#v",v)
+	v := NewItem(m).SetFields(`id`, `title`, `inner_mock`, `_content`).resolve()
+	//fmt.Printf("%#v", v)
 	//vs, _ := json.Marshal(v)
 	//fmt.Println(string(vs))
 
-	assert.Equal(t, "main title", v[`data`].(ResolveMap)[`title`].(string))
-	assert.Equal(t, "content", v[`data`].(ResolveMap)[`_content`].(string))
-	assert.Equal(t, uint(10), v[`data`].(ResolveMap)[`id`].(uint))
-	assert.Equal(t, subM, v[`data`].(ResolveMap)[`inner_mock`])
+	assert.Equal(t, "main title", v[`title`].(string))
+	assert.Equal(t, "content", v[`_content`].(string))
+	assert.Equal(t, uint(10), v[`id`].(uint))
+	assert.Equal(t, subM, v[`inner_mock`])
 }
 
 func TestStruct(t *testing.T) {
@@ -60,18 +60,18 @@ func TestStruct(t *testing.T) {
 		SubMock: subM,
 	}
 
-	v := NewItem(m).SetFields(`id`, `title`, `inner_mock`, `_content`).Resolve()
+	v := NewItem(m).SetFields(`id`, `title`, `inner_mock`, `_content`).resolve()
 	vs, _ := json.Marshal(v)
 	fmt.Println(string(vs))
 
-	assert.Equal(t, "main title", v[`data`].(ResolveMap)[`title`].(string))
-	assert.Equal(t, "content", v[`data`].(ResolveMap)[`_content`].(string))
-	assert.Equal(t, uint(10), v[`data`].(ResolveMap)[`id`].(uint))
-	assert.Equal(t, subM, v[`data`].(ResolveMap)[`inner_mock`])
+	assert.Equal(t, "main title", v[`title`].(string))
+	assert.Equal(t, "content", v[`_content`].(string))
+	assert.Equal(t, uint(10), v[`id`].(uint))
+	assert.Equal(t, subM, v[`inner_mock`])
 }
 
 type AppTransformer struct {
-	resource2.Transformer
+	transform.BaseTransformer
 }
 
 func (t *AppTransformer) IdField() uint {
@@ -91,7 +91,10 @@ func TestTransformer(t *testing.T) {
 		Content: "content",
 	}
 
-	v := NewItem(resource2.New(source, &AppTransformer{})).SetFields(`id`, `title`).Resolve()
-	fmt.Println(v[`data`].(ResolveMap)[`id`].(uint))
-	assert.Equal(t, uint(11), v[`data`].(ResolveMap)[`id`].(uint))
+	item := NewItem(transform.New(source, new(AppTransformer)))
+	item.SetFields(`id`, `title`).SetMeta(map[string]interface{}{"a": 1})
+	v := item.Data()
+	m := item.Meta()
+	assert.Equal(t, uint(11), v[`id`].(uint))
+	assert.Equal(t, 1, m[`a`])
 }
