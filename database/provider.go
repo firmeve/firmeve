@@ -6,7 +6,7 @@ import (
 )
 
 type Provider struct {
-	Firmeve *firmeve.Firmeve `inject:"firmeve"`
+	firmeve.BaseFirmeve
 }
 
 func (p *Provider) Name() string {
@@ -14,7 +14,7 @@ func (p *Provider) Name() string {
 }
 
 func (p *Provider) Register() {
-	DB := New(p.Firmeve.Get(`config`).(config.Configurator))
+	DB := New(p.Firmeve.Get(`config`).(config.Configurator).Item(`database`))
 	p.Firmeve.Bind(`db`, DB)
 	p.Firmeve.Bind(`db.connection`, DB.ConnectionDefault())
 }

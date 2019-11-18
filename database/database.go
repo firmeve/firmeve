@@ -3,6 +3,7 @@ package database
 import (
 	"strings"
 
+	"github.com/firmeve/firmeve/config"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mssql"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -12,37 +13,21 @@ import (
 
 type dbConnection map[string]*gorm.DB
 
-type ConfigDriver map[string]interface{}
-
-type Config struct {
-	Current string
-	Drivers ConfigDriver
-}
-
 type DB struct {
-	config      *Config
+	config      config.Configurator
 	db          *gorm.DB
 	connections dbConnection
 }
 
-func New(config *Config) *DB {
+func New(config config.Configurator) *DB {
 	return &DB{
-		config:      config,
-		connections: make(dbConnection, 0),
-	}
-}
-
-func Default() *DB {
-	return &DB{
-		config: &Config{
-			Current: `mysql`,
-		},
+		config:      config.Item(`database`),
 		connections: make(dbConnection, 0),
 	}
 }
 
 func (d *DB) ConnectionDefault() *gorm.DB {
-	return d.Connection(d.config.Current)
+	return d.Connection(d.config.GetString(`default`))
 }
 
 func (d *DB) Connection(driver string) *gorm.DB {
