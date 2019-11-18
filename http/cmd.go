@@ -3,7 +3,6 @@ package http
 import (
 	"context"
 	"fmt"
-	"log"
 	http2 "net/http"
 	"os"
 	"os/signal"
@@ -76,7 +75,7 @@ func (c *cmd) run(cmd *cobra.Command, args []string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Fatal("Server Shutdown: ", err)
+		c.logger.Fatal("Server Shutdown: ", err)
 	}
 
 	c.logger.Info("Server exiting")
