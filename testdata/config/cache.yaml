@@ -1,4 +1,5 @@
 prefix: firmeve_cache
+default: redis
 redis:
   host: localhost
   port: 6379

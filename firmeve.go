@@ -13,6 +13,7 @@ const (
 )
 
 type Provider interface {
+	Name() string
 	Register()
 	Boot()
 }
@@ -58,16 +59,19 @@ func New() *Firmeve {
 	return firmeve
 }
 
-// A singleton firmeve expose func
-func Instance() *Firmeve {
+// binding unique firmeve instance
+func BindingInstance(firmeve *Firmeve) {
 	if instance != nil {
-		return instance
+		return
 	}
 
 	once.Do(func() {
-		instance = New()
+		instance = firmeve
 	})
+}
 
+// A singleton firmeve expose func
+func Instance() *Firmeve {
 	return instance
 }
 
@@ -104,7 +108,8 @@ func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface
 }
 
 // Register a service provider
-func (f *Firmeve) Register(name string, provider Provider, options ...support.Option) {
+func (f *Firmeve) Register(provider Provider, options ...support.Option) {
+	name := provider.Name()
 	// Parameter analysis
 	option := support.ApplyOption(newOption(), options...).(*option)
 

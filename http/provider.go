@@ -10,14 +10,14 @@ type Provider struct {
 	id      int
 }
 
+func (p *Provider) Name() string {
+	return `http`
+}
+
 func (p *Provider) Register() {
 	p.Firmeve.Bind(`http.router`, New(), container.WithShare(true))
 }
 
 func (p *Provider) Boot() {
 
-}
-
-func init() {
-	firmeve.Instance().Register(`http`, firmeve.Instance().Resolve(new(Provider)).(*Provider))
 }

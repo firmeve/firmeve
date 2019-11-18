@@ -1,6 +1,7 @@
 package firmeve
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -19,9 +20,13 @@ func (m *MockProvider) Boot() {
 }
 
 func TestInstance(t *testing.T) {
+	firmeve := New()
+	BindingInstance(firmeve)
 	instance1 := Instance()
 	instance2 := Instance()
 	assert.Equal(t, instance1, instance2)
+	assert.Equal(t, firmeve, instance2)
+	assert.Equal(t, fmt.Sprintf("%p", firmeve), fmt.Sprintf("%p", instance2), fmt.Sprintf("%p", instance1))
 }
 
 func TestF(t *testing.T) {

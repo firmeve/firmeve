@@ -9,27 +9,26 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/firmeve/firmeve/container"
-
-	"github.com/firmeve/firmeve"
 	"github.com/firmeve/firmeve/config"
-	logging "github.com/firmeve/firmeve/logger"
+	"github.com/firmeve/firmeve/logger"
 
 	"github.com/spf13/cobra"
 )
-
-func NewCmd(router *Router) *cmd {
-	return &cmd{
-		router:  router,
-		command: new(cobra.Command),
-		logger:  firmeve.F(`logger`).(logging.Loggable),
-	}
-}
 
 type cmd struct {
 	router  *Router
 	command *cobra.Command
 	logger  logging.Loggable
+	config  config.Configurator
+}
+
+func NewCmd(config config.Configurator, router *Router, logger logging.Loggable) *cmd {
+	return &cmd{
+		router:  router,
+		command: new(cobra.Command),
+		logger:  logger,
+		config:  config,
+	}
 }
 
 func (c *cmd) Cmd() *cobra.Command {
@@ -44,10 +43,10 @@ func (c *cmd) Cmd() *cobra.Command {
 
 func (c *cmd) run(cmd *cobra.Command, args []string) {
 	// init config
-	firmeve.Instance().Bind("config",
-		config.New(cmd.Flag("config").Value.String()),
-		container.WithCover(true),
-	)
+	//firmeve.Instance().Bind("config",
+	//	config.New(cmd.Flag("config").Value.String()),
+	//	container.WithCover(true),
+	//)
 
 	srv := &http2.Server{
 		Addr:    cmd.Flag("host").Value.String(),

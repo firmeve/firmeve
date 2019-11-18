@@ -9,6 +9,10 @@ type Provider struct {
 	Firmeve *firmeve.Firmeve `inject:"firmeve"`
 }
 
+func (p *Provider) Name() string {
+	return `db`
+}
+
 func (p *Provider) Register() {
 	DB := New(p.Firmeve.Get(`config`).(config.Configurator))
 	p.Firmeve.Bind(`db`, DB)
@@ -16,8 +20,4 @@ func (p *Provider) Register() {
 }
 
 func (p *Provider) Boot() {
-}
-
-func init() {
-	firmeve.Instance().Register(`db`, firmeve.Instance().Make(new(Provider)).(*Provider))
 }

@@ -9,19 +9,19 @@ import (
 	"time"
 )
 
+type ConfigRepositoryType map[string]interface{}
+
+type Config struct {
+	Prefix       string
+	Current      string
+	Repositories ConfigRepositoryType
+}
+
 type Cache struct {
 	config       *Config
 	current      repository.Serializable
 	repositories map[string]repository.Serializable
 }
-
-type Config struct {
-	Prefix       string
-	Current      string
-	Repositories configRepositoryType
-}
-
-type configRepositoryType map[string]interface{}
 
 var (
 	mutex sync.Mutex
@@ -43,8 +43,8 @@ func Default() *Cache {
 	return New(&Config{
 		Prefix:  `firmeve_cache`,
 		Current: `redis`,
-		Repositories: configRepositoryType{
-			`redis`: configRepositoryType{
+		Repositories: ConfigRepositoryType{
+			`redis`: ConfigRepositoryType{
 				`host`: `localhost`,
 				`port`: `6379`,
 				`db`:   0,
@@ -80,9 +80,9 @@ func (c *Cache) Driver(driver string) repository.Serializable {
 // Create a redis cache driver
 func (c *Cache) createRedisDriver() repository.Cacheable {
 	var (
-		host   = c.config.Repositories[`redis`].(configRepositoryType)[`host`].(string)
-		port   = c.config.Repositories[`redis`].(configRepositoryType)[`port`].(string)
-		db     = c.config.Repositories[`redis`].(configRepositoryType)[`db`].(int)
+		host   = c.config.Repositories[`redis`].(ConfigRepositoryType)[`host`].(string)
+		port   = c.config.Repositories[`redis`].(ConfigRepositoryType)[`port`].(string)
+		db     = c.config.Repositories[`redis`].(ConfigRepositoryType)[`db`].(int)
 		prefix = c.config.Prefix
 	)
 

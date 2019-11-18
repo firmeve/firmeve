@@ -52,7 +52,8 @@ func TestNamePanic(t *testing.T) {
 }
 
 func TestProvider_Register(t *testing.T) {
-	firmeve := firmeve2.Instance()
+	firmeve := firmeve2.New()
+	firmeve.Register(firmeve.Make(new(Provider)).(firmeve2.Provider))
 	firmeve.Boot()
 	assert.Equal(t, true, firmeve.HasProvider("event"))
 	assert.Equal(t, true, firmeve.Has(`event`))

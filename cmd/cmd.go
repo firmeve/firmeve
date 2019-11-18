@@ -16,7 +16,7 @@ func Root() *cobra.Command {
 		Short:   "Firmeve Framework",
 		Version: firmeve.Version,
 	}
-	cmd.PersistentFlags().StringP("config", "c", "", "Config directory path(required)")
+	cmd.PersistentFlags().StringP("config", "C", "", "Config directory path(required)")
 	//err := cmd.MarkFlagRequired("config")
 	//if err != nil {
 	//	firmeve.F(`logger`).(logging.Loggable).Fatal(err.Error())

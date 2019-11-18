@@ -7,7 +7,8 @@ import (
 )
 
 func TestProvider(t *testing.T) {
-	firmeve := firmeve2.Instance()
+	firmeve := firmeve2.New()
+	//firmeve2.BindingInstance(firmeve)
 	firmeve.Boot()
 	assert.Equal(t, true, firmeve.HasProvider("http"))
 	assert.Equal(t, true, firmeve.Has(`http.router`))

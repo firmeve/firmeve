@@ -4,6 +4,8 @@ import (
 	"fmt"
 	firmeve2 "github.com/firmeve/firmeve"
 	"github.com/firmeve/firmeve/cache/repository"
+	"github.com/firmeve/firmeve/config"
+	"github.com/firmeve/firmeve/support/path"
 	"github.com/stretchr/testify/assert"
 	"math/rand"
 	"strconv"
@@ -291,7 +293,9 @@ func TestRepository_Flush(t *testing.T) {
 }
 
 func TestProvider_Register(t *testing.T) {
-	firmeve := firmeve2.Instance()
+	firmeve := firmeve2.New()
+	firmeve.Bind(`config`, config.New(path.RunRelative("../testdata/config")))
+	firmeve.Register(firmeve.Make(new(Provider)).(firmeve2.Provider))
 	firmeve.Boot()
 	assert.Equal(t, true, firmeve.HasProvider("cache"))
 	assert.Equal(t, true, firmeve.Has(`cache`))

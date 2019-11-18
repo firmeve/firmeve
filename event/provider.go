@@ -10,14 +10,14 @@ type Provider struct {
 	id      int
 }
 
+func (p *Provider) Name() string {
+	return `event`
+}
+
 func (p *Provider) Register() {
 	p.Firmeve.Bind(`event`, New(), container.WithShare(true))
 }
 
 func (p *Provider) Boot() {
 
-}
-
-func init() {
-	firmeve.Instance().Register(`event`, firmeve.Instance().Resolve(new(Provider)).(*Provider))
 }
