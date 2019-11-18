@@ -17,6 +17,11 @@ func TestCache_Implement(t *testing.T) {
 	assert.Implements(t, (*repository.CacheSerializable)(nil), Default())
 }
 
+//Create a cache manager
+func Default() *Cache {
+	return New(config.New(path.RunRelative("../testdata/config")).Item(`cache`))
+}
+
 func TestRepository_Get(t *testing.T) {
 
 	cache := Default()

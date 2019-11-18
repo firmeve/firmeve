@@ -3,6 +3,7 @@ package cache
 import (
 	"github.com/firmeve/firmeve/cache/redis"
 	"github.com/firmeve/firmeve/cache/repository"
+	"github.com/firmeve/firmeve/config"
 	goRedis "github.com/go-redis/redis"
 	"strings"
 	"sync"
@@ -18,7 +19,7 @@ type Config struct {
 }
 
 type Cache struct {
-	config       *Config
+	config       config.Configurator
 	current      repository.Serializable
 	repositories map[string]repository.Serializable
 }
@@ -28,29 +29,14 @@ var (
 )
 
 // Create a cache manager
-func New(config *Config) *Cache {
+func New(config config.Configurator) *Cache {
 	cache := &Cache{
 		config:       config,
 		repositories: make(map[string]repository.Serializable, 0),
 	}
-	cache.current = cache.Driver(cache.config.Current)
+	cache.current = cache.Driver(cache.config.GetString(`default`))
 
 	return cache
-}
-
-// Create a cache manager
-func Default() *Cache {
-	return New(&Config{
-		Prefix:  `firmeve_cache`,
-		Current: `redis`,
-		Repositories: ConfigRepositoryType{
-			`redis`: ConfigRepositoryType{
-				`host`: `localhost`,
-				`port`: `6379`,
-				`db`:   0,
-			},
-		},
-	})
 }
 
 // Get the cache driver of the finger
@@ -80,10 +66,10 @@ func (c *Cache) Driver(driver string) repository.Serializable {
 // Create a redis cache driver
 func (c *Cache) createRedisDriver() repository.Cacheable {
 	var (
-		host   = c.config.Repositories[`redis`].(ConfigRepositoryType)[`host`].(string)
-		port   = c.config.Repositories[`redis`].(ConfigRepositoryType)[`port`].(string)
-		db     = c.config.Repositories[`redis`].(ConfigRepositoryType)[`db`].(int)
-		prefix = c.config.Prefix
+		host   = c.config.GetString(`repositories.redis.host`)
+		port   = c.config.GetString(`repositories.redis.port`)
+		db     = c.config.GetInt(`repositories.redis.db`)
+		prefix = c.config.GetString(`prefix`)
 	)
 
 	addr := []string{host, `:`, port}
