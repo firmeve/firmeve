@@ -1,6 +1,8 @@
 package logging
 
 import (
+	"github.com/firmeve/firmeve/config"
+	"github.com/firmeve/firmeve/support/path"
 	"testing"
 
 	firmeve2 "github.com/firmeve/firmeve"
@@ -17,26 +19,16 @@ func TestDefault(t *testing.T) {
 	//assert.Equal(t, true, true)
 }
 
+func Default() Loggable {
+	return New(config.New(path.RunRelative("../testdata/config")).Item(`logging`))
+}
+
 func TestLogger_Channel(t *testing.T) {
 	Default().Channel(`file`).Debug("Debug")
 }
 
 func TestLogger_Logger_Config(t *testing.T) {
-	logger := New(&Config{
-		Current: `console`,
-		Channels: ConfigChannelType{
-			`stack`: []string{`file`, `console`},
-			`console`: ConfigChannelType{
-				`level`: `debug`,
-			},
-			`file`: ConfigChannelType{
-				`level`:  `debug`,
-				`path`:   "../testdata/logs",
-				`size`:   100,
-				`backup`: 3,
-				`age`:    1,
-			},
-		}})
+	logger := New(config.New(path.RunRelative("../testdata/config")).Item(`logging`))
 
 	logger.Debug("Debug")
 	logger.Info("Info")
@@ -48,27 +40,15 @@ func TestLogger_Logger_Config(t *testing.T) {
 }
 
 func TestLogger_File(t *testing.T) {
-	logger := New(&Config{
-		Current: `file`,
-		Channels: ConfigChannelType{
-			`stack`: []string{`file`, `console`},
-			`console`: ConfigChannelType{
-				`level`: `debug`,
-			},
-			`file`: ConfigChannelType{
-				`level`:  `debug`,
-				`path`:   "../testdata/logs",
-				`size`:   100,
-				`backup`: 3,
-				`age`:    1,
-			},
-		}})
+	logger := New(config.New(path.RunRelative("../testdata/config")).Item(`logging`))
 
 	logger.Warn("File")
 }
 
 func TestProvider_Register(t *testing.T) {
-	firmeve := firmeve2.Instance()
+	firmeve := firmeve2.New()
+	firmeve.Bind(`config`, config.New(path.RunRelative("../testdata/config")))
+	firmeve.Register(firmeve.Make(new(Provider)).(firmeve2.Provider))
 	firmeve.Boot()
 	assert.Equal(t, true, firmeve.HasProvider("logger"))
 	assert.Equal(t, true, firmeve.Has(`logger`))

@@ -2,12 +2,12 @@ package logging
 
 import (
 	"github.com/firmeve/firmeve"
+	config2 "github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/container"
 )
 
 type Provider struct {
-	Firmeve *firmeve.Firmeve `inject:"firmeve"`
-	id      int
+	firmeve.BaseFirmeve
 }
 
 func (p *Provider) Name() string {
@@ -15,8 +15,8 @@ func (p *Provider) Name() string {
 }
 
 func (p *Provider) Register() {
-	//@todo 这里需要引入config
-	p.Firmeve.Bind(`logger`, Default(), container.WithShare(true))
+	config := p.Firmeve.Get(`config`).(config2.Configurator).Item(`logging`)
+	p.Firmeve.Bind(`logger`, New(config), container.WithShare(true))
 }
 
 func (p *Provider) Boot() {

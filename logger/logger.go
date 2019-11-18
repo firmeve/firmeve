@@ -2,8 +2,10 @@ package logging
 
 import (
 	"fmt"
+	"github.com/firmeve/firmeve/config"
 	"io"
 	"os"
+	"strings"
 	"sync"
 
 	"go.uber.org/zap"
@@ -22,16 +24,11 @@ type Loggable interface {
 
 type logger struct {
 	channels channels
-	config   *Config
-}
-
-type Config struct {
-	Current  string
-	Channels ConfigChannelType
+	config   config.Configurator
+	current  string
 }
 
 type Level string
-type ConfigChannelType map[string]interface{}
 type internalLogger = *zap.SugaredLogger
 type channels map[string]internalLogger
 type writers map[string]io.Writer
@@ -53,38 +50,18 @@ var (
 		Error: zapcore.ErrorLevel,
 		Fatal: zapcore.FatalLevel,
 	}
-	channelMap = map[string]func(config *Config) io.Writer{
+	channelMap = map[string]func(config config.Configurator) io.Writer{
 		`file`:    newFileChannel,
 		`console`: newConsoleChannel,
 	}
 )
 
-func New(config *Config) Loggable {
+func New(config config.Configurator) Loggable {
 	return &logger{
 		config:   config,
+		current:  config.GetString(`default`),
 		channels: make(channels, 0),
 	}
-}
-
-func Default() Loggable {
-	config := &Config{
-		Current: `stack`,
-		Channels: ConfigChannelType{
-			`stack`: []string{`file`, `console`},
-			`console`: ConfigChannelType{
-				`level`: `debug`,
-			},
-			`file`: ConfigChannelType{
-				`level`:  `debug`,
-				`path`:   "../testdata/logs",
-				`size`:   100,
-				`backup`: 3,
-				`age`:    1,
-			},
-		},
-	}
-
-	return New(config)
 }
 
 //func (l *logger) Config(config *Config) Loggable {
@@ -93,23 +70,23 @@ func Default() Loggable {
 //}
 
 func (l *logger) Debug(message string, context ...interface{}) {
-	l.channel(l.config.Current).Debugw(message, context...)
+	l.channel(l.current).Debugw(message, context...)
 }
 
 func (l *logger) Info(message string, context ...interface{}) {
-	l.channel(l.config.Current).Infow(message, context...)
+	l.channel(l.current).Infow(message, context...)
 }
 
 func (l *logger) Warn(message string, context ...interface{}) {
-	l.channel(l.config.Current).Warnw(message, context...)
+	l.channel(l.current).Warnw(message, context...)
 }
 
 func (l *logger) Error(message string, context ...interface{}) {
-	l.channel(l.config.Current).Errorw(message, context...)
+	l.channel(l.current).Errorw(message, context...)
 }
 
 func (l *logger) Fatal(message string, context ...interface{}) {
-	l.channel(l.config.Current).Fatalw(message, context...)
+	l.channel(l.current).Fatalw(message, context...)
 }
 
 // Return a new Logger instance
@@ -118,6 +95,7 @@ func (l *logger) Channel(stack string) Loggable {
 	return &logger{
 		config:   l.config,
 		channels: l.channels,
+		current:  stack,
 	}
 }
 
@@ -137,7 +115,7 @@ func (l *logger) channel(stack string) internalLogger {
 // ---------------------------------------------- func --------------------------------------------------
 
 // Default internal logger
-func zapLogger(config *Config, writers writers) internalLogger {
+func zapLogger(config config.Configurator, writers writers) internalLogger {
 	//zapcore.EncoderConfig{
 	//	TimeKey:        "time",
 	//	LevelKey:       "level",
@@ -164,7 +142,7 @@ func zapLogger(config *Config, writers writers) internalLogger {
 			zapEncoder,
 			zapcore.Lock(zapcore.AddSync(write)), //writer(option)
 			zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-				return lvl >= levelMap[Level(config.Channels[stack].(ConfigChannelType)[`level`].(string))]
+				return lvl >= levelMap[Level(config.GetStringMap(strings.Join([]string{`channels`, stack}, `.`))[`level`].(string))]
 			}),
 		)
 
@@ -175,7 +153,7 @@ func zapLogger(config *Config, writers writers) internalLogger {
 }
 
 // Channel factory
-func factory(stack string, config *Config) internalLogger {
+func factory(stack string, config config.Configurator) internalLogger {
 	var channels writers
 	switch stack {
 	case `file`:
@@ -192,23 +170,23 @@ func factory(stack string, config *Config) internalLogger {
 }
 
 // New file channel
-func newFileChannel(config *Config) io.Writer {
+func newFileChannel(config config.Configurator) io.Writer {
 	return &lumberjack.Logger{
-		Filename:   config.Channels[`file`].(ConfigChannelType)[`path`].(string) + "/log.log",
-		MaxSize:    config.Channels[`file`].(ConfigChannelType)[`size`].(int),
-		MaxBackups: config.Channels[`file`].(ConfigChannelType)[`backup`].(int),
-		MaxAge:     config.Channels[`file`].(ConfigChannelType)[`age`].(int),
+		Filename:   config.GetStringMap(`channels.file`)[`path`].(string) + "/log.log",
+		MaxSize:    config.GetStringMap(`channels.file`)[`size`].(int),
+		MaxBackups: config.GetStringMap(`channels.file`)[`backup`].(int),
+		MaxAge:     config.GetStringMap(`channels.file`)[`age`].(int),
 	}
 }
 
 // New console channel
-func newConsoleChannel(config *Config) io.Writer {
+func newConsoleChannel(config config.Configurator) io.Writer {
 	return os.Stdout
 }
 
 // New stack channel
-func newStackChannel(config *Config) writers {
-	stacks := config.Channels[`stack`].([]string)
+func newStackChannel(config config.Configurator) writers {
+	stacks := config.GetStringSlice(`channels.stack`)
 	existsStackMap := make(writers, 0)
 	for _, stack := range stacks {
 		existsStackMap[stack] = channelMap[stack](config)

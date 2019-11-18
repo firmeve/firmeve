@@ -6,9 +6,9 @@ channels:
   file:
     path: "../testdata/logs"
     # megabytes
-    size:    100,
-    backup: 3,
-    age:     1,
+    size:    100
+    backup: 3
+    age:     1
     # debug ,info,warn,error,fatal
     level: debug
   console:
