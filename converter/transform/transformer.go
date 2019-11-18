@@ -16,8 +16,3 @@ func (t *BaseTransformer) Resource() interface{} {
 func (t *BaseTransformer) SetResource(resource interface{}) {
 	t.resource = resource
 }
-
-func New(resource interface{}, transformer Transformer) Transformer {
-	transformer.SetResource(resource)
-	return transformer
-}

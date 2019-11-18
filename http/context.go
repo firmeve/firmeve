@@ -7,7 +7,6 @@ import (
 	"time"
 
 	resource2 "github.com/firmeve/firmeve/converter/resource"
-	"github.com/firmeve/firmeve/converter/transform"
 
 	"github.com/firmeve/firmeve/converter/serializer"
 
@@ -98,7 +97,7 @@ func (c *Context) String(content string) *Context {
 	return c
 }
 
-func (c *Context) Json(content interface{}) *Context {
+func (c *Context) JSON(content interface{}) *Context {
 	c.SetHeader(`Content-Type`, `application/json`)
 	str, err := json.Marshal(content)
 	if err != nil {
@@ -109,15 +108,15 @@ func (c *Context) Json(content interface{}) *Context {
 }
 
 func (c *Context) Data(content interface{}) *Context {
-	return c.Json(serializer.NewData(content).Resolve())
+	return c.JSON(serializer.NewData(content).Resolve())
 }
 
-func (c *Context) Item(resource interface{}, transformer transform.Transformer) *Context {
-	return c.Data(resource2.NewItem(transform.New(resource, transformer)).SetFields(`id`, `title`))
+func (c *Context) Item(resource interface{}, option *resource2.Option) *Context {
+	return c.Data(resource2.NewItem(resource, option))
 }
 
-func (c *Context) Collection(resource interface{}, transformer transform.Transformer) *Context {
-	return c.Data(resource2.NewCollection(resource).SetFields(`id`, `title`))
+func (c *Context) Collection(resource interface{}, option *resource2.Option) *Context {
+	return c.Data(resource2.NewCollection(resource, option))
 }
 
 // JSONP serializes the given struct as JSON into the responseWriter body.

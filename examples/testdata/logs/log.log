@@ -18,3 +18,34 @@
 {"level":"info","ts":1573797408.8289113,"msg":"Server exiting"}
 {"level":"info","ts":1573802208.7169297,"msg":"Shutdown Server ..."}
 {"level":"info","ts":1573802208.7170212,"msg":"Server exiting"}
+{"level":"info","ts":1574044384.861228,"msg":"Shutdown Server ..."}
+{"level":"info","ts":1574044384.8617876,"msg":"Server exiting"}
+{"level":"info","ts":1574044418.8299625,"msg":"Shutdown Server ..."}
+{"level":"info","ts":1574044418.8304489,"msg":"Server exiting"}
+{"level":"info","ts":1574045378.9471881,"msg":"Shutdown Server ..."}
+{"level":"info","ts":1574045378.947544,"msg":"Server exiting"}
+{"level":"info","ts":1574045737.0959973,"msg":"Shutdown Server ..."}
+{"level":"info","ts":1574045737.0963507,"msg":"Server exiting"}
+{"level":"info","ts":1574045824.7568269,"msg":"Shutdown Server ..."}
+{"level":"info","ts":1574045824.7572234,"msg":"Server exiting"}
+{"level":"info","ts":1574045880.855739,"msg":"Shutdown Server ..."}
+{"level":"info","ts":1574045880.8563275,"msg":"Server exiting"}
+{"level":"info","ts":1574045899.9810143,"msg":"Shutdown Server ..."}
+{"level":"info","ts":1574045899.9814086,"msg":"Server exiting"}
+{"level":"info","ts":1574045919.8467343,"msg":"Shutdown Server ..."}
+{"level":"info","ts":1574045919.847244,"msg":"Server exiting"}
+{"level":"fatal","ts":1574059444.0462542,"msg":"listen: listen tcp 127.0.0.1:22182: bind: address already in use\n","stacktrace":"github.com/firmeve/firmeve/logger.(*logger).Fatal\n\t/home/simon/code/golang/src/github.com/firmeve/firmeve/logger/logger.go:112\ngithub.com/firmeve/firmeve/http.(*cmd).run.func1\n\t/home/simon/code/golang/src/github.com/firmeve/firmeve/http/cmd.go:60"}
+{"level":"info","ts":1574059449.1682153,"msg":"Shutdown Server ..."}
+{"level":"info","ts":1574059449.1685352,"msg":"Server exiting"}
+{"level":"info","ts":1574059495.4847531,"msg":"Shutdown Server ..."}
+{"level":"info","ts":1574059495.4851794,"msg":"Server exiting"}
+{"level":"info","ts":1574059717.5167184,"msg":"Shutdown Server ..."}
+{"level":"info","ts":1574059717.5171413,"msg":"Server exiting"}
+{"level":"info","ts":1574059834.7863865,"msg":"Shutdown Server ..."}
+{"level":"info","ts":1574059834.7869458,"msg":"Server exiting"}
+{"level":"info","ts":1574059841.1952586,"msg":"Shutdown Server ..."}
+{"level":"info","ts":1574059841.195673,"msg":"Server exiting"}
+{"level":"info","ts":1574060058.4855902,"msg":"Shutdown Server ..."}
+{"level":"info","ts":1574060058.4860067,"msg":"Server exiting"}
+{"level":"info","ts":1574060082.4245534,"msg":"Shutdown Server ..."}
+{"level":"info","ts":1574060082.4248328,"msg":"Server exiting"}

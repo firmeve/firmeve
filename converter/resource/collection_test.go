@@ -40,7 +40,9 @@ func TestCollection_Resolve(t *testing.T) {
 	//for i, s := range structs {
 	//	newInterface[i] = s
 	//}
-	collection := NewCollection(structs).SetFields(`id`, `title`)
+	collection := NewCollection(structs, &Option{
+		Fields: Fields{"id"},
+	})
 	collection.SetMeta(Meta{"a": "a"})
 	v := collection.CollectionData()
 	assert.Equal(t, `a`, collection.Meta()[`a`])

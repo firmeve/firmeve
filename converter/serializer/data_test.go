@@ -39,7 +39,9 @@ func mockCollectionStruct() []struct {
 }
 
 func TestNewData_Resolve(t *testing.T) {
-	collection := resource.NewCollection(mockCollectionStruct()).SetFields(`id`, `title`)
+	collection := resource.NewCollection(mockCollectionStruct(), &resource.Option{
+		Fields: resource.Fields{`id`, `title`},
+	})
 	collection.SetMeta(resource.Meta{"a": 1, "head": "head"})
 	//fmt.Printf("%#v", collection.CollectionData())
 	v := NewData(collection).Resolve()

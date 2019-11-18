@@ -52,32 +52,35 @@ func main() {
 			10,
 			"Title",
 			"Simon",
-		}, new(AnyTransformer))
+		}, &resource.Option{
+			Fields:      []string{"id", "title", "name"},
+			Transformer: new(AnyTransformer),
+		})
+		c.Next()
 	})
 	router.GET(`/collection`, func(c *http.Context) {
-		z := []*resource.Item{
-			resource.NewItem(transform.New(&Original{
+		z := []*Original{
+			&Original{
 				10, "title", "simon",
-			}, new(AnyTransformer))),
-			resource.NewItem(transform.New(&Original{
-				11, "title", "simon",
-			}, new(AnyTransformer))),
-			resource.NewItem(transform.New(&Original{
+			},
+			&Original{
 				12, "title", "simon",
-			}, new(AnyTransformer))),
-			resource.NewItem(transform.New(&Original{
+			},
+			&Original{
 				13, "title", "simon",
-			}, new(AnyTransformer))),
+			},
+			&Original{
+				14, "title", "simon",
+			},
+			&Original{
+				15, "title", "simon",
+			},
 		}
-		//z := []*resource.Item{
-		//	resource.NewItem(transform.New(&Original{
-		//{
-		//	10,
-		//	"Title",
-		//	"Simon",
-		//}, new(AnyTransformer)))()
-		//}
-		c.Collection(z, new(AnyTransformer))
+		c.Collection(z, &resource.Option{
+			Transformer: new(AnyTransformer),
+			Fields:      []string{"id", "title"},
+		})
+		c.Next()
 	})
 	router.GET("/abc", func(ctx *http.Context) {
 		//time.Sleep(time.Second * 10)
@@ -89,7 +92,7 @@ func main() {
 		s := ctx.Firmeve.Make(new(Something)).(*Something)
 		s.SetId()
 		fmt.Printf("%#v\n", s)
-		ctx.Json(s)
+		ctx.JSON(s)
 		//if !ctx.Firmeve.Has("something") {
 		//	ctx.Firmeve.Bind("something", ctx.Firmeve.Make(new(Something)))
 		//	ctx.Json(Something{
