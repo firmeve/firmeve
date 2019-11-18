@@ -1,6 +1,7 @@
 package http
 
 import (
+	"github.com/firmeve/firmeve"
 	"net/http"
 	"strings"
 
@@ -8,13 +9,15 @@ import (
 )
 
 type Router struct {
+	Firmeve   *firmeve.Firmeve
 	router    *httprouter.Router
 	routes    map[string]*Route
 	routeKeys []string
 }
 
-func New() *Router {
+func New(firmeve *firmeve.Firmeve) *Router {
 	return &Router{
+		Firmeve:   firmeve,
 		router:    httprouter.New(),
 		routes:    make(map[string]*Route, 0),
 		routeKeys: make([]string, 0),
@@ -53,7 +56,7 @@ func (r *Router) Static(path string, root string) *Router {
 
 func (r *Router) NotFound(handler HandlerFunc) *Router {
 	r.router.NotFound = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		newContext(w, req, handler).Next()
+		newContext(r.Firmeve, w, req, handler).Next()
 	})
 	return r
 }
@@ -75,7 +78,7 @@ func (r *Router) createRoute(method string, path string, handler HandlerFunc) *R
 			ctxParams[param.Key] = param.Value
 		}
 
-		newContext(w, req, r.routes[key].Handlers()...).
+		newContext(r.Firmeve, w, req, r.routes[key].Handlers()...).
 			SetParams(ctxParams).
 			SetRoute(r.routes[key]).
 			Next()

@@ -2,6 +2,10 @@ package main
 
 import (
 	"fmt"
+	"github.com/firmeve/firmeve/bootstrap"
+	"github.com/firmeve/firmeve/config"
+	"github.com/firmeve/firmeve/logger"
+	"github.com/firmeve/firmeve/support/path"
 	"os"
 
 	"github.com/firmeve/firmeve/converter/resource"
@@ -43,10 +47,12 @@ func main() {
 	//fmt.Println(reflect.TypeOf(&x).Kind())
 	//fmt.Println(reflect.TypeOf(&x) == reflect.TypeOf(&y))
 	//fmt.Println("#########################")
-	firmeve.Instance().Bind("something", func() *Something {
-		return firmeve.Instance().Make(new(Something)).(*Something)
+	firmeve := firmeve.New()
+
+	firmeve.Bind("something", func() *Something {
+		return firmeve.Make(new(Something)).(*Something)
 	})
-	router := http.New()
+	router := http.New(firmeve)
 	router.GET(`/item`, func(c *http.Context) {
 		c.Item(&Original{
 			10,
@@ -116,6 +122,9 @@ func main() {
 	})
 	//
 	root := cmd.Root()
+	//configPath := root.Flag(`config`).Value.String()
+	//fmt.Println(configPath)
+
 	root.AddCommand(http.NewCmd(router).Cmd())
 	root.SetArgs(os.Args[1:])
 	root.Execute()

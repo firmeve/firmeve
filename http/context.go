@@ -27,10 +27,9 @@ type Context struct {
 	route          *Route
 }
 
-func newContext(writer http.ResponseWriter, r *http.Request, handlers ...HandlerFunc) *Context {
-	firmeve := *firmeve.Instance()
+func newContext(firmeve *firmeve.Firmeve, writer http.ResponseWriter, r *http.Request, handlers ...HandlerFunc) *Context {
 	return &Context{
-		Firmeve:        &firmeve,
+		Firmeve:        firmeve,
 		request:        r,
 		responseWriter: writer,
 		handlers:       handlers,

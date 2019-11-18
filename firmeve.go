@@ -64,28 +64,28 @@ func New() *Firmeve {
 }
 
 // binding unique firmeve instance
-func BindingInstance(firmeve *Firmeve) {
-	if instance != nil {
-		return
-	}
-
-	once.Do(func() {
-		instance = firmeve
-	})
-}
+//func BindingInstance(firmeve *Firmeve) {
+//	if instance != nil {
+//		return
+//	}
+//
+//	once.Do(func() {
+//		instance = firmeve
+//	})
+//}
 
 // A singleton firmeve expose func
-func Instance() *Firmeve {
-	return instance
-}
-
-func F(params ...interface{}) interface{} {
-	if len(params) > 0 {
-		return Instance().Make(params[0], params[1:]...)
-	}
-
-	return Instance()
-}
+//func Instance() *Firmeve {
+//	return instance
+//}
+//
+//func F(params ...interface{}) interface{} {
+//	if len(params) > 0 {
+//		return Instance().Make(params[0], params[1:]...)
+//	}
+//
+//	return Instance()
+//}
 
 // Start all service providers at once
 func (f *Firmeve) Boot() {

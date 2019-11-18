@@ -6,8 +6,7 @@ import (
 )
 
 type Provider struct {
-	Firmeve *firmeve.Firmeve `inject:"firmeve"`
-	id      int
+	firmeve.BaseFirmeve
 }
 
 func (p *Provider) Name() string {
@@ -15,7 +14,7 @@ func (p *Provider) Name() string {
 }
 
 func (p *Provider) Register() {
-	p.Firmeve.Bind(`http.router`, New(), container.WithShare(true))
+	p.Firmeve.Bind(`http.router`, New(p.Firmeve), container.WithShare(true))
 }
 
 func (p *Provider) Boot() {

@@ -3,13 +3,14 @@ package http
 import (
 	"context"
 	"fmt"
+	"github.com/firmeve/firmeve/bootstrap"
+	"github.com/firmeve/firmeve/support/path"
 	http2 "net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/logger"
 
 	"github.com/spf13/cobra"
@@ -19,21 +20,21 @@ type cmd struct {
 	router  *Router
 	command *cobra.Command
 	logger  logging.Loggable
-	config  config.Configurator
+	//config  config.Configurator
 }
 
-func NewCmd(config config.Configurator, router *Router, logger logging.Loggable) *cmd {
+func NewCmd(router *Router) *cmd {
 	return &cmd{
 		router:  router,
 		command: new(cobra.Command),
-		logger:  logger,
-		config:  config,
+		logger:  router.Firmeve.Get(`logger`).(logging.Loggable),
+		//config:  router.Firmeve.Get(`config`).(config.Configurator),
 	}
 }
 
 func (c *cmd) Cmd() *cobra.Command {
 	c.command.Use = "http:serve"
-	c.command.Flags().StringP("host", "", ":80", "Http serve address")
+	c.command.Flags().StringP("host", "H", ":80", "Http serve address")
 	c.command.Run = func(cmd *cobra.Command, args []string) {
 		c.run(cmd, args)
 	}
@@ -42,11 +43,7 @@ func (c *cmd) Cmd() *cobra.Command {
 }
 
 func (c *cmd) run(cmd *cobra.Command, args []string) {
-	// init config
-	//firmeve.Instance().Bind("config",
-	//	config.New(cmd.Flag("config").Value.String()),
-	//	container.WithCover(true),
-	//)
+	bootstrap.New(c.router.Firmeve, path.RunRelative(cmd.Flag("config").Value.String())).QuickBoot()
 
 	srv := &http2.Server{
 		Addr:    cmd.Flag("host").Value.String(),

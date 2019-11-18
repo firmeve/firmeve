@@ -1,6 +1,7 @@
 package http
 
 import (
+	"github.com/firmeve/firmeve"
 	"net/http"
 	"testing"
 
@@ -19,7 +20,7 @@ func assertBaseRoute(t *testing.T, router *Router, method, path, name string, be
 }
 
 func TestRouter_BaseRoute(t *testing.T) {
-	router := New()
+	router := New(firmeve.New())
 	router.GET("/gets/1", func(ctx *Context) {
 		ctx.Write([]byte("Body"))
 		ctx.Next()
@@ -70,7 +71,7 @@ func TestRouter_BaseRoute(t *testing.T) {
 }
 
 func TestRouter_Group(t *testing.T) {
-	router := New()
+	router := New(firmeve.New())
 	v1 := router.Group("/v1").After(func(ctx *Context) {
 		ctx.Write([]byte("Group v1 After"))
 		ctx.Next()
@@ -138,7 +139,7 @@ func (m *MockResponseWriter) WriteHeader(statusCode int) {
 func TestRouter_Static(t *testing.T) {
 	//http.Handle("/", http.FileServer(http.Dir("/tmp")))
 	//http.ListenAndServe("127.0.0.1:28084", nil)
-	router := New()
+	router := New(firmeve.New())
 	router.Static("/file", "/tmp")
 	router.GET("/gets/:name", func(ctx *Context) {
 		ctx.Write([]byte(ctx.Param("name")))

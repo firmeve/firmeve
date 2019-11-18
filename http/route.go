@@ -17,6 +17,7 @@ func (r *Route) Before(handlers ...HandlerFunc) *Route {
 	r.beforeHandlers = append(r.beforeHandlers, handlers...)
 	return r
 }
+
 func (r *Route) After(handlers ...HandlerFunc) *Route {
 	r.afterHandlers = append(r.afterHandlers, handlers...)
 	return r
