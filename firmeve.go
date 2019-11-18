@@ -18,6 +18,10 @@ type Provider interface {
 	Boot()
 }
 
+type BaseFirmeve struct {
+	Firmeve *Firmeve `inject:"firmeve"`
+}
+
 type Firmeve struct {
 	container.Container
 
