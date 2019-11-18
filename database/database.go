@@ -21,7 +21,7 @@ type DB struct {
 
 func New(config config.Configurator) *DB {
 	return &DB{
-		config:      config.Item(`database`),
+		config:      config,
 		connections: make(dbConnection, 0),
 	}
 }
@@ -35,7 +35,7 @@ func (d *DB) Connection(driver string) *gorm.DB {
 		return connection
 	}
 
-	config := d.config.GetString(strings.Join([]string{driver, `addr`}, `.`))
+	config := d.config.GetString(strings.Join([]string{`connections`, driver, `addr`}, `.`))
 	db, err := gorm.Open(driver, config)
 
 	if err != nil {

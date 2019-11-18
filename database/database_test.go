@@ -9,36 +9,36 @@ import (
 	firmeve2 "github.com/firmeve/firmeve"
 )
 
-//func TestNew(t *testing.T) {
-//	db := New(config.New(path.RunRelative("../testdata/config")))
-//	assert.NotPanics(t, func() {
-//		db.ConnectionDefault()
-//		db.CloseDefault()
-//	})
-//	assert.Equal(t, db.ConnectionDefault(), db.ConnectionDefault())
-//}
-//
-//func TestNew_Connection_Error(t *testing.T) {
-//	config := config.New(path.RunRelative("../testdata/config"))
-//	config.Item("database").Set("error_connection.addr", "nothing")
-//	db := New(config)
-//	assert.Panics(t, func() {
-//		db.Connection(`error_connection`)
-//	})
-//}
-//
-//func TestNew_Close_Error(t *testing.T) {
-//	db := New(config.New(path.RunRelative("../testdata/config")))
-//	assert.NotPanics(t, func() {
-//		db.ConnectionDefault()
-//		db.CloseDefault()
-//		db.CloseDefault()
-//	})
-//}
+func TestNew(t *testing.T) {
+	db := New(config.New(path.RunRelative("../testdata/config")).Item(`database`))
+	assert.NotPanics(t, func() {
+		db.ConnectionDefault()
+		db.CloseDefault()
+	})
+	assert.Equal(t, db.ConnectionDefault(), db.ConnectionDefault())
+}
+
+func TestNew_Connection_Error(t *testing.T) {
+	config := config.New(path.RunRelative("../testdata/config")).Item(`database`)
+	config.Item("database").Set("error_connection.addr", "nothing")
+	db := New(config)
+	assert.Panics(t, func() {
+		db.Connection(`error_connection`)
+	})
+}
+
+func TestNew_Close_Error(t *testing.T) {
+	db := New(config.New(path.RunRelative("../testdata/config")).Item(`database`))
+	assert.NotPanics(t, func() {
+		db.ConnectionDefault()
+		db.CloseDefault()
+		db.CloseDefault()
+	})
+}
 
 func TestDB_Provider(t *testing.T) {
 	firmeve := firmeve2.New()
-	firmeve.Bind(`config`, config.New(path.RunRelative("../testdata/config")))
+	firmeve.Bind(`config`, config.New(path.RunRelative("../testdata/config")).Item(`database`))
 	firmeve.Register(firmeve.Make(new(Provider)).(firmeve2.Provider))
 
 	//z := &Provider{
