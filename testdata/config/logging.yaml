@@ -4,7 +4,7 @@ channels:
     - file
     - console
   file:
-    path: "../testdata/logs"
+    path: "../../testdata/logs"
     # megabytes
     size:    100
     backup: 3
