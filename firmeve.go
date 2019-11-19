@@ -18,7 +18,7 @@ type Provider interface {
 	Boot()
 }
 
-type BaseFirmeve struct {
+type BaseProvider struct {
 	Firmeve *Firmeve `inject:"firmeve"`
 }
 

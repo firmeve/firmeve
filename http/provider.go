@@ -6,7 +6,7 @@ import (
 )
 
 type Provider struct {
-	firmeve.BaseFirmeve
+	firmeve.BaseProvider
 }
 
 func (p *Provider) Name() string {
