@@ -23,7 +23,7 @@ func (h *Error) Response() {
 	http2.Error(h.Context.ResponseWriter(), h.Message, h.Code)
 }
 
-func NewError(code int, message string, ctx *Context) *Http {
+func NewError(code int, message string, ctx *Context) *Error {
 	return &Error{
 		Code:    code,
 		Message: message,
