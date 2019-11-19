@@ -48,6 +48,10 @@ func (c *Context) SetRoute(route *Route) *Context {
 	return c
 }
 
+func (c *Context) Abort(code int, message string) {
+	panic(NewError(code, message, c))
+}
+
 func (c *Context) Param(key string) string {
 	value, _ := c.params[key]
 	return value
