@@ -15,7 +15,7 @@ func (p *Provider) Name() string {
 }
 
 func (p *Provider) Register() {
-	config := p.Firmeve.Get(`config`).(config2.Configurator).Item(`cache`)
+	config := p.Firmeve.Get(`config`).(*config2.Config).Item(`cache`)
 	p.Firmeve.Bind(`cache`, New(config), container.WithShare(true))
 }
 

@@ -14,7 +14,7 @@ func (p *Provider) Name() string {
 }
 
 func (p *Provider) Register() {
-	DB := New(p.Firmeve.Get(`config`).(config.Configurator).Item(`database`))
+	DB := New(p.Firmeve.Get(`config`).(*config.Config).Item(`database`))
 	p.Firmeve.Bind(`db`, DB)
 	p.Firmeve.Bind(`db.connection`, DB.ConnectionDefault())
 }

@@ -2,11 +2,12 @@ package logging
 
 import (
 	"fmt"
-	"github.com/firmeve/firmeve/config"
 	"io"
 	"os"
 	"strings"
 	"sync"
+
+	"github.com/firmeve/firmeve/config"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -63,11 +64,6 @@ func New(config config.Configurator) Loggable {
 		channels: make(channels, 0),
 	}
 }
-
-//func (l *logger) Config(config *Config) Loggable {
-//	l.config = config
-//	return l
-//}
 
 func (l *logger) Debug(message string, context ...interface{}) {
 	l.channel(l.current).Debugw(message, context...)

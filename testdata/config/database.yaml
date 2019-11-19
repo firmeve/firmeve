@@ -1,4 +1,4 @@
-default: "mysql"
+default: mysql
 connections:
   mysql:
-    addr: "root:root@(127.0.0.1)/test?charset=utf8mb4&parseTime=True&loc=Local"
+    addr: "root:@(127.0.0.1)/test?charset=utf8mb4&parseTime=True&loc=Local"

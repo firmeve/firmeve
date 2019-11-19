@@ -2,11 +2,9 @@ package main
 
 import (
 	"fmt"
-	"github.com/firmeve/firmeve/bootstrap"
-	"github.com/firmeve/firmeve/config"
-	"github.com/firmeve/firmeve/logger"
-	"github.com/firmeve/firmeve/support/path"
 	"os"
+
+	cmd2 "github.com/firmeve/firmeve/http/cmd"
 
 	"github.com/firmeve/firmeve/converter/resource"
 
@@ -41,17 +39,7 @@ func (a *AnyTransformer) IdField() int {
 	return a.Resource().(*Original).Id * 10
 }
 
-func main() {
-	//x := 1
-	//y := 2
-	//fmt.Println(reflect.TypeOf(&x).Kind())
-	//fmt.Println(reflect.TypeOf(&x) == reflect.TypeOf(&y))
-	//fmt.Println("#########################")
-	firmeve := firmeve.New()
-
-	firmeve.Bind("something", func() *Something {
-		return firmeve.Make(new(Something)).(*Something)
-	})
+func router(firmeve *firmeve.Firmeve) *http.Router {
 	router := http.New(firmeve)
 	router.GET(`/item`, func(c *http.Context) {
 		c.Item(&Original{
@@ -120,19 +108,19 @@ func main() {
 		//})
 		ctx.Next()
 	})
+	return router
+}
+
+func main() {
+	firmeve := firmeve.New()
+
+	firmeve.Bind("something", func() *Something {
+		return firmeve.Make(new(Something)).(*Something)
+	})
+
 	//
 	root := cmd.Root()
-	//configPath := root.Flag(`config`).Value.String()
-	//fmt.Println(configPath)
-
-	root.AddCommand(http.NewCmd(router).Cmd())
+	root.AddCommand(cmd2.NewServer(router(firmeve)).Cmd())
 	root.SetArgs(os.Args[1:])
 	root.Execute()
-
-	//cmd := cmd.New()
-	//testCmd := &testCmd{}
-	//cmd.Register(testCmd)
-	//testCmd.Register()
-	//cmd.Root().SetArgs(os.Args[1:])
-	//cmd.Execute()
 }

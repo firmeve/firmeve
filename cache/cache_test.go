@@ -2,15 +2,16 @@ package cache
 
 import (
 	"fmt"
+	"math/rand"
+	"strconv"
+	"testing"
+	"time"
+
 	firmeve2 "github.com/firmeve/firmeve"
 	"github.com/firmeve/firmeve/cache/repository"
 	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/support/path"
 	"github.com/stretchr/testify/assert"
-	"math/rand"
-	"strconv"
-	"testing"
-	"time"
 )
 
 func TestCache_Implement(t *testing.T) {
@@ -26,7 +27,7 @@ func TestRepository_Get(t *testing.T) {
 
 	cache := Default()
 
-	key := randString(30)
+	key := t.Name() + randString(30)
 
 	value, err := cache.GetDefault(key, "abc")
 	assert.Nil(t, err)

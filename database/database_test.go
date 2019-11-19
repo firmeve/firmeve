@@ -1,10 +1,11 @@
 package database
 
 import (
+	"testing"
+
 	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/support/path"
 	"github.com/stretchr/testify/assert"
-	"testing"
 
 	firmeve2 "github.com/firmeve/firmeve"
 )
@@ -20,7 +21,7 @@ func TestNew(t *testing.T) {
 
 func TestNew_Connection_Error(t *testing.T) {
 	config := config.New(path.RunRelative("../testdata/config")).Item(`database`)
-	config.Item("database").Set("error_connection.addr", "nothing")
+	config.Set("error_connection.addr", "nothing")
 	db := New(config)
 	assert.Panics(t, func() {
 		db.Connection(`error_connection`)
@@ -38,7 +39,7 @@ func TestNew_Close_Error(t *testing.T) {
 
 func TestDB_Provider(t *testing.T) {
 	firmeve := firmeve2.New()
-	firmeve.Bind(`config`, config.New(path.RunRelative("../testdata/config")).Item(`database`))
+	firmeve.Bind(`config`, config.New(path.RunRelative("../testdata/config")))
 	firmeve.Register(firmeve.Make(new(Provider)).(firmeve2.Provider))
 
 	//z := &Provider{

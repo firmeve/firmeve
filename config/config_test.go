@@ -2,13 +2,13 @@ package config
 
 import (
 	"fmt"
-	firmeve2 "github.com/firmeve/firmeve"
-	"github.com/firmeve/firmeve/support/path"
-	"github.com/stretchr/testify/assert"
 	"os"
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/firmeve/firmeve/support/path"
+	"github.com/stretchr/testify/assert"
 )
 
 var (
@@ -50,7 +50,7 @@ func TestConfig_Set(t *testing.T) {
 			}
 
 			wg.Done()
-		}(config)
+		}(config.Item("app"))
 	}
 
 	wg.Wait()
@@ -76,7 +76,7 @@ func TestConfig_Load(t *testing.T) {
 
 func TestConfig_Item(t *testing.T) {
 	assert.Panics(t, func() {
-		New(directory).Item("def").Load("abc.yaml")
+		New(directory).Load("abc.yaml")
 	}, "open yaml")
 }
 
@@ -169,11 +169,4 @@ func TestGetEnv(t *testing.T) {
 
 	os.Setenv("lower", "lower")
 	assert.Equal(t, "", GetEnv("lower"))
-}
-
-func TestProvider_Register(t *testing.T) {
-	firmeve := firmeve2.Instance()
-	firmeve.Boot()
-	assert.Equal(t, true, firmeve.HasProvider("config"))
-	assert.Equal(t, true, firmeve.Has(`config`))
 }

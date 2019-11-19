@@ -1,22 +1,15 @@
 package cache
 
 import (
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/firmeve/firmeve/cache/redis"
 	"github.com/firmeve/firmeve/cache/repository"
 	"github.com/firmeve/firmeve/config"
 	goRedis "github.com/go-redis/redis"
-	"strings"
-	"sync"
-	"time"
 )
-
-type ConfigRepositoryType map[string]interface{}
-
-type Config struct {
-	Prefix       string
-	Current      string
-	Repositories ConfigRepositoryType
-}
 
 type Cache struct {
 	config       config.Configurator

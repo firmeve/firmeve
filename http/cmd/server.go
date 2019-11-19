@@ -1,34 +1,35 @@
-package http
+package cmd
 
 import (
 	"context"
 	"fmt"
-	"github.com/firmeve/firmeve/bootstrap"
-	"github.com/firmeve/firmeve/support/path"
 	http2 "net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/firmeve/firmeve/logger"
+	"github.com/firmeve/firmeve/bootstrap"
+
+	"github.com/firmeve/firmeve/http"
+
+	"github.com/firmeve/firmeve/config"
+	logging "github.com/firmeve/firmeve/logger"
 
 	"github.com/spf13/cobra"
 )
 
 type cmd struct {
-	router  *Router
+	router  *http.Router
 	command *cobra.Command
 	logger  logging.Loggable
-	//config  config.Configurator
+	config  *config.Config
 }
 
-func NewCmd(router *Router) *cmd {
+func NewServer(router *http.Router) *cmd {
 	return &cmd{
 		router:  router,
 		command: new(cobra.Command),
-		logger:  router.Firmeve.Get(`logger`).(logging.Loggable),
-		//config:  router.Firmeve.Get(`config`).(config.Configurator),
 	}
 }
 
@@ -43,7 +44,12 @@ func (c *cmd) Cmd() *cobra.Command {
 }
 
 func (c *cmd) run(cmd *cobra.Command, args []string) {
-	bootstrap.New(c.router.Firmeve, path.RunRelative(cmd.Flag("config").Value.String())).QuickBoot()
+	// bootstrap
+	bootstrap.New(c.router.Firmeve, cmd.Flag("config").Value.String()).QuickBoot()
+
+	// base
+	c.config = c.router.Firmeve.Get(`config`).(*config.Config)
+	c.logger = c.router.Firmeve.Get(`logger`).(logging.Loggable)
 
 	srv := &http2.Server{
 		Addr:    cmd.Flag("host").Value.String(),

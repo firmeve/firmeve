@@ -2,12 +2,13 @@ package config
 
 import (
 	"fmt"
-	"github.com/spf13/viper"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/spf13/viper"
 )
 
 // Package global variable
@@ -31,32 +32,50 @@ type Configurator interface {
 	Exists(key string) bool
 	Set(key string, value interface{})
 	SetDefault(key string, value interface{})
-	Item(item string) Configurator
-	Load(file string)
+	//Item(item string) Configurator
+	//Load(file string)
 }
 
 // Config struct
-type config struct {
+type Config struct {
 	directory string
-	items     map[string]*viper.Viper
-	current   *viper.Viper
+	items     map[string]*item
 	delimiter string
 	extension string
 }
 
+type item struct {
+	config *viper.Viper
+}
+
+//
+//var (
+//	configVar *config
+//	once      sync.Once
+//)
+
+//func Config() *config {
+//	if configVar != nil{
+//		return configVar
+//	}
+//
+//	once.Do(func() {
+//		config := New()
+//	})
+//}
+
 // Create a new config instance
-func New(directory string) Configurator {
+func New(directory string) *Config {
 	directory, err := filepath.Abs(directory)
 	if err != nil {
 		panic(err)
 	}
 
-	config := &config{
+	config := &Config{
 		directory: directory,
-		current:   nil,
 		delimiter: `.`,
 		extension: `.yaml`,
-		items:     make(map[string]*viper.Viper),
+		items:     make(map[string]*item),
 	}
 	config.loadAll()
 
@@ -66,97 +85,18 @@ func New(directory string) Configurator {
 //---------------------- config ------------------------
 
 // Get the current file node
-func (c *config) Item(item string) Configurator {
+func (c *Config) Item(item string) Configurator {
 	mutex.Lock()
 	defer mutex.Unlock()
 	if itemConfig, ok := c.items[item]; ok {
-		c.current = itemConfig
-		return c
+		return itemConfig
 	}
 
 	panic(fmt.Errorf(`the config %s not exists`, item))
 }
 
-// Get the value of the specified key
-func (c *config) Get(key string) interface{} {
-	return c.current.Get(key)
-}
-
-// Get the bool value of the specified key
-func (c *config) GetBool(key string) bool {
-	return c.current.GetBool(key)
-}
-
-// Get the float value of the specified key
-func (c *config) GetFloat(key string) float64 {
-	return c.current.GetFloat64(key)
-}
-
-// Get the int value of the specified key
-func (c *config) GetInt(key string) int {
-	return c.current.GetInt(key)
-}
-
-// Get the int slice value of the specified key
-func (c *config) GetIntSlice(key string) []int {
-	return c.current.GetIntSlice(key)
-}
-
-// Get the string value of the specified key
-func (c *config) GetString(key string) string {
-	return c.current.GetString(key)
-}
-
-// Get the string map value of the specified key
-func (c *config) GetStringMap(key string) map[string]interface{} {
-	return c.current.GetStringMap(key)
-}
-
-// Get the string map string value of the specified key
-func (c *config) GetStringMapString(key string) map[string]string {
-	return c.current.GetStringMapString(key)
-}
-
-// Get the string slice value of the specified key
-func (c *config) GetStringSlice(key string) []string {
-	return c.current.GetStringSlice(key)
-}
-
-// Get the time type value of the specified key
-func (c *config) GetTime(key string) time.Time {
-	return c.current.GetTime(key)
-}
-
-// Get the time duration value of the specified key
-func (c *config) GetDuration(key string) time.Duration {
-	return c.current.GetDuration(key)
-}
-
-// Determine if the specified key exists
-func (c *config) Exists(key string) bool {
-	return c.current.IsSet(key)
-}
-
-// Set configuration value
-func (c *config) Set(key string, value interface{}) {
-	// map加锁
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	c.current.Set(key, value)
-}
-
-// Set item default value if not exists
-func (c *config) SetDefault(key string, value interface{}) {
-	// map加锁
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	c.current.SetDefault(key, value)
-}
-
 // Load all configuration files at once
-func (c *config) loadAll() {
+func (c *Config) loadAll() {
 	err := filepath.Walk(c.directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -174,7 +114,7 @@ func (c *config) loadAll() {
 	}
 }
 
-func (c *config) Load(file string) {
+func (c *Config) Load(file string) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
@@ -185,7 +125,87 @@ func (c *config) Load(file string) {
 		panic(err)
 	}
 
-	c.items[strings.Replace(filepath.Base(file), c.extension, "", 1)] = conf
+	c.items[strings.Replace(filepath.Base(file), c.extension, "", 1)] = &item{
+		config: conf,
+	}
+}
+
+// Get the value of the specified key
+func (i *item) Get(key string) interface{} {
+	return i.config.Get(key)
+}
+
+// Get the bool value of the specified key
+func (i *item) GetBool(key string) bool {
+	return i.config.GetBool(key)
+}
+
+// Get the float value of the specified key
+func (i *item) GetFloat(key string) float64 {
+	return i.config.GetFloat64(key)
+}
+
+// Get the int value of the specified key
+func (i *item) GetInt(key string) int {
+	return i.config.GetInt(key)
+}
+
+// Get the int slice value of the specified key
+func (i *item) GetIntSlice(key string) []int {
+	return i.config.GetIntSlice(key)
+}
+
+// Get the string value of the specified key
+func (i *item) GetString(key string) string {
+	return i.config.GetString(key)
+}
+
+// Get the string map value of the specified key
+func (i *item) GetStringMap(key string) map[string]interface{} {
+	return i.config.GetStringMap(key)
+}
+
+// Get the string map string value of the specified key
+func (i *item) GetStringMapString(key string) map[string]string {
+	return i.config.GetStringMapString(key)
+}
+
+// Get the string slice value of the specified key
+func (i *item) GetStringSlice(key string) []string {
+	return i.config.GetStringSlice(key)
+}
+
+// Get the time type value of the specified key
+func (i *item) GetTime(key string) time.Time {
+	return i.config.GetTime(key)
+}
+
+// Get the time duration value of the specified key
+func (i *item) GetDuration(key string) time.Duration {
+	return i.config.GetDuration(key)
+}
+
+// Determine if the specified key exists
+func (i *item) Exists(key string) bool {
+	return i.config.IsSet(key)
+}
+
+// Set configuration value
+func (i *item) Set(key string, value interface{}) {
+	// map加锁
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	i.config.Set(key, value)
+}
+
+// Set item default value if not exists
+func (i *item) SetDefault(key string, value interface{}) {
+	// map加锁
+	mutex.Lock()
+	defer mutex.Unlock()
+
+	i.config.SetDefault(key, value)
 }
 
 // -------------------------------- Env ----------------------------------------

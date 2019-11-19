@@ -15,7 +15,7 @@ func (p *Provider) Name() string {
 }
 
 func (p *Provider) Register() {
-	config := p.Firmeve.Get(`config`).(config2.Configurator).Item(`logging`)
+	config := p.Firmeve.Get(`config`).(*config2.Config).Item(`logging`)
 	p.Firmeve.Bind(`logger`, New(config), container.WithShare(true))
 }
 
