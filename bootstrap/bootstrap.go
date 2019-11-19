@@ -8,64 +8,54 @@ import (
 	"github.com/firmeve/firmeve/database"
 	"github.com/firmeve/firmeve/event"
 	"github.com/firmeve/firmeve/http"
-	"github.com/firmeve/firmeve/logger"
+	logging "github.com/firmeve/firmeve/logger"
 )
 
-type bootstrap struct {
+type Bootstrap struct {
 	configPath string
-	firmeve    *firmeve.Firmeve
+	Firmeve    *firmeve.Firmeve
 }
 
-func New(firmeve2 *firmeve.Firmeve, configPath string) *bootstrap {
+func New(firmeve2 *firmeve.Firmeve, configPath string) *Bootstrap {
 	//binding current unique firmeve
 	//firmeve.BindingInstance(firmeve2)
 
-	return &bootstrap{
+	bootstrap := &Bootstrap{
 		configPath: configPath,
-		firmeve:    firmeve2,
+		Firmeve:    firmeve2,
 	}
+	bootstrap.configure(configPath)
+	bootstrap.registerBaseProvider()
+	return bootstrap
 }
 
-func (b *bootstrap) BootstrapBase() *bootstrap {
-	b.configure(b.configPath)
-	b.registerBaseProvider()
-	return b
-}
-
-func (b *bootstrap) RegisterDefault() *bootstrap {
+func (b *Bootstrap) RegisterDefault() *Bootstrap {
 	return b.Register([]firmeve.Provider{
-		b.firmeve.Make(new(cache.Provider)).(firmeve.Provider),
-		b.firmeve.Make(new(database.Provider)).(firmeve.Provider),
-		b.firmeve.Make(new(http.Provider)).(firmeve.Provider),
+		b.Firmeve.Make(new(cache.Provider)).(firmeve.Provider),
+		b.Firmeve.Make(new(database.Provider)).(firmeve.Provider),
+		b.Firmeve.Make(new(http.Provider)).(firmeve.Provider),
 	}...)
 }
 
-func (b *bootstrap) Register(providers ...firmeve.Provider) *bootstrap {
+func (b *Bootstrap) Register(providers ...firmeve.Provider) *Bootstrap {
 	for _, provider := range providers {
-		b.firmeve.Register(provider, firmeve.WithRegisterForce())
+		b.Firmeve.Register(provider, firmeve.WithRegisterForce())
 	}
 
 	return b
 }
 
-func (b *bootstrap) Boot() *bootstrap {
-	b.firmeve.Boot()
-
-	return b
+func (b *Bootstrap) Boot() {
+	b.Firmeve.Boot()
 }
 
-func (b *bootstrap) QuickBoot() *bootstrap {
-	b.BootstrapBase().RegisterDefault().Boot()
-	return b
+func (b *Bootstrap) configure(path string) {
+	b.Firmeve.Bind(`config`, config2.New(path), container.WithShare(true))
 }
 
-func (b *bootstrap) configure(path string) {
-	b.firmeve.Bind(`config`, config2.New(path), container.WithShare(true))
-}
-
-func (b *bootstrap) registerBaseProvider() {
+func (b *Bootstrap) registerBaseProvider() {
 	b.Register([]firmeve.Provider{
-		b.firmeve.Make(new(event.Provider)).(firmeve.Provider),
-		b.firmeve.Make(new(logging.Provider)).(firmeve.Provider),
+		b.Firmeve.Make(new(event.Provider)).(firmeve.Provider),
+		b.Firmeve.Make(new(logging.Provider)).(firmeve.Provider),
 	}...)
 }

@@ -10,26 +10,23 @@ import (
 	"time"
 
 	"github.com/firmeve/firmeve/bootstrap"
-
-	"github.com/firmeve/firmeve/http"
-
 	"github.com/firmeve/firmeve/config"
+	"github.com/firmeve/firmeve/http"
 	logging "github.com/firmeve/firmeve/logger"
-
 	"github.com/spf13/cobra"
 )
 
 type cmd struct {
-	router  *http.Router
-	command *cobra.Command
-	logger  logging.Loggable
-	config  *config.Config
+	bootstrap *bootstrap.Bootstrap
+	command   *cobra.Command
+	logger    logging.Loggable
+	config    *config.Config
 }
 
-func NewServer(router *http.Router) *cmd {
+func NewServer(bootstrap *bootstrap.Bootstrap) *cmd {
 	return &cmd{
-		router:  router,
-		command: new(cobra.Command),
+		bootstrap: bootstrap,
+		command:   new(cobra.Command),
 	}
 }
 
@@ -45,15 +42,15 @@ func (c *cmd) Cmd() *cobra.Command {
 
 func (c *cmd) run(cmd *cobra.Command, args []string) {
 	// bootstrap
-	bootstrap.New(c.router.Firmeve, cmd.Flag("config").Value.String()).QuickBoot()
+	c.bootstrap.Boot()
 
 	// base
-	c.config = c.router.Firmeve.Get(`config`).(*config.Config)
-	c.logger = c.router.Firmeve.Get(`logger`).(logging.Loggable)
+	c.config = c.bootstrap.Firmeve.Get(`config`).(*config.Config)
+	c.logger = c.bootstrap.Firmeve.Get(`logger`).(logging.Loggable)
 
 	srv := &http2.Server{
 		Addr:    cmd.Flag("host").Value.String(),
-		Handler: c.router,
+		Handler: c.bootstrap.Firmeve.Get(`http.router`).(*http.Router),
 	}
 
 	go func() {

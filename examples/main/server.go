@@ -4,6 +4,10 @@ import (
 	"fmt"
 	"os"
 
+	path2 "github.com/firmeve/firmeve/support/path"
+
+	"github.com/firmeve/firmeve/bootstrap"
+
 	cmd2 "github.com/firmeve/firmeve/http/cmd"
 
 	"github.com/firmeve/firmeve/converter/resource"
@@ -39,8 +43,7 @@ func (a *AnyTransformer) IdField() int {
 	return a.Resource().(*Original).Id * 10
 }
 
-func router(firmeve *firmeve.Firmeve) *http.Router {
-	router := http.New(firmeve)
+func router(router *http.Router) *http.Router {
 	router.GET(`/item`, func(c *http.Context) {
 		c.Item(&Original{
 			10,
@@ -111,16 +114,39 @@ func router(firmeve *firmeve.Firmeve) *http.Router {
 	return router
 }
 
-func main() {
-	firmeve := firmeve.New()
+type Testing struct {
+	firmeve.BaseProvider
+}
 
-	firmeve.Bind("something", func() *Something {
-		return firmeve.Make(new(Something)).(*Something)
+func (t *Testing) Name() string {
+	return `testing`
+}
+
+func (t *Testing) Register() {
+	router(t.Firmeve.Get(`http.router`).(*http.Router))
+}
+
+func (t *Testing) Boot() {
+}
+
+func main() {
+	app := firmeve.New()
+
+	app.Bind("something", func() *Something {
+		return app.Make(new(Something)).(*Something)
 	})
 
+	configPath := os.Getenv("FIRMEVE_CONFIG_PATH")
+	if configPath == `` {
+		configPath = path2.RunRelative(`../../testdata/config`)
+	}
+
+	bootstrap := bootstrap.New(app, configPath)
+	bootstrap.RegisterDefault()
+	bootstrap.Register(app.Make(new(Testing)).(firmeve.Provider))
 	//
 	root := cmd.Root()
-	root.AddCommand(cmd2.NewServer(router(firmeve)).Cmd())
+	root.AddCommand(cmd2.NewServer(bootstrap).Cmd())
 	root.SetArgs(os.Args[1:])
 	root.Execute()
 }
