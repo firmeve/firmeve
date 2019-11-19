@@ -57,7 +57,7 @@ func (c *Context) Request() *http.Request {
 	return c.request
 }
 
-func (c *Context) Response(key string) http.ResponseWriter {
+func (c *Context) ResponseWriter() http.ResponseWriter {
 	return c.responseWriter
 }
 
