@@ -5,12 +5,10 @@ import (
 	"net/http"
 
 	logging "github.com/firmeve/firmeve/logger"
-
-	errors2 "github.com/firmeve/firmeve/http/errors"
 )
 
 var (
-	httpError errors2.HttpError
+	httpError IError
 )
 
 func ServerError(ctx *Context) {
@@ -18,7 +16,7 @@ func ServerError(ctx *Context) {
 		if err := recover(); err != nil {
 			ctx.Firmeve.Get(`logger`).(logging.Loggable).Debug(err.(error).Error(), ctx)
 			if errors.Is(err.(error), httpError) {
-				err.(errors2.HttpError).Response()
+				err.(IError).Response()
 			} else {
 				ctx.Status(http.StatusInternalServerError).String("Server error")
 			}

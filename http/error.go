@@ -4,27 +4,27 @@ import (
 	http2 "net/http"
 )
 
-type Error interface {
+type IError interface {
 	error
 	Response()
 }
 
-type Http struct {
+type Error struct {
 	Code    int
 	Message string
 	Context *Context
 }
 
-func (h *Http) Error() string {
+func (h *Error) Error() string {
 	return h.Message
 }
 
-func (h *Http) Response() {
+func (h *Error) Response() {
 	http2.Error(h.Context.ResponseWriter(), h.Message, h.Code)
 }
 
 func NewError(code int, message string, ctx *Context) *Http {
-	return &Http{
+	return &Error{
 		Code:    code,
 		Message: message,
 		Context: ctx,
