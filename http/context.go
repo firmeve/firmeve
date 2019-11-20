@@ -3,7 +3,9 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/firmeve/firmeve/support/strings"
 	"net/http"
+	strings2 "strings"
 	"time"
 
 	resource2 "github.com/firmeve/firmeve/converter/resource"
@@ -53,13 +55,7 @@ func (c *Context) Abort(code int, message string) {
 }
 
 func (c *Context) AbortWithError(code int, message string, err error) {
-	err = NewErrorWithError(code, message, err)
-	if v, ok := err.(ErrorResponse); ok {
-		v.Response(c.responseWriter)
-		return
-	}
-
-	panic(err)
+	NewErrorWithError(code, message, err).Response(c)
 }
 
 func (c *Context) Param(key string) string {
@@ -88,6 +84,10 @@ func (c *Context) Status(code int) *Context {
 	return c
 }
 
+func (c *Context) Header(key string) string {
+	return c.request.Header.Get(key)
+}
+
 func (c *Context) SetHeader(key, value string) *Context {
 	c.responseWriter.Header().Set(key, value)
 	return c
@@ -110,13 +110,27 @@ func (c *Context) String(content string) *Context {
 	return c
 }
 
+func (c *Context) IsJSON() bool {
+	accept := c.Header(strings.UcFirst(`Accept`))
+	accepts := strings2.Split(accept, `,`)
+	for _, item := range accepts {
+		if item == `application/json` || item == `application+json` {
+			return true
+		}
+	}
+
+	return false
+}
+
 func (c *Context) JSON(content interface{}) *Context {
 	c.SetHeader(`Content-Type`, `application/json`)
+
 	str, err := json.Marshal(content)
 	if err != nil {
 		panic(err)
 	}
 	c.Write(str)
+
 	return c
 }
 

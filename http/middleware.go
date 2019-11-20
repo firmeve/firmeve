@@ -44,7 +44,7 @@ func render(err interface{}, c *Context) {
 		var HttpErrorResponse ErrorResponse
 		var HttpError *Error
 		if errors.As(v, &HttpErrorResponse) {
-			HttpErrorResponse.Response(c.responseWriter)
+			HttpErrorResponse.Response(c)
 		} else if errors.As(v, &HttpError) {
 			c.AbortWithError(HttpError.code, HttpError.message, v)
 		}

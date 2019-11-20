@@ -3,10 +3,6 @@ package http
 import (
 	"errors"
 	"fmt"
-	"github.com/firmeve/firmeve"
-	"github.com/firmeve/firmeve/config"
-	"github.com/firmeve/firmeve/logger"
-	"github.com/firmeve/firmeve/support/path"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -47,24 +43,24 @@ func TestServerError(t *testing.T) {
 	//fmt.Println(z)
 }
 
-func TestRecoveryString(t *testing.T) {
-	firmeve := firmeve.New()
-	//bootstrap.New(firmeve,path.RunRelative("../../testdata/config")).Boot()
-	firmeve.Bind(`logger`, logging.New(
-		config.New(path.RunRelative("../testdata/config")).Item("logging").(config.Configurator)))
-	firmeve.Boot()
-	Recovery(newContext(firmeve,new(MockResponseWriter),nil, func(c *Context) {
-		panic(`error`)
-	}))
-}
-
-func TestRecoveryError(t *testing.T) {
-	firmeve := firmeve.New()
-	//bootstrap.New(firmeve,path.RunRelative("../../testdata/config")).Boot()
-	firmeve.Bind(`logger`, logging.New(
-		config.New(path.RunRelative("../testdata/config")).Item("logging").(config.Configurator)))
-	firmeve.Boot()
-	Recovery(newContext(firmeve,new(MockResponseWriter),nil, func(c *Context) {
-		panic(errors.New(`error`))
-	}))
-}
+//func TestRecoveryString(t *testing.T) {
+//	firmeve := firmeve.New()
+//	//bootstrap.New(firmeve,path.RunRelative("../../testdata/config")).Boot()
+//	firmeve.Bind(`logger`, logging.New(
+//		config.New(path.RunRelative("../testdata/config")).Item("logging").(config.Configurator)))
+//	firmeve.Boot()
+//	Recovery(newContext(firmeve,new(MockResponseWriter),nil, func(c *Context) {
+//		panic(`error`)
+//	}))
+//}
+//
+//func TestRecoveryError(t *testing.T) {
+//	firmeve := firmeve.New()
+//	//bootstrap.New(firmeve,path.RunRelative("../../testdata/config")).Boot()
+//	firmeve.Bind(`logger`, logging.New(
+//		config.New(path.RunRelative("../testdata/config")).Item("logging").(config.Configurator)))
+//	firmeve.Boot()
+//	Recovery(newContext(firmeve,new(MockResponseWriter),nil, func(c *Context) {
+//		panic(errors.New(`error`))
+//	}))
+//}

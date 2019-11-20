@@ -6,7 +6,7 @@ import (
 )
 
 type ErrorResponse interface {
-	Response(writer http2.ResponseWriter)
+	Response(c *Context)
 }
 
 type Error struct {
@@ -23,8 +23,14 @@ func (h *Error) Error() string {
 	return h.message
 }
 
-func (h *Error) Response(writer http2.ResponseWriter) {
-	http2.Error(writer, h.message, h.code)
+func (h *Error) Response(c *Context) {
+	if c.IsJSON() {
+		c.Status(h.code).JSON(map[string]interface{}{
+			"message": h.message,
+		})
+	} else {
+		http2.Error(c.responseWriter, h.message, h.code)
+	}
 }
 
 func NewErrorWithError(code int, message string, err error) *Error {
