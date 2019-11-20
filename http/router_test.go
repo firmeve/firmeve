@@ -10,6 +10,26 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+type MockResponseWriter struct {
+	mock.Mock
+	Bytes      []byte
+	StatusCode int
+	Headers    http.Header
+}
+
+func (m *MockResponseWriter) Header() http.Header {
+	return m.Headers
+}
+
+func (m *MockResponseWriter) Write(p []byte) (int, error) {
+	m.Bytes = p
+	return len(p), nil
+}
+
+func (m *MockResponseWriter) WriteHeader(statusCode int) {
+	m.StatusCode = statusCode
+}
+
 func assertBaseRoute(t *testing.T, router *Router, method, path, name string, beforeHandlerLen int, afterHandlerLen int) {
 	key := router.routeKey(method, path)
 	assert.NotNil(t, router.routes[key])
@@ -119,21 +139,6 @@ func TestRouter_Group(t *testing.T) {
 		})
 	}
 	assertBaseRoute(t, router, http.MethodGet, "/v1/dep/gets/1", "", 3, 1)
-}
-
-type MockResponseWriter struct {
-	mock.Mock
-}
-
-func (m *MockResponseWriter) Header() http.Header {
-	return http.Header{}
-}
-
-func (m *MockResponseWriter) Write(p []byte) (int, error) {
-	return len(p), nil
-}
-
-func (m *MockResponseWriter) WriteHeader(statusCode int) {
 }
 
 func TestRouter_Static(t *testing.T) {
