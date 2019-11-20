@@ -1,26 +1,56 @@
 package http
 
 import (
+	"context"
 	"errors"
+	"github.com/firmeve/firmeve/logger"
 	"net/http"
-
-	logging "github.com/firmeve/firmeve/logger"
 )
 
-var (
-	httpError IError
-)
+func Recovery(c *Context) {
+	defer panicRecovery(c)
+	c.Next()
+}
 
-func ServerError(ctx *Context) {
-	defer func() {
-		if err := recover(); err != nil {
-			ctx.Firmeve.Get(`logger`).(logging.Loggable).Debug(err.(error).Error(), ctx)
-			if errors.Is(err.(error), httpError) {
-				err.(IError).Response()
-			} else {
-				ctx.Status(http.StatusInternalServerError).String("Server error")
-			}
+func panicRecovery(c *Context) {
+	if err := recover(); err != nil {
+		render(err, c)
+
+		// @todo context未测试，也可以不使用context，但 http.Context 一定只能是只读
+		go report(err, context.WithValue(context.Background(), "context", c))
+	}
+}
+
+func report(err interface{}, c context.Context) {
+	var (
+		message string
+	)
+	if v, ok := err.(error); ok {
+		message = v.Error()
+	} else if v, ok := err.(string); ok {
+		message = string(v)
+	} else {
+		message = `mixed type`
+	}
+
+	c.Value("context").(*Context).Firmeve.Get(`logger`).(logging.Loggable).Error(message, map[string]interface{}{
+		`error`:   err,
+		`context`: c.Value("context"),
+	})
+}
+
+func render(err interface{}, c *Context) {
+	if v, ok := err.(error); ok {
+		var HttpErrorResponse ErrorResponse
+		var HttpError *Error
+		if errors.As(v, &HttpErrorResponse) {
+			HttpErrorResponse.Response(c.responseWriter)
+		} else if errors.As(v, &HttpError) {
+			c.AbortWithError(HttpError.code, HttpError.message, v)
 		}
-	}()
-	ctx.Next()
+	} else if v, ok := err.(string); ok {
+		c.Abort(http.StatusInternalServerError, string(v))
+	} else {
+		c.Abort(http.StatusInternalServerError, `Server error`)
+	}
 }

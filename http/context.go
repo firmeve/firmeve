@@ -49,7 +49,17 @@ func (c *Context) SetRoute(route *Route) *Context {
 }
 
 func (c *Context) Abort(code int, message string) {
-	panic(NewError(code, message, c))
+	c.AbortWithError(code, message, nil)
+}
+
+func (c *Context) AbortWithError(code int, message string, err error) {
+	err = NewErrorWithError(code, message, err)
+	if v, ok := err.(ErrorResponse); ok {
+		v.Response(c.responseWriter)
+		return
+	}
+
+	panic(err)
 }
 
 func (c *Context) Param(key string) string {

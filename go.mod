@@ -4,8 +4,10 @@ go 1.13
 
 require (
 	github.com/go-redis/redis v6.15.6+incompatible
+	github.com/iris-contrib/go.uuid v2.0.0+incompatible // indirect
 	github.com/jinzhu/gorm v1.9.11
 	github.com/julienschmidt/httprouter v1.3.0
+	github.com/kataras/iris v11.1.1+incompatible
 	github.com/onsi/ginkgo v1.10.2 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect
 	github.com/pelletier/go-toml v1.6.0 // indirect

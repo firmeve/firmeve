@@ -75,7 +75,7 @@ func TestRouter_Group(t *testing.T) {
 	v1 := router.Group("/v1").After(func(ctx *Context) {
 		ctx.Write([]byte("Group v1 After"))
 		ctx.Next()
-	}).Before(ServerError, func(ctx *Context) {
+	}).Before(Recovery, func(ctx *Context) {
 		ctx.Write([]byte("Group v1 Before"))
 		ctx.Next()
 	})

@@ -1,6 +1,7 @@
 package strings
 
 import (
+	"html"
 	"regexp"
 	"strings"
 )
@@ -16,4 +17,12 @@ func UcWords(words []string) string {
 
 func SnakeCase(str string) string {
 	return strings.ToLower(regexp.MustCompile("([a-z0-9])([A-Z])").ReplaceAllString(str, "${1}_${2}"))
+}
+
+func Join(sep string, str ...string) string {
+	return strings.Join(str, sep)
+}
+
+func HTMLEntity(str string) string {
+	return html.EscapeString(str)
 }
