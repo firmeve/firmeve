@@ -27,6 +27,7 @@ type Context struct {
 	index          int
 	params         Params
 	route          *Route
+	stop           bool
 }
 
 func newContext(firmeve *firmeve.Firmeve, writer http.ResponseWriter, r *http.Request, handlers ...HandlerFunc) *Context {
@@ -37,6 +38,7 @@ func newContext(firmeve *firmeve.Firmeve, writer http.ResponseWriter, r *http.Re
 		handlers:       handlers,
 		index:          0,
 		params:         make(Params, 0),
+		stop:           false,
 	}
 }
 
@@ -177,10 +179,18 @@ func (c *Context) Flush() *Context {
 }
 
 func (c *Context) Next() {
+	if c.stop {
+		return
+	}
+
 	if c.index < len(c.handlers) {
 		c.index++
 		c.handlers[c.index-1](c)
 	}
+}
+
+func (c *Context) Stop() {
+	c.stop = true
 }
 
 func (c *Context) Deadline() (deadline time.Time, ok bool) {
