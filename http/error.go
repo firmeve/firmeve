@@ -24,7 +24,7 @@ func (h *Error) Error() string {
 }
 
 func (h *Error) Response(c *Context) {
-	if c.IsJSON() || c.Header(`Content-Type`) == `application/json` {
+	if c.IsJSON() {
 		c.Status(h.code).JSON(map[string]interface{}{
 			"message": h.message,
 		})
