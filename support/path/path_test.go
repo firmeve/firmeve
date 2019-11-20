@@ -16,3 +16,9 @@ func TestRunDir(t *testing.T) {
 func TestRunRelative(t *testing.T) {
 	assert.Contains(t, RunRelative("../"), "support")
 }
+
+func TestCallerStepFilePanic(t *testing.T) {
+	assert.Panics(t, func() {
+		callerStepFile(1000)
+	})
+}

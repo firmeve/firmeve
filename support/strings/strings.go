@@ -11,8 +11,8 @@ func UcFirst(str string) string {
 	return strings.Join([]string{first, str[1:]}, ``)
 }
 
-func UcWords(words []string) string {
-	return strings.ReplaceAll(strings.Title(strings.Join(words, ` `)), ` `, ``)
+func UcWords(words ...string) string {
+	return strings.ReplaceAll(strings.Title(Join(` `, words...)), ` `, ``)
 }
 
 func SnakeCase(str string) string {

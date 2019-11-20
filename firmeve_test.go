@@ -1,6 +1,7 @@
 package firmeve
 
 import (
+	"github.com/firmeve/firmeve/testdata/structs"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -69,6 +70,16 @@ func TestFirmeve_Register(t *testing.T) {
 	firmeve.Register(m3)
 	assert.Equal(t, false, m3.register)
 	assert.Equal(t, false, m3.boot)
+}
+
+func TestFirmeve_Resolve(t *testing.T) {
+	c := New()
+	c.Bind("dynamic", func() *structs.Nesting {
+		return &structs.Nesting{
+			NId: 15,
+		}
+	})
+	assert.IsType(t, &structs.Nesting{}, c.Resolve("dynamic"))
 }
 
 func TestFirmeve_GetProvider(t *testing.T) {
