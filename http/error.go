@@ -43,14 +43,34 @@ func NewError(code int, message string) *Error {
 	}
 }
 
+func Error400(message string) *Error {
+	return NewError(400, message)
+}
+
+func Error400WithError(message string, err error) *Error {
+	return NewErrorWithError(400, message, err)
+}
+
 func Error403(message string) *Error {
 	return NewError(403, message)
+}
+
+func Error403WithError(message string, err error) *Error {
+	return NewErrorWithError(403, message, err)
+}
+
+func Error422(message string) *Error {
+	return NewError(422, message)
+}
+
+func Error422WithError(message string, err error) *Error {
+	return NewErrorWithError(422, message, err)
 }
 
 func Error500(message string) *Error {
 	return NewError(500, message)
 }
 
-func Error422(message string) *Error {
-	return NewError(422, message)
+func Error500WithError(message string, err error) *Error {
+	return NewErrorWithError(500, message, err)
 }
