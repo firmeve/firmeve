@@ -3,21 +3,23 @@ package http
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/firmeve/firmeve"
+	resource2 "github.com/firmeve/firmeve/converter/resource"
+	"github.com/firmeve/firmeve/converter/serializer"
 	"github.com/firmeve/firmeve/support/strings"
+	"github.com/go-playground/form/v4"
 	"net/http"
 	strings2 "strings"
 	"time"
-
-	resource2 "github.com/firmeve/firmeve/converter/resource"
-
-	"github.com/firmeve/firmeve/converter/serializer"
-
-	"github.com/firmeve/firmeve"
 )
 
 type HandlerFunc func(c *Context)
 
 type Params map[string]string
+
+var (
+	formDecoder = form.NewDecoder()
+)
 
 type Context struct {
 	Firmeve        *firmeve.Firmeve `inject:"firmeve"`
@@ -48,6 +50,14 @@ func (c *Context) SetParams(params Params) *Context {
 func (c *Context) SetRoute(route *Route) *Context {
 	c.route = route
 	return c
+}
+
+func (c *Context) FormDecode(v interface{}) interface{} {
+	if err := formDecoder.Decode(v, c.request.Form); err != nil {
+		panic(err)
+	}
+
+	return v
 }
 
 func (c *Context) Abort(code int, message string) {
