@@ -18,6 +18,10 @@ func (h *Error) Error() string {
 	return h.message
 }
 
+func (h *Error) Unwrap() error {
+	return h.err
+}
+
 func (h *Error) Response(c *Context) {
 	if c.IsJSON() {
 		c.Status(h.code).JSON(map[string]interface{}{
