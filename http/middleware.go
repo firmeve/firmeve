@@ -46,7 +46,11 @@ func render(err interface{}, c *Context) {
 		if errors.As(v, &HttpErrorResponse) {
 			HttpErrorResponse.Response(c)
 		} else if errors.As(v, &HttpError) {
-			c.AbortWithError(HttpError.code, HttpError.message, v)
+			HttpError.Response(c)
+		} else {
+			//@todo 增加debug 判断 strings2.Join(` `, `Server error`, v.Error())
+			message := `Server error`
+			c.AbortWithError(http.StatusInternalServerError, message, v)
 		}
 	} else if v, ok := err.(string); ok {
 		c.Abort(http.StatusInternalServerError, string(v))
