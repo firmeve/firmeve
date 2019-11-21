@@ -1,18 +1,18 @@
 package transform
 
 type Transformer interface {
-	SetResource(resource interface{})
 	Resource() interface{}
+	SetResource(resource interface{})
 }
 
 type BaseTransformer struct {
-	resource interface{}
+	Original interface{}
 }
 
 func (t *BaseTransformer) Resource() interface{} {
-	return t.resource
+	return t.Original
 }
 
 func (t *BaseTransformer) SetResource(resource interface{}) {
-	t.resource = resource
+	t.Original = resource
 }
