@@ -105,6 +105,16 @@ func (c *Context) Write(bytes []byte) *Context {
 	return c
 }
 
+func (c *Context) NoContent(bytes []byte) *Context {
+	c.responseWriter.WriteHeader(204)
+	return c
+}
+
+func (c *Context) Created(bytes []byte) *Context {
+	c.responseWriter.WriteHeader(201)
+	return c
+}
+
 func (c *Context) String(content string) *Context {
 	c.Write([]byte(content))
 	return c
