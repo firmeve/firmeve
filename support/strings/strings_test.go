@@ -28,3 +28,7 @@ func TestUcFirst(t *testing.T) {
 	str1 := `HelloWorld`
 	assert.Equal(t, str1, UcFirst(`helloWorld`))
 }
+
+func TestRand(t *testing.T) {
+	assert.NotEqual(t,Rand(10),Rand(10))
+}
