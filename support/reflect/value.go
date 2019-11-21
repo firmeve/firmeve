@@ -1,7 +1,6 @@
 package reflect
 
 import (
-	"fmt"
 	"reflect"
 )
 
@@ -49,9 +48,9 @@ func CallFuncValue(reflectValue reflect.Value, params ...interface{}) []interfac
 	results := make([]interface{}, 0)
 	for _, value := range reflectValue.Call(newParams) {
 		current := InterfaceValue(reflect.TypeOf(value), value)
-		if err, ok := current.(error); ok && err != nil {
-			panic(fmt.Errorf("call func execute result error. %w", err))
-		}
+		//if err, ok := current.(error); ok && err != nil {
+		//	panic(fmt.Errorf("call func execute result error. %w", err))
+		//}
 
 		results = append(results, current)
 	}
