@@ -53,6 +53,10 @@ func (c *Context) SetRoute(route *Route) *Context {
 }
 
 func (c *Context) FormDecode(v interface{}) interface{} {
+	if c.request.Form == nil {
+		c.request.ParseMultipartForm(32 << 20)
+	}
+
 	if err := formDecoder.Decode(v, c.request.Form); err != nil {
 		panic(err)
 	}
