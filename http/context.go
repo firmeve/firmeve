@@ -105,12 +105,12 @@ func (c *Context) Write(bytes []byte) *Context {
 	return c
 }
 
-func (c *Context) NoContent(bytes []byte) *Context {
+func (c *Context) NoContent() *Context {
 	c.responseWriter.WriteHeader(204)
 	return c
 }
 
-func (c *Context) Created(bytes []byte) *Context {
+func (c *Context) Created() *Context {
 	c.responseWriter.WriteHeader(201)
 	return c
 }
