@@ -1,7 +1,6 @@
 package http
 
 import (
-	strings2 "github.com/firmeve/firmeve/support/strings"
 	http2 "net/http"
 )
 
@@ -16,20 +15,16 @@ type Error struct {
 }
 
 func (h *Error) Error() string {
-	if h.err != nil {
-		return strings2.Join(``, h.message, h.err.Error())
-	}
-
 	return h.message
 }
 
 func (h *Error) Response(c *Context) {
 	if c.IsJSON() {
 		c.Status(h.code).JSON(map[string]interface{}{
-			"message": h.message,
+			"message": h.Error(),
 		})
 	} else {
-		http2.Error(c.responseWriter, h.message, h.code)
+		http2.Error(c.responseWriter, h.Error(), h.code)
 	}
 }
 

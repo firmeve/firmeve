@@ -52,7 +52,7 @@ func TestNewErrorWithError(t *testing.T) {
 	err2 := NewErrorWithError(500, `http_error`, err1)
 	assert.Equal(t, 500, err2.code)
 	assert.Equal(t, `http_error`, err2.message)
-	assert.Equal(t, `http_errorfirst_error`, err2.Error())
+	assert.Equal(t, `http_error`, err2.Error())
 }
 
 func TestError400(t *testing.T) {
@@ -67,7 +67,7 @@ func TestError400WithError(t *testing.T) {
 	err := Error400WithError(`error400`, err1)
 	assert.Equal(t, 400, err.code)
 	assert.Equal(t, `error400`, err.message)
-	assert.Equal(t, `error400first_error`, err.Error())
+	assert.Equal(t, `error400`, err.Error())
 }
 
 func TestError403(t *testing.T) {
@@ -82,7 +82,7 @@ func TestError403WithError(t *testing.T) {
 	err := Error403WithError(`error403`, err1)
 	assert.Equal(t, 403, err.code)
 	assert.Equal(t, `error403`, err.message)
-	assert.Equal(t, `error403first_error`, err.Error())
+	assert.Equal(t, `error403`, err.Error())
 }
 
 func TestError422(t *testing.T) {
@@ -97,7 +97,7 @@ func TestError422WithError(t *testing.T) {
 	err := Error422WithError(`error422`, err1)
 	assert.Equal(t, 422, err.code)
 	assert.Equal(t, `error422`, err.message)
-	assert.Equal(t, `error422first_error`, err.Error())
+	assert.Equal(t, `error422`, err.Error())
 }
 
 func TestError500(t *testing.T) {
@@ -112,5 +112,5 @@ func TestError500WithError(t *testing.T) {
 	err := Error500WithError(`error500`, err1)
 	assert.Equal(t, 500, err.code)
 	assert.Equal(t, `error500`, err.message)
-	assert.Equal(t, `error500first_error`, err.Error())
+	assert.Equal(t, `error500`, err.Error())
 }
