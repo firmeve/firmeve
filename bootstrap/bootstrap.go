@@ -15,8 +15,8 @@ import (
 )
 
 type Bootstrap struct {
-	Firmeve *firmeve.Firmeve
-	option  *option
+	Firmeve    *firmeve.Firmeve
+	configPath string
 }
 
 var (
@@ -44,8 +44,8 @@ func New(firmeve2 *firmeve.Firmeve, options ...support.Option) *Bootstrap {
 	}
 
 	bootstrap := &Bootstrap{
-		Firmeve: firmeve2,
-		option:  option,
+		Firmeve:    firmeve2,
+		configPath: option.path,
 	}
 	bootstrap.configure()
 	bootstrap.registerBaseProvider()
@@ -79,7 +79,7 @@ func (b *Bootstrap) FastBootFull(providers ...firmeve.Provider) {
 }
 
 func (b *Bootstrap) configure() {
-	b.Firmeve.Bind(`config`, config2.New(b.option.path), container.WithShare(true))
+	b.Firmeve.Bind(`config`, config2.New(b.configPath), container.WithShare(true))
 }
 
 func (b *Bootstrap) registerBaseProvider() {
