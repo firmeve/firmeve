@@ -11,19 +11,20 @@ import (
 	strings2 "github.com/firmeve/firmeve/support/strings"
 )
 
-type mapCache map[string]map[string]string
+type (
+	Item struct {
+		resource interface{}
+		option   *Option
+		meta     Meta
+		link     Link
+	}
 
-type Item struct {
-	resource interface{}
-	option   *Option
-	meta     Meta
-	link     Link
-}
+	mapCache map[string]map[string]string
+)
 
 var (
 	resourcesFields  = make(map[reflect.Type]mapCache, 0)
 	resourcesMethods = make(map[reflect.Type]mapCache, 0)
-	//mutex            sync.Mutex
 )
 
 func NewItem(resource interface{}, option *Option) *Item {

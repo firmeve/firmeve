@@ -5,17 +5,20 @@ import (
 	"sync"
 )
 
-type listenFunc func(params ...interface{}) interface{}
-type listenFuncs []listenFunc
+type (
+	ListenDispatcher interface {
+		Listen(name string, df listenFunc)
+		Dispatch(name string, params ...interface{}) []interface{}
+	}
+	
+	event struct {
+		listeners map[string]listenFuncs
+	}
 
-type ListenDispatcher interface {
-	Listen(name string, df listenFunc)
-	Dispatch(name string, params ...interface{}) []interface{}
-}
+	listenFunc func(params ...interface{}) interface{}
 
-type event struct {
-	listeners map[string]listenFuncs
-}
+	listenFuncs []listenFunc
+)
 
 var (
 	mutex sync.Mutex

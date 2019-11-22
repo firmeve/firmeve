@@ -11,13 +11,15 @@ import (
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
 )
 
-type dbConnection map[string]*gorm.DB
+type (
+	DB struct {
+		config      config.Configurator
+		db          *gorm.DB
+		connections dbConnection
+	}
 
-type DB struct {
-	config      config.Configurator
-	db          *gorm.DB
-	connections dbConnection
-}
+	dbConnection map[string]*gorm.DB
+)
 
 func New(config config.Configurator) *DB {
 	return &DB{

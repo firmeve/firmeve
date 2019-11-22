@@ -10,39 +10,38 @@ import (
 	reflect2 "github.com/firmeve/firmeve/support/reflect"
 )
 
-type Container interface {
-	Has(name string) bool
-	Get(name string) interface{}
-	Bind(name string, prototype interface{}, options ...support.Option)
-	Make(abstract interface{}, params ...interface{}) interface{}
-	Remove(name string)
-	Flush()
-}
+type (
+	Container interface {
+		Has(name string) bool
+		Get(name string) interface{}
+		Bind(name string, prototype interface{}, options ...support.Option)
+		Make(abstract interface{}, params ...interface{}) interface{}
+		Remove(name string)
+		Flush()
+	}
 
-type prototypeFunc func(container Container, params ...interface{}) interface{}
-type bindingType map[string]*binding
-type instanceType map[reflect.Type]interface{}
+	baseContainer struct {
+		bindings  bindingType
+		instances instanceType
+	}
 
-type baseContainer struct {
-	bindings  bindingType
-	instances instanceType
-}
+	binding struct {
+		name        string
+		prototype   prototypeFunc
+		reflectType reflect.Type
+	}
 
-type binding struct {
-	name        string
-	prototype   prototypeFunc
-	reflectType reflect.Type
-}
+	bindingOption struct {
+		share bool
+		cover bool
+	}
 
-type bindingOption struct {
-	share bool
-	cover bool
-}
+	prototypeFunc func(container Container, params ...interface{}) interface{}
 
-//
-//var (
-//	mutex sync.Mutex
-//)
+	bindingType map[string]*binding
+
+	instanceType map[reflect.Type]interface{}
+)
 
 // Create a new container instance
 func New() *baseContainer {

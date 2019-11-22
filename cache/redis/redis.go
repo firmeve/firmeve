@@ -4,12 +4,7 @@ import (
 	repository2 "github.com/firmeve/firmeve/cache/repository"
 	"github.com/go-redis/redis"
 	"strings"
-	"sync"
 	"time"
-)
-
-var (
-	once sync.Once
 )
 
 type repository struct {

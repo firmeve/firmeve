@@ -6,53 +6,55 @@ import (
 	"time"
 )
 
-type Cacheable interface {
-	Get(key string) (interface{}, error)
+type (
+	Cacheable interface {
+		Get(key string) (interface{}, error)
 
-	Add(key string, value interface{}, expire time.Time) error
+		Add(key string, value interface{}, expire time.Time) error
 
-	Put(key string, value interface{}, expire time.Time) error
+		Put(key string, value interface{}, expire time.Time) error
 
-	Forever(key string, value interface{}) error
+		Forever(key string, value interface{}) error
 
-	Forget(key string) error
+		Forget(key string) error
 
-	Increment(key string, steps ...int64) error
+		Increment(key string, steps ...int64) error
 
-	Decrement(key string, steps ...int64) error
+		Decrement(key string, steps ...int64) error
 
-	Has(key string) bool
+		Has(key string) bool
 
-	Flush() error
-}
+		Flush() error
+	}
 
-type CacheSerializable interface {
-	Cacheable
+	Serializable interface {
+		Store() Cacheable
 
-	Serializable
-}
+		GetDefault(key string, defaultValue interface{}) (interface{}, error)
 
-type Serializable interface {
-	Store() Cacheable
+		Pull(key string) (interface{}, error)
 
-	GetDefault(key string, defaultValue interface{}) (interface{}, error)
+		PullDefault(key string, defaultValue interface{}) (interface{}, error)
 
-	Pull(key string) (interface{}, error)
+		GetDecode(key string, to interface{}) (interface{}, error)
 
-	PullDefault(key string, defaultValue interface{}) (interface{}, error)
+		AddEncode(key string, value interface{}, expire time.Time) error
 
-	GetDecode(key string, to interface{}) (interface{}, error)
+		ForeverEncode(key string, value interface{}) error
 
-	AddEncode(key string, value interface{}, expire time.Time) error
+		PutEncode(key string, value interface{}, expire time.Time) error
+	}
 
-	ForeverEncode(key string, value interface{}) error
+	CacheSerializable interface {
+		Cacheable
 
-	PutEncode(key string, value interface{}, expire time.Time) error
-}
+		Serializable
+	}
 
-type repository struct {
-	store Cacheable
-}
+	repository struct {
+		store Cacheable
+	}
+)
 
 // Create a new cache repository
 func New(store Cacheable) Serializable {

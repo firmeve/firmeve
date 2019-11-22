@@ -11,58 +11,43 @@ import (
 	"github.com/spf13/viper"
 )
 
+type (
+	// Configurator interface
+	Configurator interface {
+		Get(key string) interface{}
+		GetBool(key string) bool
+		GetFloat(key string) float64
+		GetInt(key string) int
+		GetIntSlice(key string) []int
+		GetString(key string) string
+		GetStringMap(key string) map[string]interface{}
+		GetStringMapString(key string) map[string]string
+		GetStringSlice(key string) []string
+		GetTime(key string) time.Time
+		GetDuration(key string) time.Duration
+		Exists(key string) bool
+		Set(key string, value interface{})
+		SetDefault(key string, value interface{})
+		//Item(item string) Configurator
+		//Load(file string)
+	}
+
+	Config struct {
+		directory string
+		items     map[string]*item
+		delimiter string
+		extension string
+	}
+
+	item struct {
+		config *viper.Viper
+	}
+)
+
 // Package global variable
 var (
 	mutex sync.Mutex
 )
-
-// Configurator interface
-type Configurator interface {
-	Get(key string) interface{}
-	GetBool(key string) bool
-	GetFloat(key string) float64
-	GetInt(key string) int
-	GetIntSlice(key string) []int
-	GetString(key string) string
-	GetStringMap(key string) map[string]interface{}
-	GetStringMapString(key string) map[string]string
-	GetStringSlice(key string) []string
-	GetTime(key string) time.Time
-	GetDuration(key string) time.Duration
-	Exists(key string) bool
-	Set(key string, value interface{})
-	SetDefault(key string, value interface{})
-	//Item(item string) Configurator
-	//Load(file string)
-}
-
-// Config struct
-type Config struct {
-	directory string
-	items     map[string]*item
-	delimiter string
-	extension string
-}
-
-type item struct {
-	config *viper.Viper
-}
-
-//
-//var (
-//	configVar *config
-//	once      sync.Once
-//)
-
-//func Config() *config {
-//	if configVar != nil{
-//		return configVar
-//	}
-//
-//	once.Do(func() {
-//		config := New()
-//	})
-//}
 
 // Create a new config instance
 func New(directory string) *Config {

@@ -14,18 +14,20 @@ import (
 	"os"
 )
 
-type Bootstrap struct {
-	Firmeve    *firmeve.Firmeve
-	configPath string
-}
+type (
+	Bootstrap struct {
+		Firmeve    *firmeve.Firmeve
+		configPath string
+	}
+
+	option struct {
+		path string
+	}
+)
 
 var (
 	configPathError = errors.New(`config path error`)
 )
-
-type option struct {
-	path string
-}
 
 func WithConfigPath(path string) support.Option {
 	return func(object support.Object) {

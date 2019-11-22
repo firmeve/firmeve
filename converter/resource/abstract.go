@@ -4,30 +4,37 @@ import (
 	"github.com/firmeve/firmeve/converter/transform"
 )
 
-type Meta map[string]interface{}
-type Data map[string]interface{}
-type DataCollection []Data
-type Link map[string]string
-type Fields []string
+type (
+	IMeta interface {
+		SetMeta(meta Meta)
+		Meta() Meta
+	}
 
-type IMeta interface {
-	SetMeta(meta Meta)
-	Meta() Meta
-}
+	ILink interface {
+		SetLink(links Link)
+		Link() Link
+	}
 
-type ILink interface {
-	SetLink(links Link)
-	Link() Link
-}
+	Datable interface {
+		Data() Data
+	}
 
-type Datable interface {
-	Data() Data
-}
-type CollectionData interface {
-	CollectionData() DataCollection
-}
+	CollectionData interface {
+		CollectionData() DataCollection
+	}
 
-type Option struct {
-	Transformer transform.Transformer
-	Fields      []string
-}
+	Option struct {
+		Transformer transform.Transformer
+		Fields      []string
+	}
+
+	Meta map[string]interface{}
+
+	Data map[string]interface{}
+
+	DataCollection []Data
+
+	Link map[string]string
+
+	Fields []string
+)

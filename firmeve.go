@@ -15,30 +15,32 @@ const (
 	ModeTesting
 )
 
-type Provider interface {
-	Name() string
-	Register()
-	Boot()
-}
+type (
+	Provider interface {
+		Name() string
+		Register()
+		Boot()
+	}
 
-type BaseProvider struct {
-	Firmeve *Firmeve `inject:"firmeve"`
-}
+	Firmeve struct {
+		container.Container
+		providers map[string]Provider
+		booted    bool
+		mode      uint8
+	}
 
-type Firmeve struct {
-	container.Container
-	providers map[string]Provider
-	booted    bool
-	mode      uint8
-}
+	BaseProvider struct {
+		Firmeve *Firmeve `inject:"firmeve"`
+	}
 
-type registerOption struct {
-	registerForce bool
-}
+	registerOption struct {
+		registerForce bool
+	}
 
-type option struct {
-	mode uint8
-}
+	option struct {
+		mode uint8
+	}
+)
 
 func WithMode(mode uint8) support.Option {
 	return func(object support.Object) {

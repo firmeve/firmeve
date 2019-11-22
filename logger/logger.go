@@ -14,25 +14,30 @@ import (
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
-type Loggable interface {
-	Debug(message string, context ...interface{})
-	Info(message string, context ...interface{})
-	Warn(message string, context ...interface{})
-	Error(message string, context ...interface{})
-	Fatal(message string, context ...interface{})
-	Channel(stack string) Loggable
-}
+type (
+	Loggable interface {
+		Debug(message string, context ...interface{})
+		Info(message string, context ...interface{})
+		Warn(message string, context ...interface{})
+		Error(message string, context ...interface{})
+		Fatal(message string, context ...interface{})
+		Channel(stack string) Loggable
+	}
 
-type logger struct {
-	channels channels
-	config   config.Configurator
-	current  string
-}
+	logger struct {
+		channels channels
+		config   config.Configurator
+		current  string
+	}
 
-type Level string
-type internalLogger = *zap.SugaredLogger
-type channels map[string]internalLogger
-type writers map[string]io.Writer
+	Level string
+
+	internalLogger = *zap.SugaredLogger
+
+	channels map[string]internalLogger
+
+	writers map[string]io.Writer
+)
 
 const (
 	Debug Level = `debug`

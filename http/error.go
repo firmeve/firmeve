@@ -4,15 +4,17 @@ import (
 	http2 "net/http"
 )
 
-type ErrorResponse interface {
-	Response(c *Context)
-}
+type (
+	ErrorResponse interface {
+		Response(c *Context)
+	}
 
-type Error struct {
-	code    int
-	message string
-	err     error
-}
+	Error struct {
+		code    int
+		message string
+		err     error
+	}
+)
 
 func (h *Error) Error() string {
 	return h.message
