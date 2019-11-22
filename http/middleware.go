@@ -3,7 +3,9 @@ package http
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/firmeve/firmeve/logger"
+	"github.com/firmeve/firmeve/support/strings"
 	"net/http"
 )
 
@@ -33,10 +35,12 @@ func report(err interface{}, c context.Context) {
 		message = `mixed type`
 	}
 
-	c.Value("context").(*Context).Firmeve.Get(`logger`).(logging.Loggable).Error(message, map[string]interface{}{
-		`error`:   err,
-		`context`: c.Value("context"),
-	})
+	ctx := c.Value("context").(*Context)
+	ctx.Firmeve.Get(`logger`).(logging.Loggable).Error(
+		strings.Join(` `, message, "Context: %s", "Error: %#v"),
+		fmt.Sprintf("%#v", *ctx),
+		err,
+	)
 }
 
 func render(err interface{}, c *Context) {
