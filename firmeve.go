@@ -9,7 +9,10 @@ import (
 )
 
 const (
-	Version = "1.0.0"
+	Version               = "1.0.0"
+	ModeDevelopment uint8 = iota
+	ModeProduction
+	ModeTesting
 )
 
 type Provider interface {
@@ -24,37 +27,35 @@ type BaseProvider struct {
 
 type Firmeve struct {
 	container.Container
-
-	bashPath string
-	//container        *Instance
 	providers map[string]Provider
 	booted    bool
+	mode      uint8
 }
 
-type option struct {
+type registerOption struct {
 	registerForce bool
 }
 
-var (
-	instance *Firmeve
-	once     sync.Once
-)
+type option struct {
+	mode uint8
+}
+
+func WithMode(mode uint8) support.Option {
+	return func(object support.Object) {
+		object.(*option).mode = mode
+	}
+}
 
 // Create a new firmeve container
-func New() *Firmeve {
+func New(options ...support.Option) *Firmeve {
 
-	//basePath := os.Getenv("FIRMEVE_BASE_PATH")
-
-	//basePath, err := filepath.Abs(basePath)
-	//if err != nil {
-	//	panic(err)
-	//}
+	option := support.ApplyOption(newOption(), options...).(*option)
 
 	firmeve := &Firmeve{
-		bashPath:  "",
+		Container: container.New(),
 		providers: make(map[string]Provider),
 		booted:    false,
-		Container: container.New(),
+		mode:      option.mode,
 	}
 
 	// binding self
@@ -87,6 +88,32 @@ func New() *Firmeve {
 //	return Instance()
 //}
 
+// Set running mode
+func (f *Firmeve) SetMode(mode uint8) *Firmeve {
+	f.mode = mode
+	return f
+}
+
+// Get running mode
+func (f *Firmeve) Mode() uint8 {
+	return f.mode
+}
+
+// Check is development mode
+func (f *Firmeve) IsDevelopment() bool {
+	return f.mode == ModeDevelopment
+}
+
+// Check is production mode
+func (f *Firmeve) IsProduction() bool {
+	return f.mode == ModeProduction
+}
+
+// Check is testing mode
+func (f *Firmeve) IsTesting() bool {
+	return f.mode == ModeTesting
+}
+
 // Start all service providers at once
 func (f *Firmeve) Boot() {
 	if f.booted {
@@ -100,22 +127,23 @@ func (f *Firmeve) Boot() {
 	f.booted = true
 }
 
+// Compatible method make method alias
+func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface{} {
+	return f.Make(abstract, params...)
+}
+
 // Register force param
 func WithRegisterForce() support.Option {
 	return func(object support.Object) {
-		object.(*option).registerForce = true
+		object.(*registerOption).registerForce = true
 	}
-}
-
-func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface{} {
-	return f.Make(abstract, params...)
 }
 
 // Register a service provider
 func (f *Firmeve) Register(provider Provider, options ...support.Option) {
 	name := provider.Name()
 	// Parameter analysis
-	option := support.ApplyOption(newOption(), options...).(*option)
+	option := support.ApplyOption(newRegisterOption(), options...).(*registerOption)
 
 	if f.HasProvider(name) && !option.registerForce {
 		return
@@ -138,15 +166,6 @@ func (f *Firmeve) registerProvider(name string, provider Provider) {
 	mutex.Unlock()
 }
 
-// Binging base instance
-//func (f *Firmeve) bingingBaseInstance() {
-//	firmeve.Bind(`container`, f, WithBindShare(true))
-//	firmeve.Bind(`firmeve`, f, WithBindShare(true))
-//	firmeve.Bind(`config`, config.NewConfig(strings.Join([]string{f.bashPath, `config`}, `/`)), WithBindShare(true))
-//	firmeve.Bind(`logger`, logging.NewLogger, WithBindShare(true))
-//	firmeve.Bind(`dispatcher`, event.NewDispatcher, WithBindShare(true))
-//}
-
 // Determine if the provider exists
 func (f *Firmeve) HasProvider(name string) bool {
 	if _, ok := f.providers[name]; ok {
@@ -166,13 +185,12 @@ func (f *Firmeve) GetProvider(name string) Provider {
 	return f.providers[name]
 }
 
-// Get application base path
-//func (f *Firmeve) GetBasePath() string {
-//	return f.bashPath
-//}
-
 // ---------------------------- option ------------------------
 
+func newRegisterOption() *registerOption {
+	return &registerOption{registerForce: false}
+}
+
 func newOption() *option {
-	return &option{registerForce: false}
+	return &option{mode: ModeProduction}
 }

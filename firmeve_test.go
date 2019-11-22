@@ -22,6 +22,33 @@ func (m *MockProvider) Boot() {
 	m.boot = true
 }
 
+func TestFirmeve_DefaultMode(t *testing.T) {
+	f := New()
+	assert.Equal(t, f.mode, ModeProduction)
+}
+
+func TestFirmeve_SetMode_WithMode(t *testing.T) {
+	f := New(WithMode(ModeDevelopment))
+	assert.Equal(t, f.mode, ModeDevelopment)
+	f.SetMode(ModeTesting)
+	assert.Equal(t, f.Mode(), ModeTesting)
+}
+
+func TestFirmeve_IsProduction(t *testing.T) {
+	f := New(WithMode(ModeProduction))
+	assert.Equal(t,true,f.IsProduction())
+}
+
+func TestFirmeve_IsTesting(t *testing.T) {
+	f := New(WithMode(ModeTesting))
+	assert.Equal(t,true,f.IsTesting())
+}
+
+func TestFirmeve_IsDevelopment(t *testing.T) {
+	f := New(WithMode(ModeDevelopment))
+	assert.Equal(t,true,f.IsDevelopment())
+}
+
 //func TestInstance(t *testing.T) {
 //	firmeve := New()
 //	BindingInstance(firmeve)
