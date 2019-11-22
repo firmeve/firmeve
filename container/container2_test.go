@@ -31,6 +31,7 @@ func TestBaseContainer_Bind_Get(t *testing.T) {
 			NId: 15,
 		}
 	})
+	reflect.ValueOf(c).CallSlice()
 	fmt.Println(fmt.Sprintf("%p", c.Get("dynamic")))
 	fmt.Println(fmt.Sprintf("%p", c.Get("dynamic")))
 	fmt.Println(fmt.Sprintf("%p", c.Get("dynamic")))

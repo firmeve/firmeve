@@ -20,23 +20,25 @@ import (
 	_ "github.com/takama/daemon"
 )
 
-type Something struct {
-	Id    int    `json:"id"`
-	Title string `json:"title"`
-}
+type (
+	Something struct {
+		Id    int    `json:"id"`
+		Title string `json:"title"`
+	}
+
+	Original struct {
+		Id    int
+		Title string
+		Name  string
+	}
+
+	AnyTransformer struct {
+		transform.BaseTransformer
+	}
+)
 
 func (s *Something) SetId() {
 	s.Id += 1
-}
-
-type Original struct {
-	Id    int
-	Title string
-	Name  string
-}
-
-type AnyTransformer struct {
-	transform.BaseTransformer
 }
 
 func (a *AnyTransformer) IdField() int {
@@ -136,17 +138,13 @@ func main() {
 		return app.Make(new(Something)).(*Something)
 	})
 
-	configPath := os.Getenv("FIRMEVE_CONFIG_PATH")
-	if configPath == `` {
-		configPath = path2.RunRelative(`../../testdata/config`)
-	}
-
-	bootstrap := bootstrap.New(app, configPath)
-	bootstrap.RegisterDefault()
-	bootstrap.Register(app.Make(new(Testing)).(firmeve.Provider))
+	bootstrap2 := bootstrap.New(app, bootstrap.WithConfigPath(path2.RunRelative(`../../testdata/config`)))
+	bootstrap2.FastBootFull(
+		app.Make(new(Testing)).(firmeve.Provider),
+	)
 	//
 	root := cmd.Root()
-	root.AddCommand(cmd2.NewServer(bootstrap).Cmd())
+	root.AddCommand(cmd2.NewServer(bootstrap2).Cmd())
 	root.SetArgs(os.Args[1:])
 	root.Execute()
 }
