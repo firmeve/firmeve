@@ -8,42 +8,45 @@ import (
 	"github.com/firmeve/firmeve/converter/serializer"
 	"github.com/firmeve/firmeve/support/strings"
 	"github.com/go-playground/form/v4"
+	"mime/multipart"
 	"net/http"
 	strings2 "strings"
 	"time"
 )
 
-type HandlerFunc func(c *Context)
-
-type Params map[string]string
+type (
+	HandlerFunc func(c *Context)
+	Params map[string]string
+	Context struct {
+		Firmeve        *firmeve.Firmeve `inject:"firmeve"`
+		Request        *http.Request
+		ResponseWriter http.ResponseWriter
+		handlers       []HandlerFunc
+		index          int
+		Params         Params
+		route          *Route
+		startTime      time.Time
+	}
+)
 
 var (
 	formDecoder = form.NewDecoder()
 )
 
-type Context struct {
-	Firmeve        *firmeve.Firmeve `inject:"firmeve"`
-	request        *http.Request
-	responseWriter http.ResponseWriter
-	handlers       []HandlerFunc
-	index          int
-	params         Params
-	route          *Route
-}
-
 func newContext(firmeve *firmeve.Firmeve, writer http.ResponseWriter, r *http.Request, handlers ...HandlerFunc) *Context {
 	return &Context{
 		Firmeve:        firmeve,
-		request:        r,
-		responseWriter: writer,
+		Request:        r,
+		ResponseWriter: writer,
 		handlers:       handlers,
 		index:          0,
-		params:         make(Params, 0),
+		Params:         make(Params, 0),
+		startTime:      time.Now(),
 	}
 }
 
 func (c *Context) SetParams(params Params) *Context {
-	c.params = params
+	c.Params = params
 	return c
 }
 
@@ -53,15 +56,25 @@ func (c *Context) SetRoute(route *Route) *Context {
 }
 
 func (c *Context) FormDecode(v interface{}) interface{} {
-	if c.request.Form == nil {
-		c.request.ParseMultipartForm(32 << 20)
+	if c.Request.Form == nil {
+		c.Request.ParseMultipartForm(32 << 20)
 	}
 
-	if err := formDecoder.Decode(v, c.request.Form); err != nil {
+	if err := formDecoder.Decode(v, c.Request.Form); err != nil {
 		panic(err)
 	}
 
 	return v
+}
+
+// FormFile returns the first file for the provided form key.
+func (c *Context) FormFile(key string) (*multipart.FileHeader, error) {
+	f, fh, err := c.Request.FormFile(key)
+	if err != nil {
+		return nil, err
+	}
+	f.Close()
+	return fh, err
 }
 
 func (c *Context) Abort(code int, message string) {
@@ -73,46 +86,42 @@ func (c *Context) AbortWithError(code int, message string, err error) {
 }
 
 func (c *Context) Param(key string) string {
-	value, _ := c.params[key]
+	value, _ := c.Params[key]
 	return value
 }
 
-func (c *Context) Request() *http.Request {
-	return c.request
-}
-
-func (c *Context) ResponseWriter() http.ResponseWriter {
-	return c.responseWriter
-}
-
 func (c *Context) Query(key string) interface{} {
-	return c.request.URL.Query().Get(key)
+	return c.Request.URL.Query().Get(key)
 }
 
 func (c *Context) Form(key string) string {
-	return c.request.FormValue(key)
+	return c.Request.FormValue(key)
+}
+
+func (c *Context) Cookie(name string) (*http.Cookie, error) {
+	return c.Request.Cookie(name)
 }
 
 func (c *Context) Status(code int) *Context {
-	c.responseWriter.WriteHeader(code)
+	c.ResponseWriter.WriteHeader(code)
 	return c
 }
 
 func (c *Context) Header(key string) string {
-	return c.request.Header.Get(key)
+	return c.Request.Header.Get(key)
 }
 
 func (c *Context) SetHeader(key, value string) *Context {
-	c.responseWriter.Header().Set(key, value)
+	c.ResponseWriter.Header().Set(key, value)
 	return c
 }
 
 func (c *Context) Post(key string) string {
-	return c.request.Form.Get(key)
+	return c.Request.Form.Get(key)
 }
 
 func (c *Context) Write(bytes []byte) *Context {
-	_, err := c.responseWriter.Write(bytes)
+	_, err := c.ResponseWriter.Write(bytes)
 	if err != nil {
 		panic(err)
 	}
@@ -120,12 +129,12 @@ func (c *Context) Write(bytes []byte) *Context {
 }
 
 func (c *Context) NoContent() *Context {
-	c.responseWriter.WriteHeader(204)
+	c.ResponseWriter.WriteHeader(204)
 	return c
 }
 
 func (c *Context) Created() *Context {
-	c.responseWriter.WriteHeader(201)
+	c.ResponseWriter.WriteHeader(201)
 	return c
 }
 
@@ -183,20 +192,20 @@ func (c *Context) Collection(resource interface{}, option *resource2.Option) *Co
 //}
 
 func (c *Context) Redirect(location string, code int) {
-	http.Redirect(c.responseWriter, c.request, location, code)
+	http.Redirect(c.ResponseWriter, c.Request, location, code)
 }
 
 func (c *Context) File(filepath string) {
-	http.ServeFile(c.responseWriter, c.request, filepath)
+	http.ServeFile(c.ResponseWriter, c.Request, filepath)
 }
 
 func (c *Context) FileAttachment(filepath, filename string) {
-	c.responseWriter.Header().Set("content-disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
-	http.ServeFile(c.responseWriter, c.request, filepath)
+	c.ResponseWriter.Header().Set("content-disposition", fmt.Sprintf("attachment; filename=\"%s\"", filename))
+	http.ServeFile(c.ResponseWriter, c.Request, filepath)
 }
 
 func (c *Context) Flush() *Context {
-	c.responseWriter.(http.Flusher).Flush()
+	c.ResponseWriter.(http.Flusher).Flush()
 	return c
 }
 

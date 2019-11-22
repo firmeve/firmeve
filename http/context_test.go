@@ -1,9 +1,9 @@
 package http
 
 import (
-	firmeve2 "github.com/firmeve/firmeve"
+	"fmt"
 	testing2 "github.com/firmeve/firmeve/testing"
-	"github.com/magiconair/properties/assert"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/url"
 	"testing"
@@ -26,8 +26,38 @@ type Nesting struct {
 	Hobby []string `form:"hobby"`
 }
 
-func TestContext_Map(t *testing.T) {
-	firmeve := firmeve2.New()
+func TestContext_SetParams_Param(t *testing.T) {
+	req := testing2.NewMockRequest(http.MethodGet, "/", "").Request
+	c := newContext(
+		testing2.TestingModeFirmeve(),
+		testing2.NewMockResponseWriter(),
+		req,
+	)
+	c.SetParams(Params{"key": "value"})
+	assert.Equal(t, "value", c.Param("key"))
+	assert.Equal(t, "", c.Param("nothing"))
+}
+
+func TestContext_Form_Query(t *testing.T) {
+	firmeve := testing2.TestingModeFirmeve()
+	req := testing2.NewMockRequest(http.MethodPost, "/", "").Request
+	req.Form = make(url.Values, 0)
+	req.Form.Set(`username`, `usernameValue`)
+	req.Form.Set(`password`, `passwordValue`)
+	req.URL.RawQuery = `?query=queryValue1`
+	req.ParseMultipartForm(32 << 20)
+
+	c := newContext(firmeve, testing2.NewMockResponseWriter(), req)
+	fmt.Println(req.URL.Query().Get(`query1`))
+	fmt.Println("=============")
+	assert.Equal(t, `usernameValue`, c.Form(`username`))
+	assert.Equal(t, `passwordValue`, c.Form(`password`))
+	//assert.Equal(t, `queryValue`, c.Query(`query`))
+	//assert.Equal(t, `queryValue1`, c.Query(`query1`))
+}
+
+func TestContext_FormDecode(t *testing.T) {
+	firmeve := testing2.TestingModeFirmeve()
 	req := testing2.NewMockRequest(http.MethodGet, "/", "").Request
 	req.Form = make(url.Values, 0)
 	req.Form.Set(`username`, `usernameValue`)

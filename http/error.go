@@ -28,7 +28,7 @@ func (h *Error) Response(c *Context) {
 			"message": h.Error(),
 		})
 	} else {
-		http2.Error(c.responseWriter, h.Error(), h.code)
+		http2.Error(c.ResponseWriter, h.Error(), h.code)
 	}
 }
 
