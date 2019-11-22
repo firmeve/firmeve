@@ -6,8 +6,10 @@ require (
 	github.com/go-playground/form v3.1.4+incompatible // indirect
 	github.com/go-playground/form/v4 v4.1.1
 	github.com/go-redis/redis v6.15.6+incompatible
+	github.com/iris-contrib/go.uuid v2.0.0+incompatible // indirect
 	github.com/jinzhu/gorm v1.9.11
 	github.com/julienschmidt/httprouter v1.3.0
+	github.com/kataras/iris v11.1.1+incompatible
 	github.com/magiconair/properties v1.8.1
 	github.com/onsi/ginkgo v1.10.2 // indirect
 	github.com/onsi/gomega v1.7.0 // indirect
@@ -23,6 +25,6 @@ require (
 	go.uber.org/zap v1.12.0
 	golang.org/x/sys v0.0.0-20191029155521-f43be2a4598c // indirect
 	golang.org/x/text v0.3.2 // indirect
-	golang.org/x/tools v0.0.0-20191107235519-f7ea15e60b12 // indirect
+	golang.org/x/tools v0.0.0-20191107235519-f7ea15e60b12
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
