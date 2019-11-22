@@ -81,9 +81,16 @@ func (b *Bootstrap) FastBootFull() {
 	b.Boot()
 }
 
-func (b *Bootstrap) FastBootFullWithFunc(fn RegisterFunc) {
+func (b *Bootstrap) FastBootFullWithProviders(providers []firmeve.Provider, options ...support.Option) {
 	b.RegisterDefault()
-	fn(b)
+
+	newProviders := make([]firmeve.Provider, 0)
+	for _, provider := range providers {
+		newProviders = append(newProviders, b.Firmeve.Make(provider).(firmeve.Provider))
+	}
+
+	b.Register(newProviders, options...)
+
 	b.Boot()
 }
 
