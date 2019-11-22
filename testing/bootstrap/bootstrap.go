@@ -1,15 +1,13 @@
 package bootstrap
 
 import (
-	"github.com/firmeve/firmeve"
 	bootstrap2 "github.com/firmeve/firmeve/bootstrap"
 	"github.com/firmeve/firmeve/support"
 	"github.com/firmeve/firmeve/testing"
 )
 
-func Bootstrap(options ...support.Option) *firmeve.Firmeve {
-	f := testing.TestingModeFirmeve()
-	bootstrap2.New(f, options...).FastBootFull()
-	return f
+func Bootstrap(options ...support.Option) *bootstrap2.Bootstrap {
+	bootstrap := bootstrap2.New(testing.TestingModeFirmeve(), options...)
+	bootstrap.FastBootFull()
+	return bootstrap
 }
-
