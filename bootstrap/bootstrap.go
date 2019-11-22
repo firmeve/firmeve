@@ -58,15 +58,15 @@ func New(firmeve2 *firmeve.Firmeve, options ...support.Option) *Bootstrap {
 
 func (b *Bootstrap) RegisterDefault() *Bootstrap {
 	return b.Register([]firmeve.Provider{
-		b.Firmeve.Make(new(cache.Provider)).(firmeve.Provider),
-		b.Firmeve.Make(new(database.Provider)).(firmeve.Provider),
-		b.Firmeve.Make(new(http.Provider)).(firmeve.Provider),
+		new(cache.Provider),
+		new(database.Provider),
+		new(http.Provider),
 	}, firmeve.WithRegisterForce())
 }
 
 func (b *Bootstrap) Register(providers []firmeve.Provider, options ...support.Option) *Bootstrap {
 	for _, provider := range providers {
-		b.Firmeve.Register(provider, options...)
+		b.Firmeve.Register(b.Firmeve.Make(provider).(firmeve.Provider), options...)
 	}
 
 	return b
@@ -84,12 +84,7 @@ func (b *Bootstrap) FastBootFull() {
 func (b *Bootstrap) FastBootFullWithProviders(providers []firmeve.Provider, options ...support.Option) {
 	b.RegisterDefault()
 
-	newProviders := make([]firmeve.Provider, 0)
-	for _, provider := range providers {
-		newProviders = append(newProviders, b.Firmeve.Make(provider).(firmeve.Provider))
-	}
-
-	b.Register(newProviders, options...)
+	b.Register(providers, options...)
 
 	b.Boot()
 }
