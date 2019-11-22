@@ -23,6 +23,8 @@ type (
 	option struct {
 		path string
 	}
+
+	RegisterFunc func(b *Bootstrap)
 )
 
 var (
@@ -59,12 +61,12 @@ func (b *Bootstrap) RegisterDefault() *Bootstrap {
 		b.Firmeve.Make(new(cache.Provider)).(firmeve.Provider),
 		b.Firmeve.Make(new(database.Provider)).(firmeve.Provider),
 		b.Firmeve.Make(new(http.Provider)).(firmeve.Provider),
-	}...)
+	}, firmeve.WithRegisterForce())
 }
 
-func (b *Bootstrap) Register(providers ...firmeve.Provider) *Bootstrap {
+func (b *Bootstrap) Register(providers []firmeve.Provider, options ...support.Option) *Bootstrap {
 	for _, provider := range providers {
-		b.Firmeve.Register(provider, firmeve.WithRegisterForce())
+		b.Firmeve.Register(provider, options...)
 	}
 
 	return b
@@ -74,9 +76,14 @@ func (b *Bootstrap) Boot() {
 	b.Firmeve.Boot()
 }
 
-func (b *Bootstrap) FastBootFull(providers ...firmeve.Provider) {
+func (b *Bootstrap) FastBootFull() {
 	b.RegisterDefault()
-	b.Register(providers...)
+	b.Boot()
+}
+
+func (b *Bootstrap) FastBootFullWithFunc(fn RegisterFunc) {
+	b.RegisterDefault()
+	fn(b)
 	b.Boot()
 }
 
@@ -88,5 +95,5 @@ func (b *Bootstrap) registerBaseProvider() {
 	b.Register([]firmeve.Provider{
 		b.Firmeve.Make(new(event.Provider)).(firmeve.Provider),
 		b.Firmeve.Make(new(logging.Provider)).(firmeve.Provider),
-	}...)
+	})
 }

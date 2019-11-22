@@ -139,8 +139,10 @@ func main() {
 	})
 
 	bootstrap2 := bootstrap.New(app, bootstrap.WithConfigPath(path2.RunRelative(`../../testdata/config`)))
-	bootstrap2.FastBootFull(
-		app.Make(new(Testing)).(firmeve.Provider),
+	bootstrap2.FastBootFullWithFunc(
+		func(b *bootstrap.Bootstrap) {
+			b.Register([]firmeve.Provider{app.Make(new(Testing)).(firmeve.Provider)}, )
+		},
 	)
 	//
 	root := cmd.Root()
