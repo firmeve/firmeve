@@ -55,6 +55,8 @@ var (
 		`file`:    newFileChannel,
 		`console`: newConsoleChannel,
 	}
+	consoleZapEncoder = zapcore.NewConsoleEncoder(zap.NewProductionEncoderConfig())
+	fileZapEncoder = zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
 )
 
 func New(config config.Configurator) Loggable {
@@ -129,9 +131,9 @@ func zapLogger(config config.Configurator, writers writers) internalLogger {
 	var zapEncoder zapcore.Encoder
 	for stack, write := range writers {
 		if stack == `console` {
-			zapEncoder = zapcore.NewConsoleEncoder(zap.NewProductionEncoderConfig())
+			zapEncoder = consoleZapEncoder
 		} else {
-			zapEncoder = zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
+			zapEncoder = fileZapEncoder
 		}
 
 		core := zapcore.NewCore(
