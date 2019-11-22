@@ -8,23 +8,46 @@ import (
 	"github.com/firmeve/firmeve/database"
 	"github.com/firmeve/firmeve/event"
 	"github.com/firmeve/firmeve/http"
-	logging "github.com/firmeve/firmeve/logger"
+	"github.com/firmeve/firmeve/logger"
+	"github.com/firmeve/firmeve/support"
+	"github.com/kataras/iris/core/errors"
+	"os"
 )
 
 type Bootstrap struct {
-	configPath string
-	Firmeve    *firmeve.Firmeve
+	Firmeve *firmeve.Firmeve
+	option  *option
 }
 
-func New(firmeve2 *firmeve.Firmeve, configPath string) *Bootstrap {
-	//binding current unique firmeve
-	//firmeve.BindingInstance(firmeve2)
+var (
+	configPathError = errors.New(`config path error`)
+)
+
+type option struct {
+	path string
+}
+
+func WithConfigPath(path string) support.Option {
+	return func(object support.Object) {
+		object.(*option).path = path
+	}
+}
+
+func New(firmeve2 *firmeve.Firmeve, options ...support.Option) *Bootstrap {
+	option := support.ApplyOption(&option{}, options...).(*option)
+
+	if option.path == `` {
+		option.path = os.Getenv("FIRMEVE_CONFIG_PATH")
+		if option.path == `` {
+			panic(configPathError)
+		}
+	}
 
 	bootstrap := &Bootstrap{
-		configPath: configPath,
-		Firmeve:    firmeve2,
+		Firmeve: firmeve2,
+		option:  option,
 	}
-	bootstrap.configure(configPath)
+	bootstrap.configure()
 	bootstrap.registerBaseProvider()
 	return bootstrap
 }
@@ -49,8 +72,14 @@ func (b *Bootstrap) Boot() {
 	b.Firmeve.Boot()
 }
 
-func (b *Bootstrap) configure(path string) {
-	b.Firmeve.Bind(`config`, config2.New(path), container.WithShare(true))
+func (b *Bootstrap) FastBootFull(providers ...firmeve.Provider) {
+	b.RegisterDefault()
+	b.Register(providers...)
+	b.Boot()
+}
+
+func (b *Bootstrap) configure() {
+	b.Firmeve.Bind(`config`, config2.New(b.option.path), container.WithShare(true))
 }
 
 func (b *Bootstrap) registerBaseProvider() {
