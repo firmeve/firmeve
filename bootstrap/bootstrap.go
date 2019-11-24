@@ -95,7 +95,7 @@ func (b *Bootstrap) configure() {
 
 func (b *Bootstrap) registerBaseProvider() {
 	b.Register([]firmeve.Provider{
-		b.Firmeve.Make(new(event.Provider)).(firmeve.Provider),
-		b.Firmeve.Make(new(logging.Provider)).(firmeve.Provider),
+		new(event.Provider),
+		new(logging.Provider),
 	})
 }
