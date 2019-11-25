@@ -87,3 +87,22 @@ func TestContext_FormDecode(t *testing.T) {
 		Hobby: []string{`hobby00`, `hobby01`},
 	}, data.Nested[0])
 }
+
+func TestContext_Entity(t *testing.T) {
+	firmeve := testing2.TestingModeFirmeve()
+	req := testing2.NewMockRequest(http.MethodGet, "/", "").Request
+	c := newContext(firmeve, testing2.NewMockResponseWriter(), req)
+	assert.Nil(t, c.Entity("nothing"))
+
+	c.AddEntity("user", map[string]string{
+		"username": "username",
+		"password": "password",
+	})
+	u := c.Entity("user").Value.(map[string]string)
+	assert.Equal(t,`username`,u[`username`])
+	assert.Equal(t,`password`,u[`password`])
+
+	u2 := c.EntityValue("user").(map[string]string)
+	assert.Equal(t,`username`,u2[`username`])
+	assert.Equal(t,`password`,u2[`password`])
+}

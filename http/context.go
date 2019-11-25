@@ -17,11 +17,16 @@ import (
 type (
 	HandlerFunc func(c *Context)
 	Params map[string]string
+	entity struct {
+		Key   string
+		Value interface{}
+	}
 	Context struct {
 		Firmeve        *firmeve.Firmeve `inject:"firmeve"`
 		Request        *http.Request
 		ResponseWriter http.ResponseWriter
 		handlers       []HandlerFunc
+		entities       map[string]*entity
 		index          int
 		Params         Params
 		route          *Route
@@ -39,6 +44,7 @@ func newContext(firmeve *firmeve.Firmeve, writer http.ResponseWriter, r *http.Re
 		Request:        r,
 		ResponseWriter: writer,
 		handlers:       handlers,
+		entities:       make(map[string]*entity, 0),
 		index:          0,
 		Params:         make(Params, 0),
 		startTime:      time.Now(),
@@ -53,6 +59,30 @@ func (c *Context) SetParams(params Params) *Context {
 func (c *Context) SetRoute(route *Route) *Context {
 	c.route = route
 	return c
+}
+
+func (c *Context) AddEntity(key string, value interface{}) *Context {
+	c.entities[key] = &entity{
+		Key:   key,
+		Value: value,
+	}
+	return c
+}
+
+func (c *Context) Entity(key string) *entity {
+	if v, ok := c.entities[key]; ok {
+		return v
+	}
+
+	return nil
+}
+
+func (c *Context) EntityValue(key string) interface{} {
+	if v, ok := c.entities[key]; ok {
+		return v.Value
+	}
+
+	return nil
 }
 
 func (c *Context) FormDecode(v interface{}) interface{} {
@@ -215,22 +245,3 @@ func (c *Context) Next() {
 		c.handlers[c.index-1](c)
 	}
 }
-
-func (c *Context) Deadline() (deadline time.Time, ok bool) {
-	panic("implement me")
-}
-
-func (c *Context) Done() <-chan struct{} {
-	panic("implement me")
-}
-
-func (c *Context) Err() error {
-	panic("implement me")
-}
-
-func (c *Context) Value(key interface{}) interface{} {
-	panic("implement me")
-}
-
-//func (c *Context) ServeHttp(w http.ResponseWriter, r *http.Request) {
-//}
