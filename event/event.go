@@ -1,7 +1,6 @@
 package event
 
 import (
-	"fmt"
 	"sync"
 )
 
@@ -9,8 +8,9 @@ type (
 	ListenDispatcher interface {
 		Listen(name string, df listenFunc)
 		Dispatch(name string, params ...interface{}) []interface{}
+		Has(name string) bool
 	}
-	
+
 	event struct {
 		listeners map[string]listenFuncs
 	}
@@ -41,11 +41,11 @@ func (e *event) Listen(name string, df listenFunc) {
 }
 
 func (e *event) Dispatch(name string, params ...interface{}) []interface{} {
-	var listeners listenFuncs
-	var ok bool
-	if listeners, ok = e.listeners[name]; !ok {
-		panic(fmt.Errorf("the event %s not exists", name))
+	if !e.Has(name) {
+		return nil
 	}
+
+	listeners := e.listeners[name]
 
 	results := make([]interface{}, 0)
 	for _, dispatchFunc := range listeners {
@@ -57,4 +57,9 @@ func (e *event) Dispatch(name string, params ...interface{}) []interface{} {
 		results = append(results, result)
 	}
 	return results
+}
+
+func (e *event) Has(name string) bool {
+	_, ok := e.listeners[name]
+	return ok
 }

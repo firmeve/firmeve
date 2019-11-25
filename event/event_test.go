@@ -24,6 +24,9 @@ func TestBaseDispatcher(t *testing.T) {
 	assert.Equal(t, 2, len(results))
 	assert.Equal(t, 3, results[0].(int))
 	assert.Equal(t, 3, results[0].(int))
+
+	nothingResult := dispatch.Dispatch("nothing", 1, 2)
+	assert.Nil(t,nothingResult)
 }
 
 func listenBOne(params ...interface{}) interface{} {
