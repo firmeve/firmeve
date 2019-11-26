@@ -61,7 +61,7 @@ go run main.go http:serve
 
 ## Feature list
 - **Core**
-    - [x] [Ioc](./docs/zh-CN/container.md)
+    - [x] [Container](./docs/zh-CN/container.md)
     - [x] [Application](./docs/zh-CN/app.md)
     - [x] [Config](./docs/zh-CN/config.md)
     - [x] [Provider](./docs/zh-CN/provider.md)
