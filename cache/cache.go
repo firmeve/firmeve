@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"github.com/kataras/iris/core/errors"
 	"strings"
 	"sync"
 	"time"
@@ -18,7 +19,8 @@ type Cache struct {
 }
 
 var (
-	mutex sync.Mutex
+	mutex             sync.Mutex
+	ErrDriverNotFound = errors.New(`driver not found`)
 )
 
 // Create a cache manager
@@ -27,6 +29,7 @@ func New(config config.Configurator) *Cache {
 		config:       config,
 		repositories: make(map[string]repository.Serializable, 0),
 	}
+	cache.registerDefaultDriver(cache.config.GetString(`default`))
 	cache.current = cache.Driver(cache.config.GetString(`default`))
 
 	return cache
@@ -44,16 +47,12 @@ func (c *Cache) Driver(driver string) repository.Serializable {
 		return current
 	}
 
-	switch driver {
-	case `redis`:
-		current = repository.New(c.createRedisDriver())
-	default:
-		panic(`driver not found`)
-	}
+	panic(ErrDriverNotFound)
+}
 
-	c.repositories[driver] = current
-
-	return c.repositories[driver]
+// Register driver
+func (c *Cache) Register(driver string, store repository.Cacheable) {
+	c.repositories[driver] = repository.New(store)
 }
 
 // Create a redis cache driver
@@ -71,6 +70,19 @@ func (c *Cache) createRedisDriver() repository.Cacheable {
 		Addr: strings.Join(addr, ``),
 		DB:   db,
 	}), prefix)
+}
+
+// register a exists default driver
+func (c *Cache) registerDefaultDriver(driver string) {
+	var store repository.Cacheable
+	switch driver {
+	case `redis`:
+		store = c.createRedisDriver()
+	default:
+		panic(ErrDriverNotFound)
+	}
+
+	c.Register(driver, store)
 }
 
 func (c *Cache) Store() repository.Cacheable {
