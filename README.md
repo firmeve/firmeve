@@ -69,6 +69,7 @@ go run main.go http:serve
     - [x] [Logger](./docs/zh-CN/logger.md)
     - [ ] [Command](./docs/zh-CN/command.md)
 - **Base**
+    - [x] [Http](./docs/zh-CN/http.md)
     - [x] [Database](./docs/zh-CN/databases.md)
     - [x] [Cache](./docs/zh-CN/cache.md)
     - [ ] [Queue](./docs/zh-CN/queue.md)
