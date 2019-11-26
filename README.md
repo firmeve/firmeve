@@ -21,7 +21,10 @@ Those who have achieved nothing can always tell you that you can't make a big de
     - [x] [Config](./docs/zh-CN/config.md)
     - [x] [Provider](./docs/zh-CN/provider.md)
     - [x] [Event](./docs/zh-CN/event.md)
-    - [ ] [Logger](./docs/zh-CN/logger.md)
+    - [x] [Logger](./docs/zh-CN/logger.md)
+    - [ ] [Command](./docs/zh-CN/command.md)
 - **Base**
-    - [ ] [Cache](./docs/zh-CN/cache.md)
+    - [x] [Cache](./docs/zh-CN/cache.md)
+    - [] [Queue](./docs/zh-CN/queue.md)
+    - [] [Cron](./docs/zh-CN/cron.md)
 - **Extension**
