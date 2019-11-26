@@ -52,6 +52,13 @@ func main() {
 }
 ```
 
+Bootstrap command
+
+```bash
+go run main.go http:serve
+```
+
+
 ## Feature list
 - **Core**
     - [x] [Ioc](./docs/zh-CN/container.md)

@@ -41,3 +41,7 @@ func main() {
 	root.Execute()
 }
 ```
+运行启动命令
+```bash
+go run main.go http:serve
+```
