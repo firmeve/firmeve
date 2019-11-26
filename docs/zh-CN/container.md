@@ -1,158 +1,177 @@
 ## 简介
-Ioc
+Ioc 单实例容器绑定
 
-## 对象绑定
+## 基础示例
 
+### 准备数据
 ```go
-f := Instance()
-```
+type (
+    Nesting struct {
+        NId        int
+        NTitle     string
+        NBoolean   bool
+        NArray     [3]int
+        NMapString map[string]string
+        NSlice     []string
+        nprivate   string
+    }
+    
+    Sample struct {
+    	Id        int
+    	Title     string
+    	Boolean   bool
+    	Array     [3]int
+    	MapString map[string]string
+    	Slice     []string
+    	private   string
+    }
+)
 
-### 标量绑定
-```go
-f.Bind(`bool`, false)
-```
-```go
-f.Bind(`string`, "string")
-```
-
-### `Struct` 绑定
-假设我们有如下`struct`
-```go
-type Foo struct {
-    Bar string	
+func Sample() *structs.Sample {
+	return &Sample{
+		Id: 15,
+	}
 }
-
-func NewFoo(bar string) Foo{
-    return Foo{Bar:bar}
-}
 ```
-我们将`foo`绑定进我们的容器中
+
+以下只是简单`Api`的示例
+[**更多示例请参考此处**](https://github.com/firmeve/firmeve/blob/develop/container/container2_test.go)
+
+### 新建一个基础容器
 ```go
-f.Bind(`foo`,NewFoo("abc"))
+// 新建一个容器
+c := container.New()
 ```
 
-### `Prt` 绑定
-绑定`prt`的`struct`类型是我们最常用的一种方式，请看下面的示例
+### 结构体绑定
+
 ```go
-type Baz struct {
-    Baz string	
-}
-
-func NewBaz() *Baz {
-	return &Baz{}
-}
-
-f.Bind(`baz`, NewBaz())
+c.Bind("nesting", &Nesting{
+    NId: 10,
+})
 ```
+
+> 默认非函数型绑定是单例对象
 
 ### 函数绑定
-```go
-func NewFoo() Foo{
-	return Foo{Bar:"default string"}
-}
 
-f.Bind(`foo`, NewFoo)
+```go
+c.Bind("sample", Sample)
 ```
-> 使用`Firmeve`在绑定的时候暂时不支持参数注入
-> 注意：如果是非函数类型绑定，则会默认为单实例类型
 
-### 已绑定值覆盖
-我们通过`WithBindCover(true)`方法可以轻松设定覆盖参数
+> 函数绑定不支持单例
+
+### 自动解析
+
 ```go
-f.Bind(`bool`, false)
-fmt.Printf("%t",f.Get(`bool`))
-f.Bind(`bool`, true, WithBindCover(true))
-fmt.Printf("%t",f.Get(`bool`))
+fmt.Printf("%#v\n", c.Make("sample"))
+```
+
+> 注意：暂时不支持...params动态扩展参数函数解析
+
+### 强制已绑定值覆盖
+
+我们通过`WithCover(true)`方法可以轻松设定覆盖参数
+
+```go
+c.Bind("nesting", &Nesting{
+    NId: 10,
+})
+
+c.Bind("nesting", &Nesting{
+    NId: 11,
+}, WithCover(true))
 ```
 
 ## 对象获取
 
 ### 验证对象是否存在
+
 在不确定容器中是否包含此对象时，请使用`Has`方法进行判断
+
 ```go
-f.Has(`foo`)
+c.Has(`foo`)
 ```
 ### 对象获取
+
 直接获取容器中的值
 ```go
-f.Get(`foo`)
-```
-> 注意：如果指的定的`key`不存在，则会抛出`panic`错误
+c.Get(`foo`)
 
-### 新对象获取
+// 或
+c.Make(`foo`)
+```
+> 注意：`Get`只能获取已存在的对象，如果需要自动解析新对象请使用`Make`方法
+
+### 对象删除
 ```go
-func NewFoo() Foo{
-	return Foo{Bar:"default string"}
-}
+// 清除指定对象
+c.Remove(`foo`)
 
-f.Bind(`foo`, NewFoo)
-fmt.Printf("%p\n",f.Get("foo"))
-fmt.Printf("%p\n",f.Get("foo"))
-fmt.Printf("%p\n",f.Get("foo"))
-```
-> 在`Firmeve`中，如果需要每次重新得到一个新的结构体对象
-必须绑定一个函数值，否则得到的将是一个单实例
-
-### 单例获取
-```go
-func NewFoo() Foo{
-	return Foo{Bar:"default string"}
-}
-
-f.Bind(`foo`, NewFoo())
-fmt.Printf("%p\n",f.Get("foo"))
-fmt.Printf("%p\n",f.Get("foo"))
-fmt.Printf("%p\n",f.Get("foo"))
+// 全部清除
+c.Flush()
 ```
 
-## 参数解析
+## 自动解析
+
+通过`Make`方法可以轻松完成自动解析，目前解析对象包括
+- 容器中已存在对象
+- 结构体
+- 函数
+
 ### 函数自动解析
+
+函数解析中，如果遇到的参数类型已存在于容器中，并且参数未提供，则会自动注入容器中的参数。
+如果存在，则会使用提供的函数参数，标量类型的参数则必须提供
+
 让我们来看一个简单的示例
+
 ```go
-type PersonName struct {
-	Name string
+//Sample函数如上
+fmt.Printf("%#v\n", c.Make(Sample))
+
+func NormalSample(id int, str string) (int, string) {
+	return id, str
 }
 
-func NewPersonName() PersonName {
-	return PersonName{Name: "Firmeve"}
+fmt.Printf("%#v\n", NormalSample, 10, `foo`)
+
+func StructFunc(ptr *Sample, nesting structs.Nesting) int {
+	return ptr.Id + nesting.NId
 }
 
-type PersonAge struct {
-	Age int
-}
+fmt.Printf("%#v\n", StructFunc)
 
-func PersonAge() *PersonAge {
-	return &PersonAge{Age: 1}
+// 支持多级函数嵌套
+func StructFuncFunc(id int, nesting *Nesting, fn func(nesting *Nesting) int, prt *Sample) int {
+	return id + fn(nesting) + prt.Id
 }
+fmt.Printf("%#v\n", StructFuncFunc, 10)
 
-type Person struct {
-	name PersonName
-	age *PersonAge
+// 更复杂的解析
+func MultipleParamSample(ptr *Sample, nestingPtr *Nesting, nesting structs.Nesting, notPtr structs.Sample) (*Sample, *Nesting, Nesting, Sample) {
+	return ptr, nestingPtr, nesting, notPtr
 }
-
-func NewPerson(name PersonName,age *PersonAge) *NewPerson {
-    return NewPerson{
-    	name: name
-    	age: age
-    }
-}
-
-f.Bind("PersonName", NewPersonName)
-f.Bind("PersonAge", PersonAge)
-fmt.Printf("%#v", f.Resolve(NewPerson))
+fmt.Printf("%#v\n", MultipleParamSample)
 ```
+
+> 带有动态参数...params的函数暂时无法解析
 
 ### 结构体tag自动解析
-现在，让我们修改下上面的`Person`
+
+tag解析的对象，必须容器中已存在，并且是指针类型，普通结构体无法设置，会自动忽略。
+
 ```go
+
+c.Bind(`foo`, FooStruct{})
+c.Bind(`bar`, FooStruct{})
+
 type Person struct {
-	Name PersonName `inject:"PersonName"`
-	Age *PersonAge `inject:"PersonAge"`
-	age1 *PersonAge `inject:"PersonAge"`
+	Foo1 PersonName `inject:"foo"`
+	Bar *Bar `inject:"bar"`
+	Foo *Foo `inject:"foo"`
 }
+
+fmt.Printf("%#v", c.Make(new(NewPerson)))
 ```
-然后我们使用`new`函数直接创建一个新的结构体指针
-```go
-fmt.Printf("%#v", new(NewPerson))
-```
-> 注意：此时 `Person`中的`Name`字段并不是指针类型，而`age1`不符合`struct`的`tag`规范，所以`Firmeve`都会自动忽略。
+> 注意：此时 `Person`中的`Foo1`字段并不是指针类型，所以会自动忽略。

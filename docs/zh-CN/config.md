@@ -1,36 +1,41 @@
 ## 简介
 `Firmeve` Config
 
-## Config Item
-在`Config`内部每个扫描的文件名（去除后缀名）作为`item`的调用名称，如
-```go
-GetConfig().Item("app")
-```
-> 注意：目前只支持yaml格式配置文件
+
 
 ## 基础示例
 
 ### 创建一个`Config`
 ```go
 directory := "./testdata/config"
-config := NewConfig(directory)
+config := config.New(directory)
 ```
-当创建完成后可以调用`GetConfig()来调用`
 
-> 注意：Config是一个单例对象
-
+### Config Item
+在`Config`内部每个扫描的文件名（去除后缀名）作为`item`的调用名称，如下
+`Item`是`Configurator Interface`的实现
+```go
+config.Item("app")
+```
+> 注意：目前只支持yaml格式配置文件
 
 ### 值的设置
 ```go
 // 设置一个默认值
-GetConfig().Item("app").SetDefault("key", "value")
+config.Item("app").SetDefault("key", "value")
 // 修改或添加一个值
-GetConfig().Item("app").Set("key", "value")
+config.Item("app").Set("key", "value")
 ```
+
+> 虽然提供了修改值的接口，但强烈建议不使用该方法
+> http.Context内不可直接使用Set来修改值，多个goroutine并发会导致不可知问题
+> 如果确实需要修改，请copy一份config副本，并后续使用此副本
 
 ### 值的获取
 ```go
-GetConfig().Item("app").Get("key")
+config.Item("app").Get("key")
+// 多层级调用
+config.Item("app").Get("key.foo.bar")
 ```
 其它可用方法：
 - GetBool()
@@ -46,13 +51,13 @@ GetConfig().Item("app").Get("key")
 
 ### 判断Key是否存在 
 ```go
-GetConfig().Item("app").Exists("key")
+config.Item("app").Exists("key")
 ```
 
 ### 加载一个Item
 ```go
 file := "./config/tmp.yaml"
-GetConfig().Load(file)
+config.Load(file)
 ```
 
 ## 环境变量

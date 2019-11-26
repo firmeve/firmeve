@@ -8,33 +8,31 @@ import (
 	"github.com/firmeve/firmeve"
 )
 
-type ServiceProvider struct {
-	Firmeve *firmeve.Firmeve `inject:"firmeve"`
+type Provider struct {
+	firmeve.BaseProvider
 }
 
-func (csp *ServiceProvider) Boot() {
+func (p *Provider) Name() string {
+	return `app`
 }
 
-func (csp *ServiceProvider) Register() {
-	// 绑定CacheManager
-	csp.Firmeve.Bind(`cache`, NewManager, firmeve.WithBindShare(true))
+func (p *Provider) Register() {
+	// bind
+	p.Firmeve.Bind(`foo`, func() string {
+		return `bar`
+	})
+}
+
+func (p *Provider) Boot() {
 }
 ```
+
+> 注意：Boot方法在所有服务提供者被注册以后才会被调用
 
 ## Provider挂载
 ```go
-func init() {
-	firmeve.Instance().Register(`cache`, firmeve.Instance().Resolve(new(Provider)).(*Provider))
-}
+f := firmeve.New()
+f.Register([]firmeve.Provider{
+    new(Provider),
+})
 ```
-
-## Register方法
-
-在`Register`方法中我们通常使用容器来实现实例绑定，如：
-
-```go
-csp.Firmeve.Bind(`cache`, NewManager, firmeve.WithBindShare(true))
-```
-
-## Boot方法
-**Boot方法在所有服务提供者被注册以后才会被调用**
