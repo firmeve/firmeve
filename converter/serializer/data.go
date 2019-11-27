@@ -15,6 +15,8 @@ func (d *Data) Resolve() interface{} {
 		collection[`data`] = data.Data()
 	} else if data, ok := d.resource.(resource.CollectionData); ok {
 		collection[`data`] = data.CollectionData()
+	} else {
+		collection[`data`] = d.resource
 	}
 
 	if meta, ok := d.resource.(resource.IMeta); ok {
@@ -23,6 +25,7 @@ func (d *Data) Resolve() interface{} {
 			collection[`meta`] = metaData
 		}
 	}
+
 	if link, ok := d.resource.(resource.ILink); ok {
 		linkData := link.Link()
 		if len(linkData) > 0 {
