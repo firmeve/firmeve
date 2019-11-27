@@ -60,8 +60,32 @@ var (
 		`file`:    newFileChannel,
 		`console`: newConsoleChannel,
 	}
-	consoleZapEncoder = zapcore.NewConsoleEncoder(zap.NewProductionEncoderConfig())
-	fileZapEncoder = zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig())
+	consoleZapEncoder = zapcore.NewConsoleEncoder(zapcore.EncoderConfig{
+		TimeKey:        "time",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		MessageKey:     "message",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
+		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		EncodeDuration: zapcore.StringDurationEncoder,
+		EncodeCaller:   zapcore.FullCallerEncoder,
+	})
+	fileZapEncoder = zapcore.NewJSONEncoder(zapcore.EncoderConfig{
+		TimeKey:        "time",
+		LevelKey:       "level",
+		NameKey:        "logger",
+		CallerKey:      "caller",
+		MessageKey:     "message",
+		StacktraceKey:  "stacktrace",
+		LineEnding:     zapcore.DefaultLineEnding,
+		EncodeLevel:    zapcore.CapitalLevelEncoder,
+		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		EncodeDuration: zapcore.StringDurationEncoder,
+		EncodeCaller:   zapcore.FullCallerEncoder,
+	})
 )
 
 func New(config config.Configurator) Loggable {
@@ -152,7 +176,9 @@ func zapLogger(config config.Configurator, writers writers) internalLogger {
 		cores = append(cores, core)
 	}
 
-	return zap.New(zapcore.NewTee(cores...), zap.AddCallerSkip(2), zap.AddStacktrace(zap.WarnLevel)).Sugar()
+	return zap.New(
+		zapcore.NewTee(cores...), zap.AddCallerSkip(2), zap.AddStacktrace(zap.DebugLevel),
+	).Sugar()
 }
 
 // Channel factory
