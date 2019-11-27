@@ -5,16 +5,19 @@ import (
 )
 
 type (
+	InParams  map[string]interface{}
+	outParams []interface{}
+
 	Handler interface {
-		Handle(params ...interface{}) (interface{}, error)
+		Handle(params InParams) (interface{}, error)
 	}
 
 	handlers []Handler
 
 	IDispatcher interface {
-		Listen(name string, df Handler)
-		ListenMany(name string, df handlers)
-		Dispatch(name string, params ...interface{}) []interface{}
+		Listen(name string, handler Handler)
+		ListenMany(name string, handlers handlers)
+		Dispatch(name string, params InParams) outParams
 		Has(name string) bool
 	}
 
@@ -49,14 +52,14 @@ func (e *event) ListenMany(name string, handlerMany handlers) {
 	}
 }
 
-func (e *event) Dispatch(name string, params ...interface{}) []interface{} {
+func (e *event) Dispatch(name string, params InParams) outParams {
 	if !e.Has(name) {
 		return nil
 	}
 
-	results := make([]interface{}, 0)
+	results := make(outParams, 0)
 	for _, listener := range e.listeners[name] {
-		result, err := listener.Handle(params...)
+		result, err := listener.Handle(params)
 		if err != nil {
 			break
 		}
