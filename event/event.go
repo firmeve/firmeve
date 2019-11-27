@@ -5,39 +5,48 @@ import (
 )
 
 type (
-	ListenDispatcher interface {
-		Listen(name string, df listenFunc)
+	Handler interface {
+		Handle(params ...interface{}) (interface{}, error)
+	}
+
+	handlers []Handler
+
+	IDispatcher interface {
+		Listen(name string, df Handler)
+		ListenMany(name string, df handlers)
 		Dispatch(name string, params ...interface{}) []interface{}
 		Has(name string) bool
 	}
 
 	event struct {
-		listeners map[string]listenFuncs
+		listeners map[string]handlers
 	}
-
-	listenFunc func(params ...interface{}) interface{}
-
-	listenFuncs []listenFunc
 )
 
 var (
 	mutex sync.Mutex
 )
 
-func New() ListenDispatcher {
+func New() IDispatcher {
 	return &event{
-		listeners: make(map[string]listenFuncs, 0),
+		listeners: make(map[string]handlers, 0),
 	}
 }
 
-func (e *event) Listen(name string, df listenFunc) {
+func (e *event) Listen(name string, handler Handler) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	if _, ok := e.listeners[name]; !ok {
-		e.listeners[name] = make(listenFuncs, 0)
+		e.listeners[name] = make(handlers, 0)
 	}
 
-	e.listeners[name] = append(e.listeners[name], df)
+	e.listeners[name] = append(e.listeners[name], handler)
+}
+
+func (e *event) ListenMany(name string, handlerMany handlers) {
+	for _, handler := range handlerMany {
+		e.Listen(name, handler)
+	}
 }
 
 func (e *event) Dispatch(name string, params ...interface{}) []interface{} {
@@ -45,17 +54,15 @@ func (e *event) Dispatch(name string, params ...interface{}) []interface{} {
 		return nil
 	}
 
-	listeners := e.listeners[name]
-
 	results := make([]interface{}, 0)
-	for _, dispatchFunc := range listeners {
-		result := dispatchFunc(params...)
-		if v, ok := result.(bool); ok && v == false {
-			results = append(results, v)
+	for _, listener := range e.listeners[name] {
+		result, err := listener.Handle(params...)
+		if err != nil {
 			break
 		}
 		results = append(results, result)
 	}
+
 	return results
 }
 
