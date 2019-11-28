@@ -61,6 +61,16 @@ func (r *Router) NotFound(handler HandlerFunc) *Router {
 	return r
 }
 
+func (r *Router) Handler(method, path string, handler http.HandlerFunc) {
+	r.createRoute(method, path, func(c *Context) {
+		handler(c.ResponseWriter, c.Request)
+	})
+}
+
+func (r *Router) HttpRouter() *httprouter.Router {
+	return r.router
+}
+
 //
 func (r *Router) Group(prefix string) *Group {
 	return newGroup(r).Prefix(prefix)
