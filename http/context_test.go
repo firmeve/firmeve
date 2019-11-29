@@ -1,9 +1,11 @@
 package http
 
 import (
+	"bytes"
 	"fmt"
 	testing2 "github.com/firmeve/firmeve/testing"
 	"github.com/stretchr/testify/assert"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"testing"
@@ -106,4 +108,15 @@ func TestContext_Entity(t *testing.T) {
 	u2 := c.EntityValue("user").(map[string]string)
 	assert.Equal(t,`username`,u2[`username`])
 	assert.Equal(t,`password`,u2[`password`])
+}
+
+func TestContext_ContentType_JSON(t *testing.T) {
+	req := testing2.NewMockRequest(http.MethodPost, "/", "").Request
+	req.Header.Set(`Content-Type`,MIMEJSON)
+	b := bytes.NewBuffer([]byte(`{"str":"中文","numbering":1}`))
+	req.Body = ioutil.NopCloser(b)
+	firmeve := testing2.TestingModeFirmeve()
+	c := newContext(firmeve, testing2.NewMockResponseWriter(), req)
+	assert.Equal(t,"中文",c.Input.GetString("str"))
+	assert.Equal(t,float64(1),c.Input.GetFloat("numbering"))
 }
