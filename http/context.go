@@ -6,12 +6,26 @@ import (
 	"github.com/firmeve/firmeve"
 	resource2 "github.com/firmeve/firmeve/converter/resource"
 	"github.com/firmeve/firmeve/converter/serializer"
+	"github.com/firmeve/firmeve/input"
+	"github.com/firmeve/firmeve/input/parser"
 	"github.com/firmeve/firmeve/support/strings"
 	"github.com/go-playground/form/v4"
+	"github.com/kataras/iris/core/errors"
+	"io/ioutil"
 	"mime/multipart"
 	"net/http"
 	strings2 "strings"
 	"time"
+)
+
+const (
+	MIMEJSON              = "application/json"
+	MIMEHTML              = "text/html"
+	MIMEXML               = "application/xml"
+	MIMEXML2              = "text/xml"
+	MIMEPlain             = "text/plain"
+	MIMEPOSTForm          = "application/x-www-form-urlencoded"
+	MIMEMultipartPOSTForm = "multipart/form-data"
 )
 
 type (
@@ -25,6 +39,7 @@ type (
 		Firmeve        *firmeve.Firmeve `inject:"firmeve"`
 		Request        *http.Request
 		ResponseWriter http.ResponseWriter
+		Input          *input.Input
 		handlers       []HandlerFunc
 		entities       map[string]*entity
 		index          int
@@ -35,11 +50,12 @@ type (
 )
 
 var (
-	formDecoder = form.NewDecoder()
+	formDecoder         = form.NewDecoder()
+	ErrUnsupportedParse = errors.New(`Unsupported type`)
 )
 
 func newContext(firmeve *firmeve.Firmeve, writer http.ResponseWriter, r *http.Request, handlers ...HandlerFunc) *Context {
-	return &Context{
+	ctx := &Context{
 		Firmeve:        firmeve,
 		Request:        r,
 		ResponseWriter: writer,
@@ -49,6 +65,9 @@ func newContext(firmeve *firmeve.Firmeve, writer http.ResponseWriter, r *http.Re
 		Params:         make(Params, 0),
 		startTime:      time.Now(),
 	}
+	ctx.Input = input.New(ctx.parseBody())
+
+	return ctx
 }
 
 func (c *Context) SetParams(params Params) *Context {
@@ -144,6 +163,30 @@ func (c *Context) Header(key string) string {
 func (c *Context) SetHeader(key, value string) *Context {
 	c.ResponseWriter.Header().Set(key, value)
 	return c
+}
+
+func (c *Context) ContentType() string {
+	return c.Header(`Content-Type`)
+}
+
+func (c *Context) parseBody() parser.IParser {
+	if c.Request.Method == http.MethodGet {
+		return parser.NewForm(c.Request.URL.Query())
+	}
+
+	switch c.ContentType() {
+	case MIMEMultipartPOSTForm:
+		c.Request.ParseMultipartForm(32 << 20)
+		return parser.NewMultipartForm(c.Request.MultipartForm)
+	case MIMEJSON:
+		bytes, _ := ioutil.ReadAll(c.Request.Body)
+		return parser.NewJSON(bytes)
+	case MIMEPOSTForm:
+		c.Request.ParseForm()
+		return parser.NewForm(c.Request.Form)
+	}
+
+	panic(ErrUnsupportedParse)
 }
 
 func (c *Context) Post(key string) string {

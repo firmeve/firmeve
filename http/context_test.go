@@ -41,6 +41,7 @@ func TestContext_SetParams_Param(t *testing.T) {
 func TestContext_Form_Query(t *testing.T) {
 	firmeve := testing2.TestingModeFirmeve()
 	req := testing2.NewMockRequest(http.MethodPost, "/", "").Request
+	req.Header.Set(`Content-Type`,MIMEPOSTForm)
 	req.Form = make(url.Values, 0)
 	req.Form.Set(`username`, `usernameValue`)
 	req.Form.Set(`password`, `passwordValue`)
@@ -49,7 +50,6 @@ func TestContext_Form_Query(t *testing.T) {
 
 	c := newContext(firmeve, testing2.NewMockResponseWriter(), req)
 	fmt.Println(req.URL.Query().Get(`query1`))
-	fmt.Println("=============")
 	assert.Equal(t, `usernameValue`, c.Form(`username`))
 	assert.Equal(t, `passwordValue`, c.Form(`password`))
 	//assert.Equal(t, `queryValue`, c.Query(`query`))
@@ -59,6 +59,7 @@ func TestContext_Form_Query(t *testing.T) {
 func TestContext_FormDecode(t *testing.T) {
 	firmeve := testing2.TestingModeFirmeve()
 	req := testing2.NewMockRequest(http.MethodGet, "/", "").Request
+	req.Header.Set(`Content-Type`,MIMEPOSTForm)
 	req.Form = make(url.Values, 0)
 	req.Form.Set(`username`, `usernameValue`)
 	req.Form.Set(`password`, `passwordValue`)
