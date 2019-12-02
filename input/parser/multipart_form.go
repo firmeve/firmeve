@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"github.com/go-playground/form/v4"
 	"mime/multipart"
 	"net/http"
 )
@@ -14,12 +13,8 @@ type (
 	}
 )
 
-var (
-	multipartFormDecoder = form.NewDecoder()
-)
-
 func (j *MultipartForm) Bind(v interface{}) error {
-	return multipartFormDecoder.Decode(v, j.original.Value)
+	return FormDecoder.Decode(v, j.original.Value)
 }
 
 func (j *MultipartForm) Has(key string) bool {

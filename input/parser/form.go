@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"github.com/go-playground/form/v4"
 	"net/url"
 )
 
@@ -13,12 +12,8 @@ type (
 	}
 )
 
-var (
-	formDecoder = form.NewDecoder()
-)
-
 func (j *Form) Bind(v interface{}) error {
-	return formDecoder.Decode(v, j.original)
+	return FormDecoder.Decode(v, j.original)
 }
 
 func (j *Form) Has(key string) bool {
