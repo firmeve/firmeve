@@ -44,6 +44,7 @@ func report(err interface{}, c context.Context) {
 }
 
 func render(err interface{}, c *Context) {
+	message := `Server error`
 	if v, ok := err.(error); ok {
 		var HttpErrorResponse ErrorResponse
 		var HttpError *Error
@@ -53,12 +54,11 @@ func render(err interface{}, c *Context) {
 			HttpError.Response(c)
 		} else {
 			//@todo 增加debug 判断 strings2.Join(` `, `Server error`, v.Error())
-			message := `Server error`
-			c.AbortWithError(http.StatusInternalServerError, message, v)
+			NewError(http.StatusInternalServerError, message).Response(c)
 		}
 	} else if v, ok := err.(string); ok {
-		c.Abort(http.StatusInternalServerError, string(v))
+		NewError(http.StatusInternalServerError, string(v)).Response(c)
 	} else {
-		c.Abort(http.StatusInternalServerError, `Server error`)
+		NewError(http.StatusInternalServerError, message).Response(c)
 	}
 }
