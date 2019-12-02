@@ -50,7 +50,6 @@ type (
 
 var (
 	ErrUnsupportedParse = errors.New(`Unsupported type`)
-	ErrBinding          = errors.New(`Binding struct error`)
 )
 
 func newContext(firmeve *firmeve.Firmeve, writer http.ResponseWriter, r *http.Request, handlers ...HandlerFunc) *Context {
@@ -111,7 +110,7 @@ func (c *Context) Bind(v interface{}) {
 
 func (c *Context) BindError(v interface{}) error {
 	if err := c.Input.Bind(v); err != nil {
-		return ErrBinding
+		return fmt.Errorf("binding struct error %w", err)
 	}
 
 	return nil
