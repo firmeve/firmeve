@@ -6,18 +6,18 @@ import (
 
 type (
 	Input struct {
-		parser parser.IParser
+		Parser parser.IParser
 	}
 )
 
 func New(parser parser.IParser) *Input {
 	return &Input{
-		parser: parser,
+		Parser: parser,
 	}
 }
 
 func (i *Input) Bind(v interface{}) error {
-	return i.parser.Bind(v)
+	return i.Parser.Bind(v)
 }
 
 //func (i *Input) Input(key string) interface{} {
@@ -25,10 +25,10 @@ func (i *Input) Bind(v interface{}) error {
 //}
 
 func (i *Input) Has(key string) bool {
-	return i.parser.Has(key)
+	return i.Parser.Has(key)
 }
 func (i *Input) Get(key string) interface{} {
-	return i.parser.Get(key)
+	return i.Parser.Get(key)
 }
 
 func (i *Input) GetString(key string) string {
