@@ -3,6 +3,7 @@ package parser
 import (
 	"github.com/go-playground/form/v4"
 	"mime/multipart"
+	"net/http"
 )
 
 type (
@@ -33,11 +34,16 @@ func (j *MultipartForm) Get(key string) interface{} {
 
 	return nil
 }
-//
-//func (j *MultipartForm) File(key string) (multipart.File, *multipart.FileHeader, error) {
-//	http.Request{}.FormFile()
-//	return j.original.(key)
-//}
+
+func (j *MultipartForm) File(key string) (multipart.File, *multipart.FileHeader, error) {
+	if j.original.File != nil {
+		if fhs := j.original.File[key]; len(fhs) > 0 {
+			f, err := fhs[0].Open()
+			return f, fhs[0], err
+		}
+	}
+	return nil, nil, http.ErrMissingFile
+}
 
 func NewMultipartForm(data MultipartFormData) *MultipartForm {
 	return &MultipartForm{
