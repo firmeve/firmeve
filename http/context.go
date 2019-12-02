@@ -104,13 +104,13 @@ func (c *Context) EntityValue(key string) interface{} {
 
 func (c *Context) Bind(v interface{}) {
 	if err := c.BindError(v); err != nil {
-		panic(err)
+		c.AbortWithError(400, err.Error(), err)
 	}
 }
 
 func (c *Context) BindError(v interface{}) error {
 	if err := c.Input.Bind(v); err != nil {
-		return fmt.Errorf("binding struct error %w", err)
+		return err
 	}
 
 	return nil
