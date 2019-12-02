@@ -105,11 +105,11 @@ func (c *Context) EntityValue(key string) interface{} {
 }
 
 func (c *Context) FormDecode(v interface{}) interface{} {
-	if c.Request.Form == nil {
-		c.Request.ParseMultipartForm(32 << 20)
-	}
+	return c.Bind(v)
+}
 
-	if err := formDecoder.Decode(v, c.Request.Form); err != nil {
+func (c *Context) Bind(v interface{}) interface{} {
+	if err := c.Input.Bind(v); err != nil {
 		panic(err)
 	}
 
