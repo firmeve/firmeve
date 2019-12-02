@@ -9,7 +9,6 @@ import (
 	"github.com/firmeve/firmeve/input"
 	"github.com/firmeve/firmeve/input/parser"
 	"github.com/firmeve/firmeve/support/strings"
-	"github.com/go-playground/form/v4"
 	"github.com/kataras/iris/core/errors"
 	"io/ioutil"
 	"mime/multipart"
@@ -50,8 +49,8 @@ type (
 )
 
 var (
-	formDecoder         = form.NewDecoder()
 	ErrUnsupportedParse = errors.New(`Unsupported type`)
+	ErrBinding          = errors.New(`Binding struct error`)
 )
 
 func newContext(firmeve *firmeve.Firmeve, writer http.ResponseWriter, r *http.Request, handlers ...HandlerFunc) *Context {
@@ -104,16 +103,18 @@ func (c *Context) EntityValue(key string) interface{} {
 	return nil
 }
 
-func (c *Context) FormDecode(v interface{}) interface{} {
-	return c.Bind(v)
-}
-
-func (c *Context) Bind(v interface{}) interface{} {
-	if err := c.Input.Bind(v); err != nil {
+func (c *Context) Bind(v interface{}) {
+	if err := c.BindError(v); err != nil {
 		panic(err)
 	}
+}
 
-	return v
+func (c *Context) BindError(v interface{}) error {
+	if err := c.Input.Bind(v); err != nil {
+		return ErrBinding
+	}
+
+	return nil
 }
 
 // FormFile returns the first file for the provided form key.
@@ -183,6 +184,7 @@ func (c *Context) parseBody() parser.IParser {
 		return parser.NewJSON(bytes)
 	case MIMEPOSTForm:
 		c.Request.ParseForm()
+		fmt.Println(c.Request.Form)
 		return parser.NewForm(c.Request.Form)
 	}
 

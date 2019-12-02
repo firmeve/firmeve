@@ -60,7 +60,7 @@ func TestContext_Form_Query(t *testing.T) {
 
 func TestContext_FormDecode(t *testing.T) {
 	firmeve := testing2.TestingModeFirmeve()
-	req := testing2.NewMockRequest(http.MethodGet, "/", "").Request
+	req := testing2.NewMockRequest(http.MethodPost, "/", "").Request
 	req.Header.Set(`Content-Type`,MIMEPOSTForm)
 	req.Form = make(url.Values, 0)
 	req.Form.Set(`username`, `usernameValue`)
@@ -76,7 +76,9 @@ func TestContext_FormDecode(t *testing.T) {
 	req.Form.Set(`nested[0].hobby[0]`, `hobby00`)
 	req.Form.Set(`nested[0].hobby[1]`, `hobby01`)
 	c := newContext(firmeve, testing2.NewMockResponseWriter(), req)
-	data := c.FormDecode(new(Data)).(*Data)
+	data := new(Data)
+	c.Bind(data)
+	fmt.Printf("%#v\n",data)
 	assert.Equal(t, `usernameValue`, data.Username)
 	assert.Equal(t, `passwordValue`, data.Password)
 	assert.Equal(t, `confirm_passwordValue`, data.ConfirmPassword)
