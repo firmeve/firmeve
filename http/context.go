@@ -131,7 +131,7 @@ func (c *Context) Abort(code int, message string) {
 }
 
 func (c *Context) AbortWithError(code int, message string, err error) {
-	NewErrorWithError(code, message, err).Response(c)
+	panic(NewErrorWithError(code, message, err))
 }
 
 func (c *Context) Param(key string) string {
