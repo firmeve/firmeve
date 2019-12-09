@@ -6,7 +6,7 @@ require (
 	github.com/go-playground/form v3.1.4+incompatible // indirect
 	github.com/go-playground/form/v4 v4.1.1
 	github.com/go-redis/redis v6.15.6+incompatible
-	github.com/guregu/null v3.4.0+incompatible // indirect
+	github.com/guregu/null v3.4.0+incompatible
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible // indirect
 	github.com/jinzhu/gorm v1.9.11
 	github.com/julienschmidt/httprouter v1.3.0

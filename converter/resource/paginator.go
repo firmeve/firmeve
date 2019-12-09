@@ -1,65 +1,86 @@
 package resource
 
 import (
+	"fmt"
+	"github.com/firmeve/firmeve/support/strings"
+	"github.com/guregu/null"
+
 	//"github.com/firmeve/firmeve/support/reflect"
 	//"github.com/jinzhu/gorm"
 	"github.com/ulule/paging"
+	"math"
 	"net/http"
 )
 
 type Paginator struct {
-	//db         *gorm.DB
-	request    *http.Request
-	resource   *paging.GORMStore
-	option     *Option
-	pageOption *paging.Options
-	meta       Meta
-	link       Link
+	resolveData DataCollection
+	store       *paging.GORMStore
+	request     *http.Request
+	pageOption  *paging.Options
+	option      *Option
+	meta        Meta
+	link        Link
 }
 
-func NewPaginator(resource *paging.GORMStore, request *http.Request, option *Option, pageOption *paging.Options) *Paginator {
+func NewPaginator(store *paging.GORMStore, option *Option, request *http.Request, pageOption *paging.Options) *Paginator {
 	return &Paginator{
-		//db:         db,
-		request:    request,
-		resource:   resource,//reflect.SliceInterface(reflect2.ValueOf(resource)),
-		pageOption: pageOption,
-		option:     option,
-		meta:       make(Meta, 0),
-		link:       make(Link, 0),
+		store:       store,
+		request:     request,
+		pageOption:  pageOption,
+		option:      option,
+		meta:        make(Meta, 0),
+		link:        make(Link, 0),
+		resolveData: make(DataCollection, 0),
 	}
 }
 
 func (p *Paginator) CollectionData() DataCollection {
-	//store, err := paging.NewGORMStore(p.db, &p.resource)
-	//if err != nil {
-	//	panic(err)
-	//}
+	if len(p.resolveData) > 0 {
+		return p.resolveData
+	}
 
-	paginator, _ := paging.NewOffsetPaginator(p.resource, p.request, p.pageOption)
+	paginator, _ := paging.NewOffsetPaginator(p.store, p.request, p.pageOption)
 
-	err := paginator.Page()
-	if err != nil {
+	if err := paginator.Page(); err != nil {
 		panic(err)
 	}
 
-	p.SetLink(Link{
-		"prev":  paginator.PreviousURI.String,
-		"next":  paginator.NextURI.String,
-		"first": "",
-		"last":  "",
-	})
-
+	link := Link{
+		"prev":  p.fullUrl(paginator.PreviousURI),
+		"next":  p.fullUrl(paginator.NextURI),
+		"first": p.fullUrl(null.StringFrom(paging.GenerateOffsetURI(p.pageOption.DefaultLimit, 0, p.pageOption))),
+		"last":  p.fullUrl(null.StringFrom(paging.GenerateOffsetURI(p.pageOption.DefaultLimit, int64(paginator.Count - (paginator.Offset + paginator.Limit)), p.pageOption))),
+	}
+	//var (
+	//	first, last null.String
+	//)
+	//if paginator.HasPrevious() {
+	//	first = null.StringFrom(paging.GenerateOffsetURI(p.pageOption.DefaultLimit, 0, p.pageOption))
+	//} else {
+	//	first = null.NewString("", false)
+	//}
+	//if paginator.HasNext() {
+	//	last = null.StringFrom(paging.GenerateOffsetURI(p.pageOption.DefaultLimit, int64(math.Floor(float64(paginator.Count)/float64(p.pageOption.DefaultLimit)))*p.pageOption.DefaultLimit, p.pageOption))
+	//} else {
+	//	last = null.NewString("", false)
+	//}
+	//link["first"] = p.fullUrl(first)
+	//link["last"] = p.fullUrl(last)
+	p.SetLink(link)
+	fmt.Println("================")
+	fmt.Println(paginator.Offset+paginator.Limit, paginator.Count, int64(math.Ceil(float64(paginator.Offset+paginator.Limit)/float64(paginator.Count))))
+	fmt.Println("================")
 	p.SetMeta(Meta{
-		"current_page": 1,               //当前页
-		"total":        paginator.Count, //总条数
-		"per_page":     "",              //每页多少条
-		"from":         "",              //从多少条
-		"last_page":    "",
-		"to":           "", //到多少条
-		"path":         "",
+		"current_page": int64(math.Ceil(float64(paginator.Offset)/float64(p.pageOption.DefaultLimit)) + 1), //当前页
+		"total":        paginator.Count,                                                                    //总条数
+		"per_page":     paginator.Limit,                                                                    //每页多少条
+		"from":         paginator.Offset + 1,                                                               //从多少条
+		"to":           paginator.Offset + paginator.Limit,                                                 //到多少条
+		"last_page":    int64(math.Ceil(float64(paginator.Count) / float64(p.pageOption.DefaultLimit))),
 	})
 
-	return NewCollection(p.resource.GetItems().([]interface{}), p.option).CollectionData()
+	p.resolveData = NewCollection(p.store.GetItems(), p.option).CollectionData()
+	return p.resolveData
 }
 
 func (p *Paginator) SetLink(links Link) {
@@ -76,4 +97,25 @@ func (p *Paginator) SetMeta(meta Meta) {
 
 func (p *Paginator) Meta() Meta {
 	return p.meta
+}
+
+func (p *Paginator) fullUrl(uri null.String) string {
+	request := p.request
+	var protocol string
+	if request.TLS != nil || request.Header.Get(`X-Forwarded-Proto`) == `https` {
+		protocol = `https://`
+	} else {
+		protocol = `http://`
+	}
+
+	query := request.URL.Query()
+	query.Del(p.pageOption.LimitKeyName)
+	query.Del(p.pageOption.OffsetKeyName)
+	var queryString string
+	if uri.Valid {
+		queryString = strings.Join(``, protocol, request.URL.Host, request.URL.Path, strings.Join(`&`, uri.String, query.Encode()))
+	} else {
+		queryString = ``
+	}
+	return queryString
 }
