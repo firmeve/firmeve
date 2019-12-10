@@ -45,19 +45,19 @@ func (p *Paginator) CollectionData() DataCollection {
 	}
 
 	p.SetLink(Link{
-		"prev":  p.fullUrl(paginator.PreviousURI),
-		"next":  p.fullUrl(paginator.NextURI),
-		"first": p.fullUrl(p.firstUrl()),
-		"last":  p.fullUrl(p.lastUrl(paginator.Count)),
+		"prev":  p.fullUrl(paginator.PreviousURI, paginator.Options),
+		"next":  p.fullUrl(paginator.NextURI, paginator.Options),
+		"first": p.fullUrl(p.firstUrl(paginator.Limit, paginator.Options), paginator.Options),
+		"last":  p.fullUrl(p.lastUrl(paginator.Count, paginator.Limit, paginator.Options), paginator.Options),
 	})
 
 	p.SetMeta(Meta{
-		"current_page": int64(math.Ceil(float64(paginator.Offset)/float64(p.pageOption.DefaultLimit)) + 1), //当前页
-		"total":        paginator.Count,                                                                    //总条数
-		"per_page":     paginator.Limit,                                                                    //每页多少条
-		"from":         paginator.Offset + 1,                                                               //从多少条
-		"to":           p.metaTo(paginator.Count, paginator.Offset),                                        //到多少条
-		"last_page":    int64(math.Ceil(float64(paginator.Count) / float64(p.pageOption.DefaultLimit))),
+		"current_page": int64(math.Ceil(float64(paginator.Offset)/float64(paginator.Limit)) + 1), //当前页
+		"total":        paginator.Count,                                                          //总条数
+		"per_page":     paginator.Limit,                                                          //每页多少条
+		"from":         paginator.Offset + 1,                                                     //从多少条
+		"to":           p.metaTo(paginator.Count, paginator.Limit, paginator.Offset),             //到多少条
+		"last_page":    int64(math.Ceil(float64(paginator.Count) / float64(paginator.Limit))),
 	})
 
 	p.resolveData = NewCollection(p.store.GetItems(), p.option).CollectionData()
@@ -80,18 +80,18 @@ func (p *Paginator) Meta() Meta {
 	return p.meta
 }
 
-func (p *Paginator) firstUrl() null.String {
-	return null.StringFrom(paging.GenerateOffsetURI(p.pageOption.DefaultLimit, 0, p.pageOption))
+func (p *Paginator) firstUrl(limit int64, options *paging.Options) null.String {
+	return null.StringFrom(paging.GenerateOffsetURI(limit, 0, options))
 }
 
-func (p *Paginator) lastUrl(count int64) null.String {
+func (p *Paginator) lastUrl(count, limit int64, options *paging.Options) null.String {
 	return null.StringFrom(paging.GenerateOffsetURI(
-		p.pageOption.DefaultLimit,
-		count-int64(count%p.pageOption.DefaultLimit), p.pageOption))
+		limit,
+		count-int64(count%limit), options))
 }
 
-func (p *Paginator) metaTo(count, offset int64) int64 {
-	total := p.pageOption.DefaultLimit + offset
+func (p *Paginator) metaTo(count, limit, offset int64) int64 {
+	total := limit + offset
 	if count < total {
 		return count
 	}
@@ -99,7 +99,7 @@ func (p *Paginator) metaTo(count, offset int64) int64 {
 	return total
 }
 
-func (p *Paginator) fullUrl(uri null.String) string {
+func (p *Paginator) fullUrl(uri null.String, options *paging.Options) string {
 	request := p.request
 	var protocol string
 	if request.TLS != nil || request.Header.Get(`X-Forwarded-Proto`) == `https` {
@@ -109,8 +109,8 @@ func (p *Paginator) fullUrl(uri null.String) string {
 	}
 
 	query := request.URL.Query()
-	query.Del(p.pageOption.LimitKeyName)
-	query.Del(p.pageOption.OffsetKeyName)
+	query.Del(options.LimitKeyName)
+	query.Del(options.OffsetKeyName)
 	var queryString string
 	if uri.Valid {
 		queryString = strings.Join(``, protocol, request.URL.Host, request.URL.Path, strings.Join(`&`, uri.String, query.Encode()))

@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"fmt"
 	"github.com/firmeve/firmeve"
 	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/container"
@@ -37,6 +38,53 @@ func init() {
 	f.Register(f.Make(new(database.Provider)).(firmeve.Provider))
 	f.Boot()
 	db = f.Get(`db.connection`).(*gorm.DB)
+}
+
+func TestNewPaginator2(t *testing.T) {
+	db.Exec("TRUNCATE table `tests`")
+	for i := 0; i <= 35; i++ {
+		db.Table(`tests`).Create(&Test{
+			Name: strings.Rand(30),
+			Uuid: strings.Rand(36),
+		})
+	}
+
+	db = db.New().Order("id asc").Debug()
+
+	var tests []*Test
+	limit := int64(15) //strconv.ParseInt(req.URL.Query().Get("limit"), 10, 64)
+	pageOption := &paging.Options{
+		DefaultLimit:  limit,
+		MaxLimit:      limit + 10,
+		LimitKeyName:  "limit",
+		OffsetKeyName: "offset",
+	}
+	option := &Option{
+		Transformer: nil,
+		Fields:      []string{"id", "name", "uuid"},
+	}
+	store, _ := paging.NewGORMStore(db, &tests)
+
+	req := testing2.NewMockRequest(http.MethodGet, "http://firmeve.com/any/testing?any_param=1&limit=15000&offset=1000", "").Request
+	paginator := NewPaginator(store, option, req, pageOption)
+	fmt.Println("==================")
+	fmt.Printf("%#v\n",paginator.CollectionData())
+	meta := paginator.Meta()
+	link := paginator.Link()
+	fmt.Printf("%#v\n",meta)
+	fmt.Println("==================")
+	fmt.Printf("%#v\n",link)
+
+	//assert.Equal(t, int64(1), meta[`current_page`].(int64))
+	//assert.Equal(t, int64(36), meta[`total`].(int64))
+	//assert.Equal(t, int64(15), meta[`per_page`].(int64))
+	//assert.Equal(t, int64(1), meta[`from`].(int64))
+	//assert.Equal(t, int64(15), meta[`to`].(int64))
+	//assert.Equal(t, int64(3), meta[`last_page`].(int64))
+	//assert.Equal(t, "http://firmeve.com/any/testing?limit=15&offset=0&any_param=1", link["first"])
+	//assert.Equal(t, "http://firmeve.com/any/testing?limit=15&offset=30&any_param=1", link["last"])
+	//assert.Equal(t, "", link["prev"])
+	//assert.Equal(t, "http://firmeve.com/any/testing?limit=15&offset=15&any_param=1", link["next"])
 }
 
 func TestNewPaginator(t *testing.T) {
