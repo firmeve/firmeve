@@ -1,7 +1,6 @@
 package resource
 
 import (
-	"fmt"
 	"github.com/firmeve/firmeve/support/strings"
 	"github.com/guregu/null"
 
@@ -45,37 +44,19 @@ func (p *Paginator) CollectionData() DataCollection {
 		panic(err)
 	}
 
-	link := Link{
+	p.SetLink(Link{
 		"prev":  p.fullUrl(paginator.PreviousURI),
 		"next":  p.fullUrl(paginator.NextURI),
-		"first": p.fullUrl(null.StringFrom(paging.GenerateOffsetURI(p.pageOption.DefaultLimit, 0, p.pageOption))),
-		"last":  p.fullUrl(null.StringFrom(paging.GenerateOffsetURI(p.pageOption.DefaultLimit, int64(paginator.Count - (paginator.Offset + paginator.Limit)), p.pageOption))),
-	}
-	//var (
-	//	first, last null.String
-	//)
-	//if paginator.HasPrevious() {
-	//	first = null.StringFrom(paging.GenerateOffsetURI(p.pageOption.DefaultLimit, 0, p.pageOption))
-	//} else {
-	//	first = null.NewString("", false)
-	//}
-	//if paginator.HasNext() {
-	//	last = null.StringFrom(paging.GenerateOffsetURI(p.pageOption.DefaultLimit, int64(math.Floor(float64(paginator.Count)/float64(p.pageOption.DefaultLimit)))*p.pageOption.DefaultLimit, p.pageOption))
-	//} else {
-	//	last = null.NewString("", false)
-	//}
-	//link["first"] = p.fullUrl(first)
-	//link["last"] = p.fullUrl(last)
-	p.SetLink(link)
-	fmt.Println("================")
-	fmt.Println(paginator.Offset+paginator.Limit, paginator.Count, int64(math.Ceil(float64(paginator.Offset+paginator.Limit)/float64(paginator.Count))))
-	fmt.Println("================")
+		"first": p.fullUrl(p.firstUrl()),
+		"last":  p.fullUrl(p.lastUrl(paginator.Count)),
+	})
+
 	p.SetMeta(Meta{
 		"current_page": int64(math.Ceil(float64(paginator.Offset)/float64(p.pageOption.DefaultLimit)) + 1), //当前页
 		"total":        paginator.Count,                                                                    //总条数
 		"per_page":     paginator.Limit,                                                                    //每页多少条
 		"from":         paginator.Offset + 1,                                                               //从多少条
-		"to":           paginator.Offset + paginator.Limit,                                                 //到多少条
+		"to":           p.metaTo(paginator.Count, paginator.Offset),                                        //到多少条
 		"last_page":    int64(math.Ceil(float64(paginator.Count) / float64(p.pageOption.DefaultLimit))),
 	})
 
@@ -97,6 +78,25 @@ func (p *Paginator) SetMeta(meta Meta) {
 
 func (p *Paginator) Meta() Meta {
 	return p.meta
+}
+
+func (p *Paginator) firstUrl() null.String {
+	return null.StringFrom(paging.GenerateOffsetURI(p.pageOption.DefaultLimit, 0, p.pageOption))
+}
+
+func (p *Paginator) lastUrl(count int64) null.String {
+	return null.StringFrom(paging.GenerateOffsetURI(
+		p.pageOption.DefaultLimit,
+		count-int64(count%p.pageOption.DefaultLimit), p.pageOption))
+}
+
+func (p *Paginator) metaTo(count, offset int64) int64 {
+	total := p.pageOption.DefaultLimit + offset
+	if count < total {
+		return count
+	}
+
+	return total
 }
 
 func (p *Paginator) fullUrl(uri null.String) string {

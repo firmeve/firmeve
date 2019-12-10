@@ -100,7 +100,7 @@ func TestNewPaginator(t *testing.T) {
 	assert.Equal(t, "http://firmeve.com/any/testing?limit=15&offset=30&any_param=1", link1["last"])
 	assert.Equal(t, "http://firmeve.com/any/testing?limit=15&offset=0&any_param=1", link1["prev"])
 	assert.Equal(t, "http://firmeve.com/any/testing?limit=15&offset=30&any_param=1", link1["next"])
-
+	//
 	req2 := testing2.NewMockRequest(http.MethodGet, "http://firmeve.com/any/testing?any_param=1&limit=15&offset=30", "").Request
 	paginator2 := NewPaginator(store, option, req2, pageOption)
 	assert.Equal(t, 6, len(paginator2.CollectionData()))
@@ -111,12 +111,12 @@ func TestNewPaginator(t *testing.T) {
 	assert.Equal(t, int64(36), meta2[`total`].(int64))
 	assert.Equal(t, int64(15), meta2[`per_page`].(int64))
 	assert.Equal(t, int64(31), meta2[`from`].(int64))
-	assert.Equal(t, int64(45), meta2[`to`].(int64))
+	assert.Equal(t, int64(36), meta2[`to`].(int64))
 	assert.Equal(t, int64(3), meta2[`last_page`].(int64))
 	assert.Equal(t, "http://firmeve.com/any/testing?limit=15&offset=0&any_param=1", link2["first"])
 	assert.Equal(t, "http://firmeve.com/any/testing?limit=15&offset=30&any_param=1", link2["last"])
 	assert.Equal(t, "http://firmeve.com/any/testing?limit=15&offset=15&any_param=1", link2["prev"])
-	assert.Equal(t, "http://firmeve.com/any/testing?limit=15&offset=30&any_param=1", link2["next"])
+	assert.Equal(t, "", link2["next"])
 
 
 
