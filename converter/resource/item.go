@@ -13,10 +13,11 @@ import (
 
 type (
 	Item struct {
-		resource interface{}
-		option   *Option
-		meta     Meta
-		link     Link
+		resource    interface{}
+		resolveData Data
+		option      *Option
+		meta        Meta
+		link        Link
 	}
 
 	mapCache map[string]map[string]string
@@ -29,8 +30,9 @@ var (
 
 func NewItem(resource interface{}, option *Option) *Item {
 	return &Item{
-		resource: resolveResource(resource, option),
-		option:   option,
+		resource:    resolveResource(resource, option),
+		resolveData: make(Data, 0),
+		option:      option,
 	}
 }
 
@@ -57,6 +59,7 @@ func (i *Item) Meta() Meta {
 func (i *Item) SetLink(link Link) {
 	i.link = link
 }
+
 func (i *Item) Link() Link {
 	return i.link
 }
@@ -66,7 +69,13 @@ func (i *Item) resolveFields() []string {
 }
 
 func (i *Item) Data() Data {
-	return i.resolve()
+	if len(i.resolveData) > 0 {
+		return i.resolveData
+	}
+
+	i.resolveData = i.resolve()
+
+	return i.resolveData
 }
 
 func (i *Item) resolve() Data {

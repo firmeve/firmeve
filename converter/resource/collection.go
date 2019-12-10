@@ -8,10 +8,11 @@ import (
 )
 
 type Collection struct {
-	resource []interface{}
-	option   *Option
-	meta     Meta
-	link     Link
+	resource    []interface{}
+	resolveData DataCollection
+	option      *Option
+	meta        Meta
+	link        Link
 }
 
 // 还不如,直接baseresource直接解析item,item里面包resource,然后 collection直接再包一层item
@@ -20,8 +21,9 @@ type Collection struct {
 
 func NewCollection(resource interface{}, option *Option) *Collection {
 	return &Collection{
-		resource: reflect.SliceInterface(reflect2.ValueOf(resource)),
-		option:   option,
+		resource:    reflect.SliceInterface(reflect2.ValueOf(resource)),
+		option:      option,
+		resolveData: make(DataCollection, 0),
 	}
 }
 
@@ -42,10 +44,13 @@ func (c *Collection) Link() Link {
 }
 
 func (c *Collection) CollectionData() DataCollection {
-	dataMaps := make(DataCollection, 0)
+	if len(c.resolveData) > 0 {
+		return c.resolveData
+	}
+
 	for _, source := range c.resource {
 		if v, ok := source.(*Item); ok {
-			dataMaps = append(dataMaps, v.SetOption(c.option).Data())
+			c.resolveData = append(c.resolveData, v.SetOption(c.option).Data())
 		} else {
 			//@todo 这里后面操作可能会有问题,collection的原始transformer会被覆盖
 			if c.option.Transformer != nil {
@@ -53,9 +58,9 @@ func (c *Collection) CollectionData() DataCollection {
 				//temp := *c.option.Transformer
 				//c.option.Transformer = &temp
 			}
-			dataMaps = append(dataMaps, NewItem(source, c.option).Data())
+			c.resolveData = append(c.resolveData, NewItem(source, c.option).Data())
 		}
 	}
 
-	return dataMaps
+	return c.resolveData
 }

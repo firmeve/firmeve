@@ -45,6 +45,7 @@ func TestCollection_Resolve(t *testing.T) {
 	})
 	collection.SetMeta(Meta{"a": "a"})
 	v := collection.CollectionData()
+	assert.Equal(t,v,collection.CollectionData())
 	assert.Equal(t, `a`, collection.Meta()[`a`])
 	assert.Equal(t, uint(10), v[0][`id`].(uint))
 	assert.Equal(t, uint(11), v[1][`id`].(uint))

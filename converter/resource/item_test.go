@@ -34,14 +34,16 @@ func TestPrtStruct(t *testing.T) {
 		SubMock: subM,
 	}
 
-	v := NewItem(m, &Option{
+	item := NewItem(m, &Option{
 		Fields: []string{`id`, `title`, `inner_mock`, `_content`},
-	}).Data()
+	})
+	v := item.Data()
 	//fmt.Println(v)
 	//fmt.Printf("%#v", v)
 	//vs, _ := json.Marshal(v)
 	//fmt.Println(string(vs))
 
+	assert.Equal(t,v,item.Data())
 	assert.Equal(t, "main title", v[`title`].(string))
 	assert.Equal(t, "content", v[`_content`].(string))
 	assert.Equal(t, uint(10), v[`id`].(uint))
