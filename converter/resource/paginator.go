@@ -113,7 +113,7 @@ func (p *Paginator) fullUrl(uri null.String, options *paging.Options) string {
 	query.Del(options.OffsetKeyName)
 	var queryString string
 	if uri.Valid {
-		queryString = strings.Join(``, protocol, request.URL.Host, request.URL.Path, strings.Join(`&`, uri.String, query.Encode()))
+		queryString = strings.Join(``, protocol, request.Host, request.URL.Path, strings.Join(`&`, uri.String, query.Encode()))
 	} else {
 		queryString = ``
 	}
