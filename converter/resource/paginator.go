@@ -3,9 +3,6 @@ package resource
 import (
 	"github.com/firmeve/firmeve/support/strings"
 	"github.com/guregu/null"
-
-	//"github.com/firmeve/firmeve/support/reflect"
-	//"github.com/jinzhu/gorm"
 	"github.com/ulule/paging"
 	"math"
 	"net/http"
@@ -25,12 +22,23 @@ func NewPaginator(store *paging.GORMStore, option *Option, request *http.Request
 	return &Paginator{
 		store:       store,
 		request:     request,
-		pageOption:  pageOption,
+		pageOption:  setDefaultPageOption(pageOption),
 		option:      option,
 		meta:        make(Meta, 0),
 		link:        make(Link, 0),
 		resolveData: make(DataCollection, 0),
 	}
+}
+
+func setDefaultPageOption(option *paging.Options) *paging.Options {
+	if option.LimitKeyName == `` {
+		option.LimitKeyName = `limit`
+	}
+	if option.OffsetKeyName == `` {
+		option.OffsetKeyName = `offset`
+	}
+
+	return option
 }
 
 func (p *Paginator) CollectionData() DataCollection {

@@ -104,8 +104,6 @@ func TestNewPaginator(t *testing.T) {
 	pageOption := &paging.Options{
 		DefaultLimit:  limit,
 		MaxLimit:      limit + 10,
-		LimitKeyName:  "limit",
-		OffsetKeyName: "offset",
 	}
 	option := &Option{
 		Transformer: nil,
