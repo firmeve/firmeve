@@ -1,7 +1,6 @@
 package resource
 
 import (
-	"fmt"
 	"github.com/firmeve/firmeve/support/strings"
 	"github.com/guregu/null"
 	"github.com/ulule/paging"
@@ -129,6 +128,6 @@ func (p *Paginator) fullUrl(uri null.String, options *paging.Options) string {
 	} else {
 		queryString = ``
 	}
-	fmt.Println(queryString)
+	
 	return queryString
 }
