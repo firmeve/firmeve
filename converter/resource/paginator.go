@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"fmt"
 	"github.com/firmeve/firmeve/support/strings"
 	"github.com/guregu/null"
 	"github.com/ulule/paging"
@@ -121,9 +122,13 @@ func (p *Paginator) fullUrl(uri null.String, options *paging.Options) string {
 	query.Del(options.OffsetKeyName)
 	var queryString string
 	if uri.Valid {
-		queryString = strings.Join(``, protocol, request.Host, request.URL.Path, strings.Join(`&`, uri.String, query.Encode()))
+		queryString = strings.Join(``, protocol, request.Host, request.URL.Path, uri.String)
+		if len(query) > 0 {
+			queryString = strings.Join(`&`, queryString, query.Encode())
+		}
 	} else {
 		queryString = ``
 	}
+	fmt.Println(queryString)
 	return queryString
 }
