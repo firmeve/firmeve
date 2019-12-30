@@ -10,6 +10,7 @@ import (
 	"github.com/firmeve/firmeve/input/parser"
 	"github.com/firmeve/firmeve/support/strings"
 	"github.com/kataras/iris/core/errors"
+	"github.com/ulule/paging"
 	"io/ioutil"
 	"mime/multipart"
 	"net/http"
@@ -251,6 +252,10 @@ func (c *Context) Item(resource interface{}, option *resource2.Option) *Context 
 
 func (c *Context) Collection(resource interface{}, option *resource2.Option) *Context {
 	return c.Data(resource2.NewCollection(resource, option))
+}
+
+func (c *Context) Paginator(store *paging.GORMStore, option *resource2.Option, pageOption *paging.Options) *Context {
+	return c.Data(resource2.NewPaginator(store, option, c.Request, pageOption))
 }
 
 // JSONP serializes the given struct as JSON into the responseWriter body.

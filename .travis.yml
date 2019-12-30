@@ -23,6 +23,7 @@ notifications:
 
 before_install:
   - mysql -e 'CREATE DATABASE IF NOT EXISTS test DEFAULT CHARSET utf8mb4 COLLATE utf8mb4_unicode_ci;'
+  - mysql -e 'use test;CREATE TABLE IF NOT EXISTS `tests` (id bigint(20) unsigned primary key auto_increment,uuid char(36) default null,name varchar(100) default null) ENGINE = InnoDB default charset = utf8mb4 collate utf8mb4_unicode_ci;'
 #  - go get github.com/mattn/goveralls
 #  - go get github.com/go-playground/overalls
 #  - go get github.com/smartystreets/goconvey
@@ -34,13 +35,13 @@ install:
 #  - echo `pwd`
 
 script:
-#  - go vet -atomic -asmdecl ./...
-#  - go test -v -race -count=1 -covermode=atomic -coverprofile=coverage.out ./...
-#  - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
+  #  - go vet -atomic -asmdecl ./...
+  #  - go test -v -race -count=1 -covermode=atomic -coverprofile=coverage.out ./...
+  #  - $HOME/gopath/bin/goveralls -coverprofile=coverage.out -service=travis-ci -repotoken $COVERALLS_TOKEN
 
 
-#  - $GOPATH/bin/goveralls -service=travis-ci
-#  - go test -v -race -count=1 ./...
+  #  - $GOPATH/bin/goveralls -service=travis-ci
+  #  - go test -v -race -count=1 ./...
 
   - go test -race -count=1 -coverprofile=coverage.txt -covermode=atomic ./...
 

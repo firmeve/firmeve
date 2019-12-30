@@ -17,14 +17,15 @@ func InterfaceValue(reflectType reflect.Type, reflectValue reflect.Value) interf
 }
 
 func SliceInterface(reflectValue reflect.Value) []interface{} {
-	kind := reflectValue.Kind()
+	newReflectValue := reflect.Indirect(reflectValue)
+	kind := newReflectValue.Kind()
 	if kind != reflect.Slice && kind != reflect.Array {
 		panic(`only support slice or array type`)
 	}
 
-	newInterfaces := make([]interface{}, reflectValue.Len())
-	for i := 0; i < reflectValue.Len(); i++ {
-		newInterfaces[i] = reflectValue.Index(i).Interface()
+	newInterfaces := make([]interface{}, newReflectValue.Len())
+	for i := 0; i < newReflectValue.Len(); i++ {
+		newInterfaces[i] = newReflectValue.Index(i).Interface()
 	}
 
 	return newInterfaces
