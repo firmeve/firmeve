@@ -3,7 +3,8 @@ package cmd
 import (
 	"context"
 	"fmt"
-	http2 "net/http"
+	"golang.org/x/net/http2"
+	net_http "net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -12,7 +13,7 @@ import (
 	"github.com/firmeve/firmeve/bootstrap"
 	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/http"
-	logging "github.com/firmeve/firmeve/logger"
+	"github.com/firmeve/firmeve/logger"
 	"github.com/spf13/cobra"
 )
 
@@ -33,6 +34,10 @@ func NewServer(bootstrap *bootstrap.Bootstrap) *cmd {
 func (c *cmd) Cmd() *cobra.Command {
 	c.command.Use = "http:serve"
 	c.command.Flags().StringP("host", "H", ":80", "Http serve address")
+	c.command.Flags().BoolP("http2", "", false, "Open http2 protocol")
+	c.command.Flags().StringP("cert-file", "", "", "Http2 cert file path")
+	c.command.Flags().StringP("key-file", "", "", "Http2 key file path")
+
 	c.command.Run = func(cmd *cobra.Command, args []string) {
 		c.run(cmd, args)
 	}
@@ -48,14 +53,34 @@ func (c *cmd) run(cmd *cobra.Command, args []string) {
 	c.config = c.bootstrap.Firmeve.Get(`config`).(*config.Config)
 	c.logger = c.bootstrap.Firmeve.Get(`logger`).(logging.Loggable)
 
-	srv := &http2.Server{
-		Addr:    cmd.Flag("host").Value.String(),
+	var (
+		host      = cmd.Flag("host").Value.String()
+		certFile  = cmd.Flag(`cert-file`).Value.String()
+		keyFile   = cmd.Flag(`key-file`).Value.String()
+		openHttp2 = cmd.Flag(`http2`).Value.String()
+	)
+	srv := &net_http.Server{
+		Addr:    host,
 		Handler: c.bootstrap.Firmeve.Get(`http.router`).(*http.Router),
 	}
 
 	go func() {
-		// service connections
-		if err := srv.ListenAndServe(); err != nil && err != http2.ErrServerClosed {
+		var err error
+
+		// ssl
+		if certFile != `` && keyFile != `` {
+			err = srv.ListenAndServeTLS(certFile, keyFile)
+
+			// http2
+			if openHttp2 == `true` {
+				//@todo conf is empty
+				err = http2.ConfigureServer(srv, &http2.Server{})
+			}
+		} else {
+			err = srv.ListenAndServe()
+		}
+
+		if err != nil && err != net_http.ErrServerClosed {
 			c.logger.Fatal(fmt.Sprintf("listen: %s\n", err))
 		}
 	}()
