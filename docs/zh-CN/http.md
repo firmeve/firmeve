@@ -44,4 +44,28 @@ v1 := router.Group("/api/v1").Before(func(ctx *http.Context) {
 }
 ```
 
+
+### 启动Http服务
+
+#### Http服务
+```bash
+go run main.go http:serve --host=0.0.0.0:22182
+```
+
+#### Https服务
+```bash
+go run main.go http:serve --host=0.0.0.0:22182 --key-file=server.key --cert-file=server.crt
+```
+
+#### Http2服务
+```bash
+go run main.go http:serve --host=0.0.0.0:22182 --key-file=server.key --cert-file=server.crt --http2
+```
+
+> 假设`server.key`,`server.crt`和`main`在同一目录
+
+
 ### Context
+
+todo
+
