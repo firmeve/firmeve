@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/firmeve/firmeve"
+	"github.com/firmeve/firmeve/event"
 	"net/http"
 	"strings"
 
@@ -88,10 +89,16 @@ func (r *Router) createRoute(method string, path string, handler HandlerFunc) *R
 			ctxParams[param.Key] = param.Value
 		}
 
-		newContext(r.Firmeve, w, req, r.routes[key].Handlers()...).
+		ctx := newContext(r.Firmeve, w, req, r.routes[key].Handlers()...).
 			SetParams(ctxParams).
-			SetRoute(r.routes[key]).
-			Next()
+			SetRoute(r.routes[key])
+
+		r.Firmeve.Get(`event`).(event.IDispatcher).Dispatch(`router.match`, event.InParams{
+			`context`: ctx,
+			`route`:   r.routes[key],
+		})
+
+		ctx.Next()
 	})
 
 	return r.routes[key]

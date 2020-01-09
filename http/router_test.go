@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/firmeve/firmeve"
+	"github.com/firmeve/firmeve/event"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"testing"
@@ -88,7 +89,7 @@ func TestRouter_BaseRoute(t *testing.T) {
 	})
 	assertBaseRoute(t, router, http.MethodOptions, "/options", "", 0, 0)
 
-	router.Handler("GET","/original", func(writer http.ResponseWriter, request *http.Request) {
+	router.Handler("GET", "/original", func(writer http.ResponseWriter, request *http.Request) {
 
 	})
 	assertBaseRoute(t, router, http.MethodGet, "/original", "", 0, 0)
@@ -98,7 +99,7 @@ func TestRouter_BaseRoute(t *testing.T) {
 
 func TestRouter_HttpRouter(t *testing.T) {
 	router := New(firmeve.New())
-	assert.IsType(t,&httprouter.Router{},router.HttpRouter())
+	assert.IsType(t, &httprouter.Router{}, router.HttpRouter())
 }
 
 func TestRouter_Group(t *testing.T) {
@@ -155,7 +156,9 @@ func TestRouter_Group(t *testing.T) {
 func TestRouter_Static(t *testing.T) {
 	//http.Handle("/", http.FileServer(http.Dir("/tmp")))
 	//http.ListenAndServe("127.0.0.1:28084", nil)
-	router := New(firmeve.New())
+	f := firmeve.New()
+	f.Bind(`event`, event.New())
+	router := New(f)
 	router.Static("/file", "/tmp")
 	router.GET("/gets/:name", func(ctx *Context) {
 		ctx.Write([]byte(ctx.Param("name")))
