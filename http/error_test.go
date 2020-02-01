@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"github.com/firmeve/firmeve"
+	"github.com/firmeve/firmeve/kernel"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
@@ -18,7 +19,7 @@ func TestNewError(t *testing.T) {
 
 func TestNewErrorResponse(t *testing.T) {
 	err := NewError(500, `error`)
-	firmeve := firmeve.New()
+	firmeve := firmeve.New(kernel.ModeProduction, configPath)
 	buffer := bytes.NewBuffer([]byte("content"))
 	req, reqError := http.NewRequest(http.MethodGet, "/", buffer)
 	if reqError != nil {

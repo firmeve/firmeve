@@ -1,7 +1,10 @@
 package testing
 
-import "github.com/firmeve/firmeve"
+import (
+	"github.com/firmeve/firmeve"
+	"github.com/firmeve/firmeve/kernel"
+)
 
-func TestingModeFirmeve() *firmeve.Firmeve  {
-	return firmeve.New(firmeve.WithMode(firmeve.ModeTesting))
+func TestingModeFirmeve() kernel.IApplication {
+	return firmeve.Default(kernel.ModeTesting, "../testdata/config")
 }

@@ -1,12 +1,12 @@
 package event
 
 import (
-	"github.com/firmeve/firmeve"
 	"github.com/firmeve/firmeve/container"
+	"github.com/firmeve/firmeve/kernel"
 )
 
 type Provider struct {
-	firmeve.BaseProvider
+	kernel.BaseProvider
 }
 
 func (p *Provider) Name() string {

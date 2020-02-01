@@ -3,11 +3,11 @@ package http
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/firmeve/firmeve"
 	resource2 "github.com/firmeve/firmeve/converter/resource"
 	"github.com/firmeve/firmeve/converter/serializer"
 	"github.com/firmeve/firmeve/input"
 	"github.com/firmeve/firmeve/input/parser"
+	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/support/strings"
 	"github.com/kataras/iris/core/errors"
 	"github.com/ulule/paging"
@@ -30,13 +30,13 @@ const (
 
 type (
 	HandlerFunc func(c *Context)
-	Params map[string]string
-	entity struct {
+	Params      map[string]string
+	entity      struct {
 		Key   string
 		Value interface{}
 	}
 	Context struct {
-		Firmeve        *firmeve.Firmeve `inject:"firmeve"`
+		Firmeve        kernel.IApplication `inject:"firmeve"`
 		Request        *http.Request
 		ResponseWriter http.ResponseWriter
 		Input          *input.Input
@@ -53,7 +53,7 @@ var (
 	ErrUnsupportedParse = errors.New(`Unsupported type`)
 )
 
-func newContext(firmeve *firmeve.Firmeve, writer http.ResponseWriter, r *http.Request, handlers ...HandlerFunc) *Context {
+func newContext(firmeve kernel.IApplication, writer http.ResponseWriter, r *http.Request, handlers ...HandlerFunc) *Context {
 	ctx := &Context{
 		Firmeve:        firmeve,
 		Request:        r,

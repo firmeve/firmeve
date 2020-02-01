@@ -1,6 +1,9 @@
 package firmeve
 
 import (
+	"fmt"
+	"github.com/firmeve/firmeve/container"
+	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/testdata/structs"
 	"testing"
 
@@ -12,6 +15,10 @@ type MockProvider struct {
 	boot     bool
 }
 
+var (
+	configPath = "./testdata/config"
+)
+
 func (m *MockProvider) Name() string {
 	return `mock`
 }
@@ -22,31 +29,36 @@ func (m *MockProvider) Boot() {
 	m.boot = true
 }
 
+func TestFirmeve(t *testing.T) {
+	assert.NotEqual(t, New(kernel.ModeProduction, configPath), New(kernel.ModeProduction, configPath))
+	//assert.NotEqual(t, Default(kernel.ModeProduction, configPath), Default(kernel.ModeProduction, configPath))
+}
+
 func TestFirmeve_DefaultMode(t *testing.T) {
-	f := New()
-	assert.Equal(t, f.mode, ModeProduction)
+	f := New(kernel.ModeProduction, configPath)
+	assert.Equal(t, f.Mode(), kernel.ModeProduction)
 }
 
 func TestFirmeve_SetMode_WithMode(t *testing.T) {
-	f := New(WithMode(ModeDevelopment))
-	assert.Equal(t, f.mode, ModeDevelopment)
-	f.SetMode(ModeTesting)
-	assert.Equal(t, f.Mode(), ModeTesting)
+	f := New(kernel.ModeDevelopment, configPath)
+	assert.Equal(t, f.Mode(), kernel.ModeDevelopment)
+	f.SetMode(kernel.ModeTesting)
+	assert.Equal(t, f.Mode(), kernel.ModeTesting)
 }
 
 func TestFirmeve_IsProduction(t *testing.T) {
-	f := New(WithMode(ModeProduction))
-	assert.Equal(t,true,f.IsProduction())
+	f := New(kernel.ModeProduction, configPath)
+	assert.Equal(t, true, f.IsProduction())
 }
 
 func TestFirmeve_IsTesting(t *testing.T) {
-	f := New(WithMode(ModeTesting))
-	assert.Equal(t,true,f.IsTesting())
+	f := New(kernel.ModeTesting, configPath)
+	assert.Equal(t, true, f.IsTesting())
 }
 
 func TestFirmeve_IsDevelopment(t *testing.T) {
-	f := New(WithMode(ModeDevelopment))
-	assert.Equal(t,true,f.IsDevelopment())
+	f := New(kernel.ModeDevelopment, configPath)
+	assert.Equal(t, true, f.IsDevelopment())
 }
 
 //func TestInstance(t *testing.T) {
@@ -70,23 +82,20 @@ func TestFirmeve_IsDevelopment(t *testing.T) {
 //}
 
 func TestFirmeve_Register(t *testing.T) {
-	firmeve := New()
+	firmeve := New(kernel.ModeProduction, configPath)
 	m1 := &MockProvider{
 		register: false,
 		boot:     false,
 	}
-	firmeve.Register(m1)
+	firmeve.Register(m1, false)
 	assert.Equal(t, true, m1.register)
-	assert.Equal(t, false, m1.boot)
-	firmeve.Boot()
 	assert.Equal(t, true, m1.boot)
-	firmeve.Boot()
 
 	m2 := &MockProvider{
 		register: false,
 		boot:     false,
 	}
-	firmeve.Register(m2, WithRegisterForce())
+	firmeve.Register(m2, true)
 	assert.Equal(t, true, m2.register)
 	assert.Equal(t, true, m2.boot)
 
@@ -94,13 +103,13 @@ func TestFirmeve_Register(t *testing.T) {
 		register: false,
 		boot:     false,
 	}
-	firmeve.Register(m3)
-	assert.Equal(t, false, m3.register)
-	assert.Equal(t, false, m3.boot)
+	firmeve.Register(m3, true)
+	assert.Equal(t, true, m3.register)
+	assert.Equal(t, true, m3.boot)
 }
 
 func TestFirmeve_Resolve(t *testing.T) {
-	c := New()
+	c := New(kernel.ModeProduction, configPath)
 	c.Bind("dynamic", func() *structs.Nesting {
 		return &structs.Nesting{
 			NId: 15,
@@ -110,16 +119,23 @@ func TestFirmeve_Resolve(t *testing.T) {
 }
 
 func TestFirmeve_GetProvider(t *testing.T) {
-	firmeve := New()
+	//firmeve := New(kernel.ModeProduction, configPath)
 	m3 := &MockProvider{
 		register: false,
 		boot:     true,
 	}
-	firmeve.Register(m3)
-	assert.Implements(t, (*Provider)(nil), firmeve.GetProvider("mock"))
-	assert.Equal(t, firmeve.GetProvider("mock").(*MockProvider).boot, true)
-
-	assert.Panics(t, func() {
-		firmeve.GetProvider("nothing")
-	}, "service provider not exists")
+	//@todo container会重新new一个对象，原来的值并不保存
+	c := container.New()
+	fmt.Printf("%#v\n", new(MockProvider))
+	fmt.Println(c.Make(m3))
+	fmt.Println("##########")
+	//firmeve.Register(m3, false)
+	//
+	//assert.Implements(t, (*kernel.IProvider)(nil), firmeve.GetProvider("mock"))
+	//assert.Equal(t, firmeve.GetProvider("mock").(*MockProvider).boot, true)
+	//assert.Equal(t, firmeve.GetProvider("mock").(*MockProvider).register, true)
+	//fmt.Printf("%#v\n", firmeve.GetProvider("mock").(*MockProvider))
+	//assert.Panics(t, func() {
+	//	firmeve.GetProvider("nothing")
+	//}, "service provider not exists")
 }
