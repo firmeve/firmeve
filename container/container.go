@@ -137,6 +137,7 @@ func (c *baseContainer) Has(name string) bool {
 // Determine whether the specified name object is included in the container
 func (c *baseContainer) resolve(abstract interface{}, params ...interface{}) interface{} {
 	reflectType := reflect.TypeOf(abstract)
+	reflectValue := reflect.ValueOf(abstract)
 
 	// 如果是单实例
 	if _type, ok := c.instances[reflectType]; ok {
@@ -147,9 +148,9 @@ func (c *baseContainer) resolve(abstract interface{}, params ...interface{}) int
 	if kind == reflect.String && c.Has(abstract.(string)) {
 		return c.Get(abstract.(string))
 	} else if kind == reflect.Struct {
-		return c.resolveStruct2(reflectType)
+		return c.resolveStruct2(reflectType, reflectValue)
 	} else if kind == reflect.Func {
-		return c.resolveFunc(reflectType, reflect.ValueOf(abstract), params...)
+		return c.resolveFunc(reflectType, reflectValue, params...)
 	}
 
 	panic(fmt.Errorf("unsupported type %T", abstract))
@@ -200,7 +201,7 @@ func (c *baseContainer) resolveFunc(reflectType reflect.Type, reflectValue refle
 		kind := reflect2.KindElemType(param)
 		// struct or ptr->struct
 		if kind == reflect.Struct {
-			return c.resolveStruct2(param)
+			return c.resolveStruct2(param, c.initZero(param))
 		} else {
 			return c.initZero(param)
 		}
@@ -216,8 +217,12 @@ func (c *baseContainer) resolveFunc(reflectType reflect.Type, reflectValue refle
 }
 
 // Resolve struct fields and auto binding field
-func (c *baseContainer) resolveStruct2(reflectType reflect.Type) interface{} {
-	reflectValue := reflect.Indirect(reflect.New(reflect2.IndirectType(reflectType)))
+func (c *baseContainer) resolveStruct2(reflectType reflect.Type, reflectValue2 reflect.Value) interface{} {
+	if reflectValue2.IsZero() {
+		reflectValue2 = c.initZero(reflectType)
+	}
+
+	reflectValue := reflect.Indirect(reflectValue2) //reflect.New(reflect2.IndirectType(reflectType)))
 
 	reflect2.CallFieldType(reflectType, func(i int, field reflect.StructField) interface{} {
 		fieldValue := reflectValue.Field(i)
@@ -229,7 +234,7 @@ func (c *baseContainer) resolveStruct2(reflectType reflect.Type) interface{} {
 			} else if v, ok := c.instances[field.Type]; ok {
 				fieldValue.Set(reflect.ValueOf(v))
 			} else if kind == reflect.Struct || kind == reflect.Ptr {
-				fieldValue.Set(reflect.ValueOf(c.resolveStruct2(field.Type)))
+				fieldValue.Set(reflect.ValueOf(c.resolveStruct2(field.Type, fieldValue)))
 			} else {
 				fieldValue.Set(c.initZero(field.Type))
 			}
@@ -242,13 +247,15 @@ func (c *baseContainer) resolveStruct2(reflectType reflect.Type) interface{} {
 }
 
 func (c *baseContainer) initZero(reflectType reflect.Type) reflect.Value {
-	kind := reflectType.Kind()
+	kind := reflect2.KindElemType(reflectType)
 	if kind == reflect.Slice {
 		return reflect.MakeSlice(reflectType, 0, 0)
 	} else if kind == reflect.Array {
 		return reflect.New(reflect.ArrayOf(reflectType.Len(), reflectType.Elem())).Elem()
 	} else if kind == reflect.Map {
 		return reflect.MakeMapWithSize(reflectType, 0)
+	} else if kind == reflect.Struct {
+		return reflect.New(reflect2.IndirectType(reflectType))
 	} else if kind <= reflect.Complex128 || kind == reflect.String {
 		return reflect.Zero(reflectType)
 	}
