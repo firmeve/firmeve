@@ -22,20 +22,14 @@ Those who have achieved nothing can always tell you that you can't make a big de
 package main
 
 import (
-	"os"
-	path2 "github.com/firmeve/firmeve/support/path"
-	"github.com/firmeve/firmeve/bootstrap"
-	cmd2 "github.com/firmeve/firmeve/http/cmd"
-	"github.com/firmeve/firmeve"
-	"github.com/firmeve/firmeve/cmd"
-	"github.com/firmeve/firmeve/http"
+    "github.com/firmeve/firmeve"
+    "github.com/firmeve/firmeve/http"
+    "github.com/firmeve/firmeve/kernel"
+    path2 "github.com/firmeve/firmeve/support/path"
 )
 
 func main() {
-	// Base bootstrap
-	app := firmeve.New()
-	bootstrap2 := bootstrap.New(app, bootstrap.WithConfigPath(path2.RunRelative(`../../testdata/config`)))
-	bootstrap2.FastBootFull()
+	app := firmeve.Default(kernel.ModeDevelopment,path2.RunRelative(`../../testdata/config`))
 
     router := app.Get(`http.router`).(*http.Router)
 	v1 := router.Group("/api/v1")
@@ -47,11 +41,9 @@ func main() {
 			c.Next()
 		})
 	}
+
 	// Command
-	root := cmd.Root()
-	root.AddCommand(cmd2.NewServer(bootstrap2).Cmd())
-	root.SetArgs(os.Args[1:])
-	root.Execute()
+	app.Run()
 }
 ```
 
