@@ -2,12 +2,13 @@ package firmeve
 
 import (
 	"fmt"
-	"github.com/firmeve/firmeve/cache"
+	"github.com/firmeve/firmeve/cmd"
 	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/container"
-	"github.com/firmeve/firmeve/database"
 	"github.com/firmeve/firmeve/event"
 	"github.com/firmeve/firmeve/http"
+	"github.com/spf13/cobra"
+	"os"
 
 	//"github.com/firmeve/firmeve/http"
 	"github.com/firmeve/firmeve/kernel"
@@ -17,10 +18,6 @@ import (
 	_ "sync"
 	//"github.com/firmeve/firmeve/container"
 	//"github.com/firmeve/firmeve/support"
-)
-
-const (
-	Version = "1.0.0"
 )
 
 type (
@@ -59,11 +56,21 @@ func WithProviders(providers []kernel.IProvider) support.Option {
 }
 
 func New(mode uint8, configPath string, options ...support.Option) kernel.IApplication {
+	return startNewApplication(mode,configPath,parseOption(options))
+}
 
-	option := support.ApplyOption(&option{
-		providers: make([]kernel.IProvider, 0),
-	}, options...).(*option)
+func Default(mode uint8, configPath string, options ...support.Option) kernel.IApplication {
+	defaultProviders := []kernel.IProvider{
+		new(http.Provider),
+	}
 
+	option := parseOption(options)
+	option.providers = append(defaultProviders,option.providers...)
+
+	return startNewApplication(mode, configPath,option)
+}
+
+func startNewApplication(mode uint8, configPath string, option *option) kernel.IApplication {
 	f := &Firmeve{
 		Container: container.New(),
 		providers: make(map[string]kernel.IProvider, 0),
@@ -86,15 +93,19 @@ func New(mode uint8, configPath string, options ...support.Option) kernel.IAppli
 	return f
 }
 
-func Default(mode uint8, configPath string, options ...support.Option) kernel.IApplication {
-	f := New(mode, configPath)
-	f.RegisterMultiple([]kernel.IProvider{
-		new(cache.Provider),
-		new(database.Provider),
-		new(http.Provider),
-	}, false)
+func parseOption(options []support.Option) *option {
+	return support.ApplyOption(&option{
+		providers: make([]kernel.IProvider, 0),
+	}, options...).(*option)
+}
 
-	return f
+func (f *Firmeve) Run() {
+	root := f.Get("command").(*cobra.Command)
+	root.SetArgs(os.Args[1:])
+	err := root.Execute()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (f *Firmeve) SetMode(mode uint8) {
@@ -187,6 +198,7 @@ func (f *Firmeve) registerProvider(name string, provider kernel.IProvider) {
 func (f *Firmeve) registerBaseProvider(configPath string) {
 
 	f.RegisterMultiple([]kernel.IProvider{
+		new(cmd.Provider),
 		new(event.Provider),
 		new(logging.Provider),
 	}, false)

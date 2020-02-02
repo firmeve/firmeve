@@ -5,6 +5,7 @@ import (
 )
 
 const (
+	Version = "1.0.0"
 	ModeDevelopment uint8 = iota
 	ModeProduction
 	ModeTesting
@@ -18,6 +19,7 @@ type (
 		IsDevelopment() bool
 		IsProduction() bool
 		IsTesting() bool
+		Run()
 		Resolve(abstract interface{}, params ...interface{}) interface{}
 		Boot()
 		Register(provider IProvider, force bool)

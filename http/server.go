@@ -1,34 +1,39 @@
-package cmd
+package http
 
 import (
 	"context"
 	"fmt"
+	"github.com/firmeve/firmeve/kernel"
 	"golang.org/x/net/http2"
 	net_http "net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-
-	"github.com/firmeve/firmeve/bootstrap"
 	"github.com/firmeve/firmeve/config"
-	"github.com/firmeve/firmeve/http"
 	"github.com/firmeve/firmeve/logger"
 	"github.com/spf13/cobra"
 )
 
 type cmd struct {
-	bootstrap *bootstrap.Bootstrap
-	command   *cobra.Command
+	app 		kernel.IApplication
+	command 	*cobra.Command
 	logger    logging.Loggable
 	config    *config.Config
 }
 
-func NewServer(bootstrap *bootstrap.Bootstrap) *cmd {
-	return &cmd{
-		bootstrap: bootstrap,
+func NewServer(firmeve kernel.IApplication) *cmd {
+	command := &cmd{
+		app: firmeve,
 		command:   new(cobra.Command),
 	}
+	command.config = firmeve.Get(`config`).(*config.Config)
+	command.logger = firmeve.Get(`logger`).(logging.Loggable)
+
+	return command
+	// base
+	//c.config = c.bootstrap.Firmeve.Get(`config`).(*config.Config)
+	//c.logger = c.bootstrap.Firmeve.Get(`logger`).(logging.Loggable)
 }
 
 func (c *cmd) Cmd() *cobra.Command {
@@ -46,13 +51,6 @@ func (c *cmd) Cmd() *cobra.Command {
 }
 
 func (c *cmd) run(cmd *cobra.Command, args []string) {
-	// bootstrap
-	c.bootstrap.Boot()
-
-	// base
-	c.config = c.bootstrap.Firmeve.Get(`config`).(*config.Config)
-	c.logger = c.bootstrap.Firmeve.Get(`logger`).(logging.Loggable)
-
 	var (
 		host      = cmd.Flag("host").Value.String()
 		certFile  = cmd.Flag(`cert-file`).Value.String()
@@ -61,7 +59,7 @@ func (c *cmd) run(cmd *cobra.Command, args []string) {
 	)
 	srv := &net_http.Server{
 		Addr:    host,
-		Handler: c.bootstrap.Firmeve.Get(`http.router`).(*http.Router),
+		Handler: c.app.Get(`http.router`).(*Router),
 	}
 
 	go func() {
