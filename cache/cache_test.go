@@ -2,12 +2,12 @@ package cache
 
 import (
 	"fmt"
+	testing2 "github.com/firmeve/firmeve/testing"
 	"math/rand"
 	"strconv"
 	"testing"
 	"time"
 
-	firmeve2 "github.com/firmeve/firmeve"
 	"github.com/firmeve/firmeve/cache/repository"
 	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/support/path"
@@ -299,9 +299,9 @@ func TestRepository_Flush(t *testing.T) {
 }
 
 func TestProvider_Register(t *testing.T) {
-	firmeve := firmeve2.New()
-	firmeve.Bind(`config`, config.New(path.RunRelative("../testdata/config")))
-	firmeve.Register(firmeve.Make(new(Provider)).(firmeve2.Provider))
+	firmeve := testing2.TestingModeFirmeve()
+	//firmeve.Bind(`config`, config.New(path.RunRelative("../testdata/config")))
+	firmeve.Register(new(Provider),true)
 	firmeve.Boot()
 	assert.Equal(t, true, firmeve.HasProvider("cache"))
 	assert.Equal(t, true, firmeve.Has(`cache`))

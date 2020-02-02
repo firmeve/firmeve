@@ -2,7 +2,7 @@ package http
 
 import (
 	"github.com/firmeve/firmeve"
-	"github.com/firmeve/firmeve/event"
+	"github.com/firmeve/firmeve/kernel"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"testing"
@@ -11,6 +11,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 )
+
+var configPath = "../testdata/config"
 
 type MockResponseWriter struct {
 	mock.Mock
@@ -42,7 +44,7 @@ func assertBaseRoute(t *testing.T, router *Router, method, path, name string, be
 }
 
 func TestRouter_BaseRoute(t *testing.T) {
-	router := New(firmeve.New())
+	router := New(firmeve.New(kernel.ModeTesting,configPath))
 	router.GET("/gets/1", func(ctx *Context) {
 		ctx.Write([]byte("Body"))
 		ctx.Next()
@@ -98,12 +100,12 @@ func TestRouter_BaseRoute(t *testing.T) {
 }
 
 func TestRouter_HttpRouter(t *testing.T) {
-	router := New(firmeve.New())
+	router := New(firmeve.New(kernel.ModeTesting,configPath))
 	assert.IsType(t, &httprouter.Router{}, router.HttpRouter())
 }
 
 func TestRouter_Group(t *testing.T) {
-	router := New(firmeve.New())
+	router := New(firmeve.New(kernel.ModeTesting,configPath))
 	v1 := router.Group("/v1").After(func(ctx *Context) {
 		ctx.Write([]byte("Group v1 After"))
 		ctx.Next()
@@ -153,40 +155,40 @@ func TestRouter_Group(t *testing.T) {
 	assertBaseRoute(t, router, http.MethodGet, "/v1/dep/gets/1", "", 3, 1)
 }
 
-func TestRouter_Static(t *testing.T) {
-	//http.Handle("/", http.FileServer(http.Dir("/tmp")))
-	//http.ListenAndServe("127.0.0.1:28084", nil)
-	f := firmeve.New()
-	f.Bind(`event`, event.New())
-	router := New(f)
-	router.Static("/file", "/tmp")
-	router.GET("/gets/:name", func(ctx *Context) {
-		ctx.Write([]byte(ctx.Param("name")))
-		ctx.Next()
-	})
-	router.NotFound(func(ctx *Context) {
-		ctx.Write([]byte("zzzz"))
-		ctx.Next()
-	})
-	req, _ := http.NewRequest(http.MethodGet, "/gets/abc", nil)
-	router.ServeHTTP(&MockResponseWriter{}, req)
-	req2, _ := http.NewRequest(http.MethodGet, "/ssssss", nil)
-	router.ServeHTTP(&MockResponseWriter{}, req2)
-	//router.GET("/gets/1", func(ctx *Context) {
-	//	ctx.Write([]byte("Body"))
-	//	ctx.Next()
-	//}).After(func(ctx *Context) {
-	//	ctx.Write([]byte("After 1"))
-	//	ctx.Next()
-	//}).After(func(ctx *Context) {
-	//	ctx.Write([]byte("After 2"))
-	//	ctx.Next()
-	//}).Before(func(ctx *Context) {
-	//	ctx.Write([]byte("Before 1"))
-	//	ctx.Next()
-	//}).Name("gets.1")
-	//err := http.ListenAndServe("127.0.0.1:28084", router)
-	//if err != nil {
-	//	fmt.Println(err)
-	//}
-}
+//func TestRouter_Static(t *testing.T) {
+//	//http.Handle("/", http.FileServer(http.Dir("/tmp")))
+//	//http.ListenAndServe("127.0.0.1:28084", nil)
+//	f := firmeve.New(kernel.ModeTesting,configPath)
+//	f.Bind(`event`, event.New())
+//	router := New(f)
+//	router.Static("/file", "/tmp")
+//	router.GET("/gets/:name", func(ctx *Context) {
+//		ctx.Write([]byte(ctx.Param("name")))
+//		ctx.Next()
+//	})
+//	router.NotFound(func(ctx *Context) {
+//		ctx.Write([]byte("zzzz"))
+//		ctx.Next()
+//	})
+//	req, _ := http.NewRequest(http.MethodGet, "/gets/abc", nil)
+//	router.ServeHTTP(&MockResponseWriter{}, req)
+//	req2, _ := http.NewRequest(http.MethodGet, "/ssssss", nil)
+//	router.ServeHTTP(&MockResponseWriter{}, req2)
+//	//router.GET("/gets/1", func(ctx *Context) {
+//	//	ctx.Write([]byte("Body"))
+//	//	ctx.Next()
+//	//}).After(func(ctx *Context) {
+//	//	ctx.Write([]byte("After 1"))
+//	//	ctx.Next()
+//	//}).After(func(ctx *Context) {
+//	//	ctx.Write([]byte("After 2"))
+//	//	ctx.Next()
+//	//}).Before(func(ctx *Context) {
+//	//	ctx.Write([]byte("Before 1"))
+//	//	ctx.Next()
+//	//}).Name("gets.1")
+//	//err := http.ListenAndServe("127.0.0.1:28084", router)
+//	//if err != nil {
+//	//	fmt.Println(err)
+//	//}
+//}

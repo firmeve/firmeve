@@ -2,11 +2,7 @@ package resource
 
 import (
 	"fmt"
-	"github.com/firmeve/firmeve"
-	"github.com/firmeve/firmeve/config"
-	"github.com/firmeve/firmeve/container"
 	"github.com/firmeve/firmeve/database"
-	"github.com/firmeve/firmeve/support/path"
 	"github.com/firmeve/firmeve/support/strings"
 	testing2 "github.com/firmeve/firmeve/testing"
 	"github.com/jinzhu/gorm"
@@ -34,8 +30,8 @@ var (
 
 func init() {
 	f := testing2.TestingModeFirmeve()
-	f.Bind(`config`, config.New(path.RunRelative("../../testdata/config")), container.WithShare(true))
-	f.Register(f.Make(new(database.Provider)).(firmeve.Provider))
+	//f.Bind(`config`, config.New(path.RunRelative("../../testdata/config")), container.WithShare(true))
+	f.Register(new(database.Provider),true)
 	f.Boot()
 	db = f.Get(`db.connection`).(*gorm.DB)
 }

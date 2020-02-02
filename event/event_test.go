@@ -4,7 +4,6 @@ import (
 	"errors"
 	"testing"
 
-	firmeve2 "github.com/firmeve/firmeve"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -59,14 +58,13 @@ func TestErrorDispatcher(t *testing.T) {
 //		dispatch.Dispatch("c", listenBOne)
 //	}, `the event not exists`)
 //}
-
-func TestProvider_Register(t *testing.T) {
-	firmeve := firmeve2.New()
-	firmeve.Register(firmeve.Make(new(Provider)).(firmeve2.Provider))
-	firmeve.Boot()
-	assert.Equal(t, true, firmeve.HasProvider("event"))
-	assert.Equal(t, true, firmeve.Has(`event`))
-
-	provider := firmeve.Resolve(new(Provider)).(*Provider)
-	assert.Equal(t, firmeve, provider.Firmeve)
-}
+//
+//func TestProvider_Register(t *testing.T) {
+//	firmeve := testing2.TestingModeFirmeve()
+//	//firmeve.Register(new(Provider),true)
+//	//assert.Equal(t, true, firmeve.HasProvider("event"))
+//	//assert.Equal(t, true, firmeve.Has(`event`))
+//	//
+//	//provider := firmeve.Resolve(new(Provider)).(*Provider)
+//	//assert.Equal(t, firmeve, provider.Firmeve)
+//}
