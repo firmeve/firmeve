@@ -235,8 +235,10 @@ func (c *baseContainer) resolveStruct2(reflectType reflect.Type, reflectValue2 r
 				fieldValue.Set(reflect.ValueOf(v))
 			} else if kind == reflect.Struct || kind == reflect.Ptr {
 				fieldValue.Set(reflect.ValueOf(c.resolveStruct2(field.Type, fieldValue)))
-			} else {
+			} else if fieldValue.IsZero() {
 				fieldValue.Set(c.initZero(field.Type))
+			} else {
+				// nothing
 			}
 		}
 

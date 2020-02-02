@@ -101,6 +101,21 @@ func TestBaseContainer_Make_Panic(t *testing.T) {
 	})
 }
 
+func TestDefaultValueSample(t *testing.T)  {
+	sample := new(structs.SampleNesting)
+	sample.Title = "testing title"
+	sample.Id = 15
+	//s := reflect.ValueOf(sample)
+	//fmt.Println(s.IsZero())
+
+	c := New()
+	v := c.Make(sample).(*structs.SampleNesting)
+	assert.Equal(t,15,sample.Id)
+	assert.Equal(t,"testing title",sample.Title)
+
+	fmt.Printf("%#v\n", v)
+}
+
 func TestWithCover(t *testing.T) {
 	c := New()
 	c.Bind("nesting", &structs.Nesting{
