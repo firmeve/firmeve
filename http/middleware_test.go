@@ -1,6 +1,7 @@
 package http
 
 import (
+	logging "github.com/firmeve/firmeve/logger"
 	testing2 "github.com/firmeve/firmeve/testing"
 	"github.com/kataras/iris/core/errors"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 
 func TestRecovery(t *testing.T) {
 	firmeve := testing2.TestingModeFirmeve()
+	firmeve.Register(new(logging.Provider),true)
 	req := testing2.NewMockRequest(http.MethodPost, "/?query=queryValue", "").Request
 	req.Header.Set(`Content-Type`,MIMEPOSTForm)
 	req.ParseMultipartForm(32 << 20)

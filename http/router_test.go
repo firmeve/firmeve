@@ -1,8 +1,7 @@
 package http
 
 import (
-	"github.com/firmeve/firmeve"
-	"github.com/firmeve/firmeve/kernel"
+	testing2 "github.com/firmeve/firmeve/testing"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"testing"
@@ -44,7 +43,7 @@ func assertBaseRoute(t *testing.T, router *Router, method, path, name string, be
 }
 
 func TestRouter_BaseRoute(t *testing.T) {
-	router := New(firmeve.New(kernel.ModeTesting,configPath))
+	router := New(testing2.TestingModeFirmeve())
 	router.GET("/gets/1", func(ctx *Context) {
 		ctx.Write([]byte("Body"))
 		ctx.Next()
@@ -100,12 +99,12 @@ func TestRouter_BaseRoute(t *testing.T) {
 }
 
 func TestRouter_HttpRouter(t *testing.T) {
-	router := New(firmeve.New(kernel.ModeTesting,configPath))
+	router := New(testing2.TestingModeFirmeve())
 	assert.IsType(t, &httprouter.Router{}, router.HttpRouter())
 }
 
 func TestRouter_Group(t *testing.T) {
-	router := New(firmeve.New(kernel.ModeTesting,configPath))
+	router := New(testing2.TestingModeFirmeve())
 	v1 := router.Group("/v1").After(func(ctx *Context) {
 		ctx.Write([]byte("Group v1 After"))
 		ctx.Next()
@@ -158,7 +157,7 @@ func TestRouter_Group(t *testing.T) {
 //func TestRouter_Static(t *testing.T) {
 //	//http.Handle("/", http.FileServer(http.Dir("/tmp")))
 //	//http.ListenAndServe("127.0.0.1:28084", nil)
-//	f := firmeve.New(kernel.ModeTesting,configPath)
+//	f := testing2.TestingModeFirmeve()
 //	f.Bind(`event`, event.New())
 //	router := New(f)
 //	router.Static("/file", "/tmp")

@@ -1,7 +1,9 @@
 package kernel
 
 import (
+	"fmt"
 	"github.com/firmeve/firmeve/container"
+	"sync"
 )
 
 const (
@@ -19,7 +21,6 @@ type (
 		IsDevelopment() bool
 		IsProduction() bool
 		IsTesting() bool
-		Run()
 		Resolve(abstract interface{}, params ...interface{}) interface{}
 		Boot()
 		Register(provider IProvider, force bool)
@@ -29,124 +30,110 @@ type (
 		Reset()
 	}
 
-	//BaseApplication struct {
-	//	container.Container
-	//	providers map[string]IProvider
-	//	booted    bool
-	//	mode      uint8
-	//}
+	Application struct {
+		container.Container
+		providers map[string]IProvider
+		booted    bool
+		mode      uint8
+	}
 )
 
-//
-//var (
-//	registerMutex sync.Mutex
-//)
-//
-//func New(mode uint8, configPath string) IApplication {
-//	app := &Application{
-//		Container: container.New(),
-//		providers: make(map[string]IProvider, 0),
-//		booted:    false,
-//		mode:      mode,
-//	}
-//
-//	//app.registerBaseProvider(configPath)
-//
-//	return app
-//}
-//
-//func (app *Application) SetMode(mode uint8) {
-//	app.Get("event").(event.IDispatcher).Dispatch("dss", make(event.InParams, 0))
-//	app.mode = mode
-//}
-//
-//func (app *Application) Mode() uint8 {
-//	return app.mode
-//}
-//
-//func (app *Application) IsDevelopment() bool {
-//	return app.mode == ModeDevelopment
-//}
-//
-//func (app *Application) IsProduction() bool {
-//	return app.mode == ModeProduction
-//}
-//
-//func (app *Application) IsTesting() bool {
-//	return app.mode == ModeTesting
-//}
-//
-//func (app *Application) Resolve(abstract interface{}, params ...interface{}) interface{} {
-//	return app.Make(abstract, params...)
-//}
-//
-//func (app *Application) Boot() {
-//	if app.booted {
-//		return
-//	}
-//
-//	for i := range app.providers {
-//		app.providers[i].Boot()
-//	}
-//
-//	app.booted = true
-//}
-//
-//func (app *Application) Register(provider IProvider, force bool) {
-//	name := provider.Name()
-//
-//	if app.HasProvider(name) && !force {
-//		return
-//	}
-//
-//	app.registerProvider(name, provider)
-//
-//	provider.Register()
-//
-//	if app.booted {
-//		provider.Boot()
-//	}
-//}
-//
-//func (app *Application) RegisterMultiple(providers []IProvider, force bool) {
-//	for i := range providers {
-//		app.Register(app.Make(providers[i]).(IProvider), force)
-//	}
-//}
-//
-//func (app *Application) HasProvider(name string) bool {
-//	if _, ok := app.providers[name]; ok {
-//		return ok
-//	}
-//
-//	return false
-//}
-//
-//func (app *Application) GetProvider(name string) IProvider {
-//	if !app.HasProvider(name) {
-//		panic(fmt.Errorf("the %s service provider not exists", name))
-//	}
-//
-//	return app.providers[name]
-//}
-//
-//func (app *Application) Reset() {
-//	app.providers = make(map[string]IProvider, 0)
-//	app.Container.Flush()
-//	app.booted = false
-//}
-//
-//// Add a service provider to providers map
-//func (app *Application) registerProvider(name string, provider IProvider) {
-//	registerMutex.Lock()
-//	app.providers[name] = provider
-//	registerMutex.Unlock()
-//}
+var (
+	registerMutex sync.Mutex
+)
 
-//func (app *Application) registerBaseProvider(configPath string) {
-//	//configProvider :=
-//	_ = app.Resolve(new(provider.Provider)).(*provider.Provider)
-//	//configProvider.ConfigPath = option.configPath
-//	//app.RegisterMultiple()
-//	return
-//}
+func New(mode uint8) IApplication {
+	return &Application{
+		Container: container.New(),
+		providers: make(map[string]IProvider, 0),
+		booted:    false,
+		mode:      mode,
+	}
+}
+
+func (a *Application) SetMode(mode uint8) {
+	a.mode = mode
+}
+
+func (a *Application) Mode() uint8 {
+	return a.mode
+}
+
+func (a *Application) IsDevelopment() bool {
+	return a.mode == ModeDevelopment
+}
+
+func (a *Application) IsProduction() bool {
+	return a.mode == ModeProduction
+}
+
+func (a *Application) IsTesting() bool {
+	return a.mode == ModeTesting
+}
+
+func (a *Application) Resolve(abstract interface{}, params ...interface{}) interface{} {
+	return a.Make(abstract, params...)
+}
+
+func (a *Application) Boot() {
+	if a.booted {
+		return
+	}
+
+	for i := range a.providers {
+		a.providers[i].Boot()
+	}
+
+	a.booted = true
+}
+
+func (a *Application) Register(provider IProvider, force bool) {
+	name := provider.Name()
+
+	if a.HasProvider(name) && !force {
+		return
+	}
+
+	a.registerProvider(name, provider)
+
+	provider.Register()
+
+	if a.booted {
+		provider.Boot()
+	}
+}
+
+func (a *Application) RegisterMultiple(providers []IProvider, force bool) {
+	for i := range providers {
+		a.Register(a.Make(providers[i]).(IProvider), force)
+	}
+}
+
+func (a *Application) HasProvider(name string) bool {
+	if _, ok := a.providers[name]; ok {
+		return ok
+	}
+
+	return false
+}
+
+func (a *Application) GetProvider(name string) IProvider {
+	if !a.HasProvider(name) {
+		panic(fmt.Errorf("the %s service provider not exists", name))
+	}
+
+	return a.providers[name]
+}
+
+func (a *Application) Reset() {
+	a.providers = make(map[string]IProvider, 0)
+	a.Container.Flush()
+	a.booted = false
+}
+
+// Add a service provider to providers map
+func (a *Application) registerProvider(name string, provider IProvider) {
+	registerMutex.Lock()
+	a.providers[name] = a.Make(provider).(IProvider)
+	registerMutex.Unlock()
+}
