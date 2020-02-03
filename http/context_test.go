@@ -3,6 +3,7 @@ package http
 import (
 	"bytes"
 	"fmt"
+	logging "github.com/firmeve/firmeve/logger"
 	testing2 "github.com/firmeve/firmeve/testing"
 	"github.com/stretchr/testify/assert"
 	"io/ioutil"
@@ -42,6 +43,7 @@ func TestContext_SetParams_Param(t *testing.T) {
 
 func TestContext_Form_Query(t *testing.T) {
 	firmeve := testing2.TestingModeFirmeve()
+	firmeve.Register(new(logging.Provider),true)
 	req := testing2.NewMockRequest(http.MethodPost, "/", "").Request
 	req.Header.Set(`Content-Type`,MIMEPOSTForm)
 	req.Form = make(url.Values, 0)
@@ -60,6 +62,7 @@ func TestContext_Form_Query(t *testing.T) {
 
 func TestContext_FormDecode(t *testing.T) {
 	firmeve := testing2.TestingModeFirmeve()
+	firmeve.Register(new(logging.Provider),true)
 	req := testing2.NewMockRequest(http.MethodPost, "/", "").Request
 	req.Header.Set(`Content-Type`,MIMEPOSTForm)
 	req.Form = make(url.Values, 0)

@@ -3,7 +3,7 @@ package http
 import (
 	"bytes"
 	"errors"
-	"github.com/firmeve/firmeve"
+	testing2 "github.com/firmeve/firmeve/testing"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
@@ -18,7 +18,7 @@ func TestNewError(t *testing.T) {
 
 func TestNewErrorResponse(t *testing.T) {
 	err := NewError(500, `error`)
-	firmeve := firmeve.New()
+	firmeve := testing2.TestingModeFirmeve()
 	buffer := bytes.NewBuffer([]byte("content"))
 	req, reqError := http.NewRequest(http.MethodGet, "/", buffer)
 	if reqError != nil {

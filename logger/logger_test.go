@@ -3,10 +3,8 @@ package logging
 import (
 	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/support/path"
-	"testing"
-
-	firmeve2 "github.com/firmeve/firmeve"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestDefault(t *testing.T) {
@@ -45,11 +43,10 @@ func TestLogger_File(t *testing.T) {
 	logger.Warn("File")
 }
 
-func TestProvider_Register(t *testing.T) {
-	firmeve := firmeve2.New()
-	firmeve.Bind(`config`, config.New(path.RunRelative("../testdata/config")))
-	firmeve.Register(firmeve.Make(new(Provider)).(firmeve2.Provider))
-	firmeve.Boot()
-	assert.Equal(t, true, firmeve.HasProvider("logger"))
-	assert.Equal(t, true, firmeve.Has(`logger`))
-}
+//func TestProvider_Register(t *testing.T) {
+//	firmeve := testing2.TestingModeFirmeve()
+//	firmeve.Register(new(Provider),true)
+//	firmeve.Boot()
+//	assert.Equal(t, true, firmeve.HasProvider("logger"))
+//	assert.Equal(t, true, firmeve.Has(`logger`))
+//}

@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"github.com/firmeve/firmeve"
 	"github.com/spf13/cobra"
 )
 
@@ -9,12 +8,16 @@ type Commander interface {
 	Cmd() *cobra.Command
 }
 
-func Root() *cobra.Command {
+//type Command struct {
+//
+//}
+
+func New(version string) *cobra.Command {
 	//var version bool
 	cmd := &cobra.Command{
 		Use:     "firmeve",
 		Short:   "Firmeve Framework",
-		Version: firmeve.Version,
+		Version: version,
 	}
 	//cmd.PersistentFlags().StringP("config", "C", "", "Config directory path(required)")
 	//err := cmd.MarkFlagRequired("config")

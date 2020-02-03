@@ -1,17 +1,14 @@
 package main
 
 import (
-	"os"
-	path2 "github.com/firmeve/firmeve/support/path"
-	"github.com/firmeve/firmeve/bootstrap"
-	cmd2 "github.com/firmeve/firmeve/http/cmd"
 	"github.com/firmeve/firmeve"
-	"github.com/firmeve/firmeve/cmd"
 	"github.com/firmeve/firmeve/http"
+	"github.com/firmeve/firmeve/kernel"
+	path2 "github.com/firmeve/firmeve/support/path"
 )
 
 type App struct {
-	firmeve.BaseProvider
+	kernel.BaseProvider
 }
 
 func (a *App) Name() string {
@@ -39,16 +36,10 @@ func (a *App) bindingRoutes() {
 }
 
 func main() {
-	// Base bootstrap
-	app := firmeve.New()
-	bootstrap2 := bootstrap.New(app, bootstrap.WithConfigPath(path2.RunRelative(`../../testdata/config`)))
-	bootstrap2.FastBootFullWithProviders(
-		[]firmeve.Provider{new(App)},
-	)
+	app := firmeve.Default(kernel.ModeDevelopment,path2.RunRelative(`../../testdata/config`),
+	firmeve.WithProviders(
+		[]kernel.IProvider{new(App)},
+	))
 
-	// Command
-	root := cmd.Root()
-	root.AddCommand(cmd2.NewServer(bootstrap2).Cmd())
-	root.SetArgs(os.Args[1:])
-	root.Execute()
+	app.Run()
 }

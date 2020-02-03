@@ -1,13 +1,12 @@
 package database
 
 import (
+	testing2 "github.com/firmeve/firmeve/testing"
 	"testing"
 
 	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/support/path"
 	"github.com/stretchr/testify/assert"
-
-	firmeve2 "github.com/firmeve/firmeve"
 )
 
 func TestNew(t *testing.T) {
@@ -38,9 +37,9 @@ func TestNew_Close_Error(t *testing.T) {
 }
 
 func TestDB_Provider(t *testing.T) {
-	firmeve := firmeve2.New()
-	firmeve.Bind(`config`, config.New(path.RunRelative("../testdata/config")))
-	firmeve.Register(firmeve.Make(new(Provider)).(firmeve2.Provider))
+	firmeve := testing2.TestingModeFirmeve()
+	//firmeve.Bind(`config`, config.New(path.RunRelative("../testdata/config")))
+	firmeve.Register(new(Provider),true)
 
 	//z := &Provider{
 	//	firmeve2.BaseFirmeve{

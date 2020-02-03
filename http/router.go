@@ -1,22 +1,21 @@
 package http
 
 import (
-	"github.com/firmeve/firmeve"
 	"github.com/firmeve/firmeve/event"
+	"github.com/firmeve/firmeve/kernel"
+	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"strings"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 type Router struct {
-	Firmeve   *firmeve.Firmeve
+	Firmeve   kernel.IApplication
 	router    *httprouter.Router
 	routes    map[string]*Route
 	routeKeys []string
 }
 
-func New(firmeve *firmeve.Firmeve) *Router {
+func New(firmeve kernel.IApplication) *Router {
 	return &Router{
 		Firmeve:   firmeve,
 		router:    httprouter.New(),

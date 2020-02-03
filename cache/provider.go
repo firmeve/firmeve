@@ -1,13 +1,13 @@
 package cache
 
 import (
-	"github.com/firmeve/firmeve"
 	config2 "github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/container"
+	"github.com/firmeve/firmeve/kernel"
 )
 
 type Provider struct {
-	firmeve.BaseProvider
+	kernel.BaseProvider
 }
 
 func (p *Provider) Name() string {

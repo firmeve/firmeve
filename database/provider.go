@@ -1,12 +1,12 @@
 package database
 
 import (
-	"github.com/firmeve/firmeve"
 	"github.com/firmeve/firmeve/config"
+	"github.com/firmeve/firmeve/kernel"
 )
 
 type Provider struct {
-	firmeve.BaseProvider
+	kernel.BaseProvider
 }
 
 func (p *Provider) Name() string {

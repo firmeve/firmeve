@@ -101,6 +101,21 @@ func TestBaseContainer_Make_Panic(t *testing.T) {
 	})
 }
 
+func TestDefaultValueSample(t *testing.T)  {
+	sample := new(structs.SampleNesting)
+	sample.Title = "testing title"
+	sample.Id = 15
+	//s := reflect.ValueOf(sample)
+	//fmt.Println(s.IsZero())
+
+	c := New()
+	v := c.Make(sample).(*structs.SampleNesting)
+	assert.Equal(t,15,sample.Id)
+	assert.Equal(t,"testing title",sample.Title)
+
+	fmt.Printf("%#v\n", v)
+}
+
 func TestWithCover(t *testing.T) {
 	c := New()
 	c.Bind("nesting", &structs.Nesting{
@@ -237,7 +252,9 @@ func TestBaseContainer_Resolve_Func_Func(t *testing.T) {
 
 func TestBaseContainer_Resolve_Struct_Sample(t *testing.T) {
 	c := New()
-	value := c.resolveStruct2(reflect.TypeOf(new(structs.Sample))).(*structs.Sample)
+	sample := new(structs.Sample)
+
+	value := c.resolveStruct2(reflect.TypeOf(sample), reflect.ValueOf(sample)).(*structs.Sample)
 	assert.Equal(t, reflect.Ptr, reflect.ValueOf(value).Kind())
 	assert.Equal(t, 0, value.Id)
 	assert.Equal(t, "", value.Title)
@@ -246,7 +263,8 @@ func TestBaseContainer_Resolve_Struct_Sample(t *testing.T) {
 	assert.Equal(t, map[string]string{}, value.MapString)
 	assert.Equal(t, []string{}, value.Slice)
 
-	value1 := c.resolveStruct2(reflect.TypeOf(structs.Sample{})).(structs.Sample)
+	sample2 := structs.Sample{}
+	value1 := c.resolveStruct2(reflect.TypeOf(sample2), reflect.ValueOf(sample2)).(structs.Sample)
 	assert.Equal(t, reflect.Struct, reflect.ValueOf(value1).Kind())
 	assert.Equal(t, 0, value1.Id)
 	assert.Equal(t, "", value1.Title)
@@ -263,14 +281,16 @@ func TestBaseContainer_Resolve_Struct_Sample_NestingPrt_Bind(t *testing.T) {
 	}
 	c.Bind("nesting", nesting, WithShare(true))
 
-	value := c.resolveStruct2(reflect.TypeOf(new(structs.SampleNestingInject))).(*structs.SampleNestingInject)
+	sn := new(structs.SampleNestingInject)
+	value := c.resolveStruct2(reflect.TypeOf(sn), reflect.ValueOf(sn)).(*structs.SampleNestingInject)
 	assert.Equal(t, true, reflect.DeepEqual(value.Nesting, value.Nesting2))
 	assert.Equal(t, fmt.Sprintf("%p", value.Nesting), fmt.Sprintf("%p", value.Nesting2))
 }
 
 func TestBaseContainer_Resolve_Struct_Sample_NestingPrt(t *testing.T) {
 	c := New()
-	value := c.resolveStruct2(reflect.TypeOf(new(structs.SampleNestingPtr))).(*structs.SampleNestingPtr)
+	sn := new(structs.SampleNestingPtr)
+	value := c.resolveStruct2(reflect.TypeOf(sn), reflect.ValueOf(sn)).(*structs.SampleNestingPtr)
 	assert.Equal(t, 0, value.Id)
 	assert.Equal(t, "", value.Title)
 	assert.Equal(t, false, value.Boolean)
@@ -285,7 +305,8 @@ func TestBaseContainer_Resolve_Struct_Sample_NestingPrt(t *testing.T) {
 	assert.Equal(t, map[string]string{}, value.Nesting.NMapString)
 	assert.Equal(t, []string{}, value.Nesting.NSlice)
 
-	value1 := c.resolveStruct2(reflect.TypeOf(structs.SampleNesting{})).(structs.SampleNesting)
+	s3 := structs.SampleNesting{}
+	value1 := c.resolveStruct2(reflect.TypeOf(s3), reflect.ValueOf(s3)).(structs.SampleNesting)
 	assert.Equal(t, 0, value1.Id)
 	assert.Equal(t, "", value1.Title)
 	assert.Equal(t, false, value1.Boolean)

@@ -1,4 +1,4 @@
-package event
+package cmd
 
 import (
 	"github.com/firmeve/firmeve/container"
@@ -10,13 +10,12 @@ type Provider struct {
 }
 
 func (p *Provider) Name() string {
-	return `event`
+	return `command`
 }
 
 func (p *Provider) Register() {
-	p.Firmeve.Bind(`event`, New(), container.WithShare(true))
+	p.Firmeve.Bind("command",New(kernel.Version),container.WithShare(true))
 }
 
 func (p *Provider) Boot() {
-
 }

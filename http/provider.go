@@ -1,12 +1,13 @@
 package http
 
 import (
-	"github.com/firmeve/firmeve"
 	"github.com/firmeve/firmeve/container"
+	"github.com/firmeve/firmeve/kernel"
+	"github.com/spf13/cobra"
 )
 
 type Provider struct {
-	firmeve.BaseProvider
+	kernel.BaseProvider
 }
 
 func (p *Provider) Name() string {
@@ -15,6 +16,10 @@ func (p *Provider) Name() string {
 
 func (p *Provider) Register() {
 	p.Firmeve.Bind(`http.router`, New(p.Firmeve), container.WithShare(true))
+
+	p.Firmeve.Get("command").(*cobra.Command).AddCommand(
+		NewServer(p.Firmeve).Cmd(),
+	)
 }
 
 func (p *Provider) Boot() {

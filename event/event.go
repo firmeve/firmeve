@@ -5,14 +5,11 @@ import (
 )
 
 type (
-	InParams  map[string]interface{}
-	outParams []interface{}
+	InParams map[string]interface{}
 
 	Handler interface {
 		Handle(params InParams) (interface{}, error)
 	}
-
-	handlers []Handler
 
 	IDispatcher interface {
 		Listen(name string, handler Handler)
@@ -20,6 +17,10 @@ type (
 		Dispatch(name string, params InParams) outParams
 		Has(name string) bool
 	}
+
+	outParams []interface{}
+
+	handlers []Handler
 
 	event struct {
 		listeners map[string]handlers

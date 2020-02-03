@@ -1,198 +1,93 @@
 package firmeve
 
 import (
-	"fmt"
-	"sync"
-
+	"github.com/firmeve/firmeve/cmd"
+	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/container"
+	"github.com/firmeve/firmeve/event"
+	"github.com/firmeve/firmeve/http"
 	"github.com/firmeve/firmeve/support"
-)
-
-const (
-	Version               = "1.0.0"
-	ModeDevelopment uint8 = iota
-	ModeProduction
-	ModeTesting
+	"github.com/spf13/cobra"
+	"os"
+	"github.com/firmeve/firmeve/kernel"
+	"github.com/firmeve/firmeve/logger"
 )
 
 type (
-	Provider interface {
-		Name() string
-		Register()
-		Boot()
+	Runner interface {
+		Run()
 	}
 
 	Firmeve struct {
-		container.Container
-		providers map[string]Provider
-		booted    bool
-		mode      uint8
-	}
-
-	BaseProvider struct {
-		Firmeve *Firmeve `inject:"firmeve"`
-	}
-
-	registerOption struct {
-		registerForce bool
+		kernel.IApplication
 	}
 
 	option struct {
-		mode uint8
+		providers []kernel.IProvider
 	}
 )
 
-func WithMode(mode uint8) support.Option {
+func WithProviders(providers []kernel.IProvider) support.Option {
 	return func(object support.Object) {
-		object.(*option).mode = mode
+		object.(*option).providers = providers
 	}
 }
 
-// Create a new firmeve container
-func New(options ...support.Option) *Firmeve {
-
-	option := support.ApplyOption(newOption(), options...).(*option)
-
-	firmeve := &Firmeve{
-		Container: container.New(),
-		providers: make(map[string]Provider),
-		booted:    false,
-		mode:      option.mode,
-	}
-
-	// binding self
-	firmeve.Bind("firmeve", firmeve)
-
-	return firmeve
+func New(mode uint8, configPath string, options ...support.Option) Runner {
+	return boot(mode,configPath,parseOption(options)).(Runner)
 }
 
-// binding unique firmeve instance
-//func BindingInstance(firmeve *Firmeve) {
-//	if instance != nil {
-//		return
-//	}
-//
-//	once.Do(func() {
-//		instance = firmeve
-//	})
-//}
+func Default(mode uint8, configPath string, options ...support.Option) Runner {
+	defaultProviders := []kernel.IProvider{
+		new(http.Provider),
+	}
 
-// A singleton firmeve expose func
-//func Instance() *Firmeve {
-//	return instance
-//}
-//
-//func F(params ...interface{}) interface{} {
-//	if len(params) > 0 {
-//		return Instance().Make(params[0], params[1:]...)
-//	}
-//
-//	return Instance()
-//}
+	option := parseOption(options)
+	option.providers = append(defaultProviders,option.providers...)
 
-// Set running mode
-func (f *Firmeve) SetMode(mode uint8) *Firmeve {
-	f.mode = mode
+	return boot(mode, configPath,option).(Runner)
+}
+
+
+func boot(mode uint8, configPath string, option *option) kernel.IApplication {
+	f := &Firmeve{
+		kernel.New(mode),
+	}
+
+	f.Bind("firmeve", f)
+
+	f.Bind(`config`, config.New(configPath), container.WithShare(true))
+
+	f.registerBaseProvider()
+
+	if len(option.providers) != 0 {
+		f.RegisterMultiple(option.providers, false)
+	}
+
+	f.Boot()
+
 	return f
 }
 
-// Get running mode
-func (f *Firmeve) Mode() uint8 {
-	return f.mode
+func parseOption(options []support.Option) *option {
+	return support.ApplyOption(&option{
+		providers: make([]kernel.IProvider, 0),
+	}, options...).(*option)
 }
 
-// Check is development mode
-func (f *Firmeve) IsDevelopment() bool {
-	return f.mode == ModeDevelopment
-}
-
-// Check is production mode
-func (f *Firmeve) IsProduction() bool {
-	return f.mode == ModeProduction
-}
-
-// Check is testing mode
-func (f *Firmeve) IsTesting() bool {
-	return f.mode == ModeTesting
-}
-
-// Start all service providers at once
-func (f *Firmeve) Boot() {
-	if f.booted {
-		return
-	}
-
-	for _, provider := range f.providers {
-		provider.Boot()
-	}
-
-	f.booted = true
-}
-
-// Compatible method make method alias
-func (f *Firmeve) Resolve(abstract interface{}, params ...interface{}) interface{} {
-	return f.Make(abstract, params...)
-}
-
-// Register force param
-func WithRegisterForce() support.Option {
-	return func(object support.Object) {
-		object.(*registerOption).registerForce = true
+func (f *Firmeve) Run() {
+	root := f.Get("command").(*cobra.Command)
+	root.SetArgs(os.Args[1:])
+	err := root.Execute()
+	if err != nil {
+		panic(err)
 	}
 }
 
-// Register a service provider
-func (f *Firmeve) Register(provider Provider, options ...support.Option) {
-	name := provider.Name()
-	// Parameter analysis
-	option := support.ApplyOption(newRegisterOption(), options...).(*registerOption)
-
-	if f.HasProvider(name) && !option.registerForce {
-		return
-	}
-
-	f.registerProvider(name, provider)
-
-	provider.Register()
-
-	if f.booted {
-		provider.Boot()
-	}
-}
-
-// Add a service provider to providers map
-func (f *Firmeve) registerProvider(name string, provider Provider) {
-	var mutex sync.Mutex
-	mutex.Lock()
-	f.providers[name] = provider
-	mutex.Unlock()
-}
-
-// Determine if the provider exists
-func (f *Firmeve) HasProvider(name string) bool {
-	if _, ok := f.providers[name]; ok {
-		return ok
-	}
-
-	return false
-}
-
-// Get a if the provider exists
-// If not found then panic
-func (f *Firmeve) GetProvider(name string) Provider {
-	if !f.HasProvider(name) {
-		panic(fmt.Errorf("the %s service provider not exists", name))
-	}
-
-	return f.providers[name]
-}
-
-// ---------------------------- option ------------------------
-
-func newRegisterOption() *registerOption {
-	return &registerOption{registerForce: false}
-}
-
-func newOption() *option {
-	return &option{mode: ModeProduction}
+func (f *Firmeve) registerBaseProvider() {
+	f.RegisterMultiple([]kernel.IProvider{
+		new(cmd.Provider),
+		new(event.Provider),
+		new(logging.Provider),
+	}, false)
 }
