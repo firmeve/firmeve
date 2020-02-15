@@ -37,7 +37,7 @@ func (a *App) bindingRoutes() {
 }
 
 func main() {
-	app := firmeve.Default(kernel.ModeDevelopment,path2.RunRelative(`../../testdata/config`),
+	app := firmeve.Default(kernel.ModeDevelopment,path2.RunRelative(`../../../testdata/config`),
 	firmeve.WithProviders(
 		[]contract.Provider{new(App)},
 	))
