@@ -2,6 +2,7 @@
 
 * [Firmeve](README.md)
 * [核心组件]
+  * [内核](docs/zh-CN/kernel.md)
   * [容器](docs/zh-CN/container.md)
   * [应用](docs/zh-CN/app.md)
   * [配置](docs/zh-CN/config.md)

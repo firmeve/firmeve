@@ -56,6 +56,7 @@ go run main.go http:serve
 
 ## Feature list
 - **Core**
+    - [x] [Kernel](./docs/zh-CN/kernel.md)
     - [x] [Container](./docs/zh-CN/container.md)
     - [x] [Application](./docs/zh-CN/app.md)
     - [x] [Config](./docs/zh-CN/config.md)
