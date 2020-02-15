@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/kernel/contract"
+	"github.com/firmeve/firmeve/logger"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/http2"
 	net_http "net/http"
@@ -17,7 +18,7 @@ import (
 type cmd struct {
 	app     contract.Application
 	command *cobra.Command
-	logger  contract.Loggable
+	logger  logging.Loggable
 	config  *config.Config
 }
 
@@ -27,7 +28,7 @@ func NewServer(firmeve contract.Application) *cmd {
 		command: new(cobra.Command),
 	}
 	command.config = firmeve.Get(`config`).(*config.Config)
-	command.logger = firmeve.Get(`logger`).(contract.Loggable)
+	command.logger = firmeve.Get(`logger`).(logging.Loggable)
 
 	return command
 	// base
