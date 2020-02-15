@@ -1,9 +1,9 @@
 package database
 
 import (
+	"github.com/firmeve/firmeve/kernel/contract"
 	"strings"
 
-	"github.com/firmeve/firmeve/config"
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mssql"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
@@ -13,7 +13,7 @@ import (
 
 type (
 	DB struct {
-		config      config.Configurator
+		config      contract.Configuration
 		db          *gorm.DB
 		connections dbConnection
 	}
@@ -21,7 +21,7 @@ type (
 	dbConnection map[string]*gorm.DB
 )
 
-func New(config config.Configurator) *DB {
+func New(config contract.Configuration) *DB {
 	return &DB{
 		config:      config,
 		connections: make(dbConnection, 0),

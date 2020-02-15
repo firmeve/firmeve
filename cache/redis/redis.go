@@ -1,7 +1,7 @@
 package redis
 
 import (
-	repository2 "github.com/firmeve/firmeve/cache/repository"
+	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/go-redis/redis"
 	"strings"
 	"time"
@@ -13,7 +13,7 @@ type repository struct {
 }
 
 // Initialize a new Repository
-func New(client *redis.Client, prefix string) repository2.Cacheable {
+func New(client *redis.Client, prefix string) contract.CacheStore {
 	return &repository{
 		prefix: prefix,
 		redis:  client,

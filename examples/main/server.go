@@ -4,6 +4,7 @@ import (
 	"github.com/firmeve/firmeve"
 	"github.com/firmeve/firmeve/http"
 	"github.com/firmeve/firmeve/kernel"
+	"github.com/firmeve/firmeve/kernel/contract"
 	path2 "github.com/firmeve/firmeve/support/path"
 )
 
@@ -38,7 +39,7 @@ func (a *App) bindingRoutes() {
 func main() {
 	app := firmeve.Default(kernel.ModeDevelopment,path2.RunRelative(`../../testdata/config`),
 	firmeve.WithProviders(
-		[]kernel.IProvider{new(App)},
+		[]contract.Provider{new(App)},
 	))
 
 	app.Run()

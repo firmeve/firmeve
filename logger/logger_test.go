@@ -2,6 +2,7 @@ package logging
 
 import (
 	"github.com/firmeve/firmeve/config"
+	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/support/path"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -17,7 +18,7 @@ func TestDefault(t *testing.T) {
 	//assert.Equal(t, true, true)
 }
 
-func Default() Loggable {
+func Default() contract.Loggable {
 	return New(config.New(path.RunRelative("../testdata/config")).Item(`logging`))
 }
 

@@ -2,24 +2,23 @@ package cache
 
 import (
 	"fmt"
-	testing2 "github.com/firmeve/firmeve/testing"
+	"github.com/firmeve/firmeve/kernel/contract"
 	"math/rand"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/firmeve/firmeve/cache/repository"
 	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/support/path"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCache_Implement(t *testing.T) {
-	assert.Implements(t, (*repository.CacheSerializable)(nil), Default())
+	assert.Implements(t, (*contract.CacheSerializable)(nil), Default())
 }
 
 //Create a cache manager
-func Default() *Cache {
+func Default() contract.Cache {
 	return New(config.New(path.RunRelative("../testdata/config")).Item(`cache`))
 }
 
@@ -275,11 +274,11 @@ func TestCache_Forever(t *testing.T) {
 }
 
 func TestCache_Driver(t *testing.T) {
-	assert.Implements(t, (*repository.Serializable)(nil), Default().Driver("redis"))
+	assert.Implements(t, (*contract.CacheSerializable)(nil), Default().Driver("redis"))
 }
 
 func TestCache_Store(t *testing.T) {
-	assert.Implements(t, (*repository.Cacheable)(nil), Default().Store())
+	assert.Implements(t, (*contract.CacheStore)(nil), Default().Store())
 }
 
 func TestRepository_Flush(t *testing.T) {
@@ -298,12 +297,12 @@ func TestRepository_Flush(t *testing.T) {
 	}
 }
 
-func TestProvider_Register(t *testing.T) {
-	firmeve := testing2.TestingModeFirmeve()
-	//firmeve.Bind(`config`, config.New(path.RunRelative("../testdata/config")))
-	firmeve.Register(new(Provider),true)
-	firmeve.Boot()
-
-	//assert.Equal(t, true, firmeve.HasProvider("cache"))
-	//assert.Equal(t, true, firmeve.Has(`cache`))
-}
+//func TestProvider_Register(t *testing.T) {
+//	firmeve := testing2.TestingModeFirmeve()
+//	//firmeve.Bind(`config`, config.New(path.RunRelative("../testdata/config")))
+//	firmeve.Register(new(Provider),true)
+//	firmeve.Boot()
+//
+//	//assert.Equal(t, true, firmeve.HasProvider("cache"))
+//	//assert.Equal(t, true, firmeve.Has(`cache`))
+//}

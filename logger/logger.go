@@ -2,12 +2,11 @@ package logging
 
 import (
 	"fmt"
+	"github.com/firmeve/firmeve/kernel/contract"
 	"io"
 	"os"
 	"strings"
 	"sync"
-
-	"github.com/firmeve/firmeve/config"
 
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -15,18 +14,9 @@ import (
 )
 
 type (
-	Loggable interface {
-		Debug(message string, context ...interface{})
-		Info(message string, context ...interface{})
-		Warn(message string, context ...interface{})
-		Error(message string, context ...interface{})
-		Fatal(message string, context ...interface{})
-		Channel(stack string) Loggable
-	}
-
 	logger struct {
 		channels channels
-		config   config.Configurator
+		config   contract.Configuration
 		current  string
 	}
 
@@ -56,7 +46,7 @@ var (
 		Error: zapcore.ErrorLevel,
 		Fatal: zapcore.FatalLevel,
 	}
-	channelMap = map[string]func(config config.Configurator) io.Writer{
+	channelMap = map[string]func(config contract.Configuration) io.Writer{
 		`file`:    newFileChannel,
 		`console`: newConsoleChannel,
 	}
@@ -88,7 +78,7 @@ var (
 	})
 )
 
-func New(config config.Configurator) Loggable {
+func New(config contract.Configuration) contract.Loggable {
 	return &logger{
 		config:   config,
 		current:  config.GetString(`default`),
@@ -118,7 +108,7 @@ func (l *logger) Fatal(message string, context ...interface{}) {
 
 // Return a new Logger instance
 // But still using internal channels
-func (l *logger) Channel(stack string) Loggable {
+func (l *logger) Channel(stack string) contract.Loggable {
 	return &logger{
 		config:   l.config,
 		channels: l.channels,
@@ -142,7 +132,7 @@ func (l *logger) channel(stack string) internalLogger {
 // ---------------------------------------------- func --------------------------------------------------
 
 // Default internal logger
-func zapLogger(config config.Configurator, writers writers) internalLogger {
+func zapLogger(config contract.Configuration, writers writers) internalLogger {
 	//zapcore.EncoderConfig{
 	//	TimeKey:        "time",
 	//	LevelKey:       "level",
@@ -182,7 +172,7 @@ func zapLogger(config config.Configurator, writers writers) internalLogger {
 }
 
 // Channel factory
-func factory(stack string, config config.Configurator) internalLogger {
+func factory(stack string, config contract.Configuration) internalLogger {
 	var channels writers
 	switch stack {
 	case `file`:
@@ -199,7 +189,7 @@ func factory(stack string, config config.Configurator) internalLogger {
 }
 
 // New file channel
-func newFileChannel(config config.Configurator) io.Writer {
+func newFileChannel(config contract.Configuration) io.Writer {
 	return &lumberjack.Logger{
 		Filename:   config.GetStringMap(`channels.file`)[`path`].(string) + "/log.log",
 		MaxSize:    config.GetStringMap(`channels.file`)[`size`].(int),
@@ -209,12 +199,12 @@ func newFileChannel(config config.Configurator) io.Writer {
 }
 
 // New console channel
-func newConsoleChannel(config config.Configurator) io.Writer {
+func newConsoleChannel(config contract.Configuration) io.Writer {
 	return os.Stdout
 }
 
 // New stack channel
-func newStackChannel(config config.Configurator) writers {
+func newStackChannel(config contract.Configuration) writers {
 	stacks := config.GetStringSlice(`channels.stack`)
 	existsStackMap := make(writers, 0)
 	for _, stack := range stacks {

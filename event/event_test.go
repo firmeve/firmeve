@@ -2,6 +2,7 @@ package event
 
 import (
 	"errors"
+	"github.com/firmeve/firmeve/kernel/contract"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,7 +13,7 @@ type mockHandler struct {
 	err    error
 }
 
-func (m *mockHandler) Handle(params InParams) (interface{}, error) {
+func (m *mockHandler) Handle(params map[string]interface{}) (interface{}, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -22,7 +23,7 @@ func (m *mockHandler) Handle(params InParams) (interface{}, error) {
 
 func TestBaseDispatcher(t *testing.T) {
 	dispatch := New()
-	dispatch.ListenMany("a", []Handler{
+	dispatch.ListenMany("a", []contract.EventHandler{
 		&mockHandler{},
 		&mockHandler{},
 	})
