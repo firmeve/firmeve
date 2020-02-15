@@ -7,7 +7,7 @@ import (
 	"github.com/firmeve/firmeve/converter/serializer"
 	"github.com/firmeve/firmeve/input"
 	"github.com/firmeve/firmeve/input/parser"
-	"github.com/firmeve/firmeve/kernel"
+	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/support/strings"
 	"github.com/kataras/iris/core/errors"
 	"github.com/ulule/paging"
@@ -36,7 +36,7 @@ type (
 		Value interface{}
 	}
 	Context struct {
-		Firmeve        kernel.IApplication `inject:"firmeve"`
+		Firmeve        contract.Application `inject:"firmeve"`
 		Request        *http.Request
 		ResponseWriter http.ResponseWriter
 		Input          *input.Input
@@ -53,7 +53,7 @@ var (
 	ErrUnsupportedParse = errors.New(`Unsupported type`)
 )
 
-func newContext(firmeve kernel.IApplication, writer http.ResponseWriter, r *http.Request, handlers ...HandlerFunc) *Context {
+func newContext(firmeve contract.Application, writer http.ResponseWriter, r *http.Request, handlers ...HandlerFunc) *Context {
 	ctx := &Context{
 		Firmeve:        firmeve,
 		Request:        r,

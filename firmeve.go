@@ -6,6 +6,7 @@ import (
 	"github.com/firmeve/firmeve/container"
 	"github.com/firmeve/firmeve/event"
 	"github.com/firmeve/firmeve/http"
+	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/support"
 	"github.com/spf13/cobra"
 	"os"
@@ -14,42 +15,38 @@ import (
 )
 
 type (
-	Runner interface {
-		Run()
-	}
-
 	Firmeve struct {
-		kernel.IApplication
+		contract.Application
 	}
 
 	option struct {
-		providers []kernel.IProvider
+		providers []contract.Provider
 	}
 )
 
-func WithProviders(providers []kernel.IProvider) support.Option {
+func WithProviders(providers []contract.Provider) support.Option {
 	return func(object support.Object) {
 		object.(*option).providers = providers
 	}
 }
 
-func New(mode uint8, configPath string, options ...support.Option) Runner {
-	return boot(mode,configPath,parseOption(options)).(Runner)
+func New(mode uint8, configPath string, options ...support.Option) contract.Firmeve {
+	return boot(mode,configPath,parseOption(options)).(contract.Firmeve)
 }
 
-func Default(mode uint8, configPath string, options ...support.Option) Runner {
-	defaultProviders := []kernel.IProvider{
+func Default(mode uint8, configPath string, options ...support.Option) contract.Firmeve {
+	defaultProviders := []contract.Provider{
 		new(http.Provider),
 	}
 
 	option := parseOption(options)
 	option.providers = append(defaultProviders,option.providers...)
 
-	return boot(mode, configPath,option).(Runner)
+	return boot(mode, configPath,option).(contract.Firmeve)
 }
 
 
-func boot(mode uint8, configPath string, option *option) kernel.IApplication {
+func boot(mode uint8, configPath string, option *option) contract.Application {
 	f := &Firmeve{
 		kernel.New(mode),
 	}
@@ -71,7 +68,7 @@ func boot(mode uint8, configPath string, option *option) kernel.IApplication {
 
 func parseOption(options []support.Option) *option {
 	return support.ApplyOption(&option{
-		providers: make([]kernel.IProvider, 0),
+		providers: make([]contract.Provider, 0),
 	}, options...).(*option)
 }
 
@@ -85,7 +82,7 @@ func (f *Firmeve) Run() {
 }
 
 func (f *Firmeve) registerBaseProvider() {
-	f.RegisterMultiple([]kernel.IProvider{
+	f.RegisterMultiple([]contract.Provider{
 		new(cmd.Provider),
 		new(event.Provider),
 		new(logging.Provider),

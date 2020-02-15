@@ -1,63 +1,20 @@
-package repository
+package cache
 
 import (
 	"bytes"
 	"encoding/gob"
+	"github.com/firmeve/firmeve/kernel/contract"
 	"time"
 )
 
 type (
-	Cacheable interface {
-		Get(key string) (interface{}, error)
-
-		Add(key string, value interface{}, expire time.Time) error
-
-		Put(key string, value interface{}, expire time.Time) error
-
-		Forever(key string, value interface{}) error
-
-		Forget(key string) error
-
-		Increment(key string, steps ...int64) error
-
-		Decrement(key string, steps ...int64) error
-
-		Has(key string) bool
-
-		Flush() error
-	}
-
-	Serializable interface {
-		Store() Cacheable
-
-		GetDefault(key string, defaultValue interface{}) (interface{}, error)
-
-		Pull(key string) (interface{}, error)
-
-		PullDefault(key string, defaultValue interface{}) (interface{}, error)
-
-		GetDecode(key string, to interface{}) (interface{}, error)
-
-		AddEncode(key string, value interface{}, expire time.Time) error
-
-		ForeverEncode(key string, value interface{}) error
-
-		PutEncode(key string, value interface{}, expire time.Time) error
-	}
-
-	CacheSerializable interface {
-		Cacheable
-
-		Serializable
-	}
-
 	repository struct {
-		store Cacheable
+		store contract.CacheStore
 	}
 )
 
 // Create a new cache repository
-func New(store Cacheable) Serializable {
+func NewRepository(store contract.CacheStore) contract.CacheSerializable {
 	return &repository{
 		store: store,
 	}
@@ -95,7 +52,7 @@ func (r *repository) PullDefault(key string, defaultValue interface{}) (interfac
 }
 
 //
-func (r *repository) Store() Cacheable {
+func (r *repository) Store() contract.CacheStore {
 	return r.store
 }
 

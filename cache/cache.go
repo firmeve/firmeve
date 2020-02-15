@@ -1,21 +1,20 @@
 package cache
 
 import (
+	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/kataras/iris/core/errors"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/firmeve/firmeve/cache/redis"
-	"github.com/firmeve/firmeve/cache/repository"
-	"github.com/firmeve/firmeve/config"
 	goRedis "github.com/go-redis/redis"
 )
 
 type Cache struct {
-	config       config.Configurator
-	current      repository.Serializable
-	repositories map[string]repository.Serializable
+	config       contract.Configuration
+	current      contract.CacheSerializable
+	repositories map[string]contract.CacheSerializable
 }
 
 var (
@@ -24,10 +23,10 @@ var (
 )
 
 // Create a cache manager
-func New(config config.Configurator) *Cache {
+func New(config contract.Configuration) contract.Cache {
 	cache := &Cache{
 		config:       config,
-		repositories: make(map[string]repository.Serializable, 0),
+		repositories: make(map[string]contract.CacheSerializable, 0),
 	}
 	cache.registerDefaultDriver(cache.config.GetString(`default`))
 	cache.current = cache.Driver(cache.config.GetString(`default`))
@@ -36,8 +35,8 @@ func New(config config.Configurator) *Cache {
 }
 
 // Get the cache driver of the finger
-func (c *Cache) Driver(driver string) repository.Serializable {
-	var current repository.Serializable
+func (c *Cache) Driver(driver string) contract.CacheSerializable {
+	var current contract.CacheSerializable
 	var ok bool
 
 	mutex.Lock()
@@ -51,12 +50,12 @@ func (c *Cache) Driver(driver string) repository.Serializable {
 }
 
 // Register driver
-func (c *Cache) Register(driver string, store repository.Cacheable) {
-	c.repositories[driver] = repository.New(store)
+func (c *Cache) Register(driver string, store contract.CacheStore) {
+	c.repositories[driver] = NewRepository(store)
 }
 
 // Create a redis cache driver
-func (c *Cache) createRedisDriver() repository.Cacheable {
+func (c *Cache) createRedisDriver() contract.CacheStore {
 	var (
 		host   = c.config.GetString(`repositories.redis.host`)
 		port   = c.config.GetString(`repositories.redis.port`)
@@ -74,7 +73,7 @@ func (c *Cache) createRedisDriver() repository.Cacheable {
 
 // register a exists default driver
 func (c *Cache) registerDefaultDriver(driver string) {
-	var store repository.Cacheable
+	var store contract.CacheStore
 	switch driver {
 	case `redis`:
 		store = c.createRedisDriver()
@@ -85,7 +84,7 @@ func (c *Cache) registerDefaultDriver(driver string) {
 	c.Register(driver, store)
 }
 
-func (c *Cache) Store() repository.Cacheable {
+func (c *Cache) Store() contract.CacheStore {
 	return c.current.Store()
 }
 

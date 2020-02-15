@@ -1,29 +1,13 @@
 package event
 
 import (
+	"github.com/firmeve/firmeve/kernel/contract"
 	"sync"
 )
 
 type (
-	InParams map[string]interface{}
-
-	Handler interface {
-		Handle(params InParams) (interface{}, error)
-	}
-
-	IDispatcher interface {
-		Listen(name string, handler Handler)
-		ListenMany(name string, handlers handlers)
-		Dispatch(name string, params InParams) outParams
-		Has(name string) bool
-	}
-
-	outParams []interface{}
-
-	handlers []Handler
-
 	event struct {
-		listeners map[string]handlers
+		listeners map[string][]contract.EventHandler
 	}
 )
 
@@ -31,34 +15,34 @@ var (
 	mutex sync.Mutex
 )
 
-func New() IDispatcher {
+func New() contract.Event {
 	return &event{
-		listeners: make(map[string]handlers, 0),
+		listeners: make(map[string][]contract.EventHandler, 0),
 	}
 }
 
-func (e *event) Listen(name string, handler Handler) {
+func (e *event) Listen(name string, handler contract.EventHandler) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	if _, ok := e.listeners[name]; !ok {
-		e.listeners[name] = make(handlers, 0)
+		e.listeners[name] = make([]contract.EventHandler, 0)
 	}
 
 	e.listeners[name] = append(e.listeners[name], handler)
 }
 
-func (e *event) ListenMany(name string, handlerMany handlers) {
+func (e *event) ListenMany(name string, handlerMany []contract.EventHandler) {
 	for _, handler := range handlerMany {
 		e.Listen(name, handler)
 	}
 }
 
-func (e *event) Dispatch(name string, params InParams) outParams {
+func (e *event) Dispatch(name string, params map[string]interface{}) []interface{} {
 	if !e.Has(name) {
 		return nil
 	}
 
-	results := make(outParams, 0)
+	results := make([]interface{}, 0)
 	for _, listener := range e.listeners[name] {
 		result, err := listener.Handle(params)
 		if err != nil {

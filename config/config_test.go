@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/firmeve/firmeve/kernel/contract"
 	"os"
 	"sync"
 	"testing"
@@ -35,7 +36,7 @@ func TestConfig_Set(t *testing.T) {
 
 	wg.Add(2)
 	for i := 0; i < 2; i++ {
-		go func(config Configurator) {
+		go func(config contract.Configuration) {
 			testn := make([]struct {
 				File  string
 				Key   string

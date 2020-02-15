@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"github.com/firmeve/firmeve/kernel/contract"
 	"os"
 	"path/filepath"
 	"strings"
@@ -12,26 +13,6 @@ import (
 )
 
 type (
-	// Configurator interface
-	Configurator interface {
-		Get(key string) interface{}
-		GetBool(key string) bool
-		GetFloat(key string) float64
-		GetInt(key string) int
-		GetIntSlice(key string) []int
-		GetString(key string) string
-		GetStringMap(key string) map[string]interface{}
-		GetStringMapString(key string) map[string]string
-		GetStringSlice(key string) []string
-		GetTime(key string) time.Time
-		GetDuration(key string) time.Duration
-		Exists(key string) bool
-		Set(key string, value interface{})
-		SetDefault(key string, value interface{})
-		//Item(item string) Configurator
-		//Load(file string)
-	}
-
 	Config struct {
 		directory string
 		items     map[string]*item
@@ -70,7 +51,7 @@ func New(directory string) *Config {
 //---------------------- config ------------------------
 
 // Get the current file node
-func (c *Config) Item(item string) Configurator {
+func (c *Config) Item(item string) contract.Configuration {
 	mutex.Lock()
 	defer mutex.Unlock()
 	if itemConfig, ok := c.items[item]; ok {

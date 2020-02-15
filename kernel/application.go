@@ -3,6 +3,7 @@ package kernel
 import (
 	"fmt"
 	"github.com/firmeve/firmeve/container"
+	"github.com/firmeve/firmeve/kernel/contract"
 	"sync"
 )
 
@@ -14,25 +15,9 @@ const (
 )
 
 type (
-	IApplication interface {
-		container.Container
-		SetMode(mode uint8)
-		Mode() uint8
-		IsDevelopment() bool
-		IsProduction() bool
-		IsTesting() bool
-		Resolve(abstract interface{}, params ...interface{}) interface{}
-		Boot()
-		Register(provider IProvider, force bool)
-		RegisterMultiple(providers []IProvider, force bool)
-		HasProvider(name string) bool
-		GetProvider(name string) IProvider
-		Reset()
-	}
-
 	Application struct {
-		container.Container
-		providers map[string]IProvider
+		contract.Container
+		providers map[string]contract.Provider
 		booted    bool
 		mode      uint8
 	}
@@ -42,10 +27,10 @@ var (
 	registerMutex sync.Mutex
 )
 
-func New(mode uint8) IApplication {
+func New(mode uint8) contract.Application {
 	return &Application{
 		Container: container.New(),
-		providers: make(map[string]IProvider, 0),
+		providers: make(map[string]contract.Provider, 0),
 		booted:    false,
 		mode:      mode,
 	}
@@ -87,7 +72,7 @@ func (a *Application) Boot() {
 	a.booted = true
 }
 
-func (a *Application) Register(provider IProvider, force bool) {
+func (a *Application) Register(provider contract.Provider, force bool) {
 	name := provider.Name()
 
 	if a.HasProvider(name) && !force {
@@ -103,9 +88,9 @@ func (a *Application) Register(provider IProvider, force bool) {
 	}
 }
 
-func (a *Application) RegisterMultiple(providers []IProvider, force bool) {
+func (a *Application) RegisterMultiple(providers []contract.Provider, force bool) {
 	for i := range providers {
-		a.Register(a.Make(providers[i]).(IProvider), force)
+		a.Register(a.Make(providers[i]).(contract.Provider), force)
 	}
 }
 
@@ -117,7 +102,7 @@ func (a *Application) HasProvider(name string) bool {
 	return false
 }
 
-func (a *Application) GetProvider(name string) IProvider {
+func (a *Application) GetProvider(name string) contract.Provider {
 	if !a.HasProvider(name) {
 		panic(fmt.Errorf("the %s service provider not exists", name))
 	}
@@ -126,14 +111,14 @@ func (a *Application) GetProvider(name string) IProvider {
 }
 
 func (a *Application) Reset() {
-	a.providers = make(map[string]IProvider, 0)
+	a.providers = make(map[string]contract.Provider, 0)
 	a.Container.Flush()
 	a.booted = false
 }
 
 // Add a service provider to providers map
-func (a *Application) registerProvider(name string, provider IProvider) {
+func (a *Application) registerProvider(name string, provider contract.Provider) {
 	registerMutex.Lock()
-	a.providers[name] = a.Make(provider).(IProvider)
+	a.providers[name] = a.Make(provider).(contract.Provider)
 	registerMutex.Unlock()
 }

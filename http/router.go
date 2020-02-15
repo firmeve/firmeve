@@ -1,21 +1,20 @@
 package http
 
 import (
-	"github.com/firmeve/firmeve/event"
-	"github.com/firmeve/firmeve/kernel"
+	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"strings"
 )
 
 type Router struct {
-	Firmeve   kernel.IApplication
+	Firmeve   contract.Application
 	router    *httprouter.Router
 	routes    map[string]*Route
 	routeKeys []string
 }
 
-func New(firmeve kernel.IApplication) *Router {
+func New(firmeve contract.Application) *Router {
 	return &Router{
 		Firmeve:   firmeve,
 		router:    httprouter.New(),
@@ -92,7 +91,7 @@ func (r *Router) createRoute(method string, path string, handler HandlerFunc) *R
 			SetParams(ctxParams).
 			SetRoute(r.routes[key])
 
-		r.Firmeve.Get(`event`).(event.IDispatcher).Dispatch(`router.match`, event.InParams{
+		r.Firmeve.Get(`event`).(contract.Event).Dispatch(`router.match`, map[string]interface{}{
 			`context`: ctx,
 			`route`:   r.routes[key],
 		})

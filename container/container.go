@@ -2,6 +2,7 @@ package container
 
 import (
 	"fmt"
+	"github.com/firmeve/firmeve/kernel/contract"
 	"reflect"
 	"strings"
 	"sync"
@@ -11,15 +12,6 @@ import (
 )
 
 type (
-	Container interface {
-		Has(name string) bool
-		Get(name string) interface{}
-		Bind(name string, prototype interface{}, options ...support.Option)
-		Make(abstract interface{}, params ...interface{}) interface{}
-		Remove(name string)
-		Flush()
-	}
-
 	baseContainer struct {
 		bindings  bindingType
 		instances instanceType
@@ -36,7 +28,7 @@ type (
 		cover bool
 	}
 
-	prototypeFunc func(container Container, params ...interface{}) interface{}
+	prototypeFunc func(container contract.Container, params ...interface{}) interface{}
 
 	bindingType map[string]*binding
 
@@ -92,7 +84,7 @@ func (c *baseContainer) Bind(name string, prototype interface{}, options ...supp
 
 	binding := &binding{
 		name: name,
-		prototype: func(container Container, params ...interface{}) interface{} {
+		prototype: func(container contract.Container, params ...interface{}) interface{} {
 			if kind == reflect.Func {
 				return container.Make(prototype, params...)
 			}
