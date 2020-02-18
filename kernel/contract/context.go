@@ -2,6 +2,8 @@ package contract
 
 import (
 	"context"
+	//"encoding/json"
+	//"io"
 )
 
 type (
@@ -12,6 +14,8 @@ type (
 		Value interface{}
 	}
 
+	ContextValues map[string][]string
+
 	Context interface {
 		context.Context
 
@@ -20,9 +24,18 @@ type (
 		Next()
 
 		Handlers() []ContextHandler
+
+		//Values() ContextValues
+		Binding(v interface{})
+
+		Render(v interface{})
+
 	}
 )
 
+func c()  {
+	//json.Marshal()
+}
 
 //AddEntity(entity *ContextEntity)
 //Entity(key string)

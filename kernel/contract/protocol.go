@@ -50,15 +50,22 @@ type (
 		//Stream()
 
 		// Full protocol message
-		Message() ([]byte,error)
+		Message() ([]byte, error)
 
-		Status(code int)
-
+		//Status(code int)
+		//Binding(v interface{})
 		//
-		Values(key string) map[string][]string
+		////
+		//Values(key string) map[string][]string
 
+		//Write(v interface{}) (int, error)
+	}
 
-
-		//Write([]byte) (int,error)
+	ProtocolPackUnpack interface {
+		Unpack(protocol Protocol) map[string][]string
+		Pack(protocol Protocol)
+		File(protocol Protocol)
+		//Get(key string) []string
+		Output(protocol Protocol, v interface{}) []byte
 	}
 )
