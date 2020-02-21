@@ -14,10 +14,6 @@ var (
 	Plain = plain{}
 )
 
-func (plain) Name() string {
-	return `plain`
-}
-
 func (plain) Render(protocol contract.Protocol, v interface{}) error {
 	if p, ok := protocol.(contract.HttpProtocol); ok {
 		p.SetHeader(`Content-Type`, `text/plain`)
@@ -27,8 +23,6 @@ func (plain) Render(protocol contract.Protocol, v interface{}) error {
 		_, err := protocol.Write(bytes)
 		return err
 	}
-
-	Mime
 
 	return fmt.Errorf("value conversion failed %#v", v)
 }
