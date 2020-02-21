@@ -25,36 +25,12 @@ type (
 
 		Handlers() []ContextHandler
 
-		//Values() ContextValues
-		Binding(v interface{})
+		Bind(v interface{}) error
 
-		Render(v interface{})
+		BindWith(b Binding, v interface{}) error
 
+		Render(v interface{}) error
+
+		RenderWith(r Render, v interface{}) error
 	}
 )
-
-func c()  {
-	//json.Marshal()
-}
-
-//AddEntity(entity *ContextEntity)
-//Entity(key string)
-//
-//
-//func (c *Context) Entity(key string) *entity {
-//	if v, ok := c.entities[key]; ok {
-//		return v
-//	}
-//
-//	return nil
-//}
-//
-//func (c *Context) EntityValue(key string) interface{} {
-//	if v, ok := c.entities[key]; ok {
-//		return v.Value
-//	}
-//
-//	return nil
-//}
-//
-////Output()

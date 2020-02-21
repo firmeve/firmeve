@@ -1,8 +1,10 @@
 package context
 
 import (
+	"github.com/firmeve/firmeve/binding"
 	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
+	"github.com/firmeve/firmeve/render"
 	"time"
 )
 
@@ -39,15 +41,23 @@ func (c *Context) Handlers() []contract.ContextHandler {
 	return c.handlers
 }
 
-func (c *Context) Values() contract.ContextValues {
+//func (c *Context) Values() contract.ContextValues {
+//}
+
+func (c *Context) Bind(v interface{}) error {
+	return binding.Bind(c.protocol, v)
 }
 
-func (c *Context) Binding(v interface{}) {
-	return xx(c.protocol,v)
+func (c *Context) BindWith(b contract.Binding, v interface{}) error {
+	return b.Protocol(c.protocol, v)
 }
-func (c *Context) Render(v interface{}) {
-	kernel.Render(c.protocol,v)
-	//return xx(c.protocol,v)
+
+func (c *Context) RenderWith(r contract.Render, v interface{}) error {
+	return r.Render(c.protocol, v)
+}
+
+func (c *Context) Render(v interface{}) error {
+	return render.Render(c.protocol, v)
 }
 
 // --------------------------- context.Context -> Base context ------------------------
