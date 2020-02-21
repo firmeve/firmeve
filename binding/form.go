@@ -4,24 +4,25 @@ import (
 	"errors"
 
 	"github.com/firmeve/firmeve/kernel/contract"
-	"github.com/go-playground/form/v4"
+	form2 "github.com/go-playground/form/v4"
 )
 
 type (
-	Form struct {
+	form struct {
 	}
 )
 
 var (
 	ProtocolTypeError = errors.New("the protocol only support http protocol")
-	formDecoder       = form.NewDecoder()
+	formDecoder       = form2.NewDecoder()
+	Form              = form{}
 )
 
-func (f *Form) Name() string {
-	return `form`
+func (f form) Name() string {
+	return `x-www-form-urlencoded`
 }
 
-func (f *Form) Binding(protocol contract.Protocol, v interface{}) error {
+func (f form) Protocol(protocol contract.Protocol, v interface{}) error {
 	if p, ok := protocol.(contract.HttpProtocol); ok {
 		return formDecoder.Decode(v, p.Values())
 	}
