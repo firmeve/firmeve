@@ -14,13 +14,15 @@ var (
 
 func Render(protocol contract.Protocol, v interface{}) error {
 	if p, ok := protocol.(contract.HttpProtocol); ok {
-		//@todo accept-type可能有多个
-		acceptType := p.Header(`Accept-Type`)
-		if r, ok := httpRenderType[acceptType]; ok {
-			return r.Render(protocol, v)
+		accept := p.Accept()
+
+		for _, item := range accept {
+			if r, ok := httpRenderType[item]; ok {
+				return r.Render(protocol, v)
+			}
 		}
 
-		return fmt.Errorf("non-existent type %s", acceptType)
+		return fmt.Errorf("non-existent type %v", accept)
 	}
 
 	return nil

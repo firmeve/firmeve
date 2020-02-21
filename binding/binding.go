@@ -15,8 +15,7 @@ var (
 
 func Bind(protocol contract.Protocol, v interface{}) error {
 	if p, ok := protocol.(contract.HttpProtocol); ok {
-		//@todo content-type 会有多个值
-		contentType := p.Header(`Content-Type`)
+		contentType := p.ContentType()
 
 		if b, ok := httpBindingType[contentType]; ok {
 			return b.Protocol(protocol, v)
