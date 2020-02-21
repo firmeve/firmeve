@@ -2,8 +2,8 @@ package kernel
 
 type (
 	Error struct {
-		err error
-		code int
+		err     error
+		code    int
 		message string
 	}
 )
@@ -21,13 +21,13 @@ func (e *Error) Details() []interface{} {
 }
 
 func (e *Error) Equal(err error) bool {
+	return false
 }
 
+func Error2() {
 
-func Error2()  {
-	
 }
 
-func Errorf()  {
-	
+func Errorf() {
+
 }
