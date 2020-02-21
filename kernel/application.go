@@ -8,10 +8,7 @@ import (
 )
 
 const (
-	Version = "1.0.0"
-	ModeDevelopment uint8 = iota
-	ModeProduction
-	ModeTesting
+	version = "1.0.0"
 )
 
 type (
@@ -44,16 +41,20 @@ func (a *Application) Mode() uint8 {
 	return a.mode
 }
 
+func (a *Application) Version() string {
+	return version
+}
+
 func (a *Application) IsDevelopment() bool {
-	return a.mode == ModeDevelopment
+	return a.mode == contract.ModeDevelopment
 }
 
 func (a *Application) IsProduction() bool {
-	return a.mode == ModeProduction
+	return a.mode == contract.ModeProduction
 }
 
 func (a *Application) IsTesting() bool {
-	return a.mode == ModeTesting
+	return a.mode == contract.ModeTesting
 }
 
 func (a *Application) Resolve(abstract interface{}, params ...interface{}) interface{} {
