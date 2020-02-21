@@ -1,14 +1,28 @@
 package binding
 
-import "github.com/firmeve/firmeve/kernel/contract"
+import (
+	"fmt"
+	"github.com/firmeve/firmeve/kernel/contract"
+)
 
-func Protocol(protocol contract.Protocol, v interface{}) error {
+var (
+	httpBindingType = map[string]contract.Binding{
+		contract.HttpMimeJson:          JSON,
+		contract.HttpMimeForm:          Form,
+		contract.HttpMimeMultipartForm: MultipartForm,
+	}
+)
+
+func Bind(protocol contract.Protocol, v interface{}) error {
 	if p, ok := protocol.(contract.HttpProtocol); ok {
-		if p.IsJson() {
-			return JSON.Protocol(protocol, v)
-		} else {
-			//todo
+		//@todo content-type 会有多个值
+		contentType := p.Header(`Content-Type`)
+
+		if b, ok := httpBindingType[contentType]; ok {
+			return b.Protocol(protocol, v)
 		}
+
+		return fmt.Errorf("non-existent type %s", contentType)
 	}
 
 	return nil

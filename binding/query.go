@@ -11,10 +11,6 @@ var (
 	Query = query{}
 )
 
-func (query) Name() string {
-	return `url-query`
-}
-
 func (query) Protocol(protocol contract.Protocol, v interface{}) error {
 	panic("not support")
 }

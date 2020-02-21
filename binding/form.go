@@ -18,10 +18,6 @@ var (
 	Form              = form{}
 )
 
-func (f form) Name() string {
-	return `x-www-form-urlencoded`
-}
-
 func (f form) Protocol(protocol contract.Protocol, v interface{}) error {
 	if p, ok := protocol.(contract.HttpProtocol); ok {
 		return formDecoder.Decode(v, p.Values())

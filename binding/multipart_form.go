@@ -11,10 +11,6 @@ var (
 	MultipartForm = multipartForm{}
 )
 
-func (multipartForm) Name() string {
-	return `multipart-form`
-}
-
 func (multipartForm) Protocol(protocol contract.Protocol, v interface{}) error {
 	//@todo 暂时不解析file
 	return Form.Protocol(protocol, v)
