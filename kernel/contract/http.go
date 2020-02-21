@@ -35,6 +35,8 @@ type (
 
 		SetStatus(status int)
 
-		Cookie(name string) (*http.Cookie, error)
+		SetCookie(cookie *http.Cookie)
+
+		Cookie(name string) (string, error)
 	}
 )

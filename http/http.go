@@ -4,6 +4,7 @@ import (
 	"github.com/firmeve/firmeve/kernel/contract"
 	"io/ioutil"
 	"net/http"
+	"net/url"
 	"strings"
 )
 
@@ -89,8 +90,23 @@ func (h *Http) IsMethod(key string) bool {
 	return h.request.Method == key
 }
 
-func (h *Http) Cookie(name string) (*http.Cookie, error) {
-	return h.request.Cookie(name)
+func (h *Http) SetCookie(cookie *http.Cookie) {
+	if cookie.Path == "" {
+		cookie.Path = "/"
+	}
+
+	cookie.Value = url.QueryEscape(cookie.Value)
+
+	http.SetCookie(h.responseWriter, cookie)
+}
+
+func (h *Http) Cookie(name string) (string, error) {
+	cookie, err := h.request.Cookie(name)
+	if err != nil {
+		return "", err
+	}
+	val, _ := url.QueryUnescape(cookie.Value)
+	return val, nil
 }
 
 func (h *Http) SetStatus(status int) {
