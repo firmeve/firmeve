@@ -52,6 +52,8 @@ type (
 		// Full protocol message
 		Message() ([]byte, error)
 
+		Values() map[string][]string
+
 		//Status(code int)
 		//Binding(v interface{})
 		//

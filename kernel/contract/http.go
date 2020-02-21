@@ -19,16 +19,22 @@ type (
 
 		ResponseWriter() http.ResponseWriter
 
-		Values() map[string][]string
-
 		SetHeader(key, value string)
 
-		//IsJson() bool
-		//
-		//IsHtml() bool
-		//
-		//IsText() bool
+		Header(key string) string
 
-		IsType(t string) bool
+		IsContentType(key string) bool
+
+		IsAccept(key string) bool
+
+		IsMethod(key string) bool
+
+		ContentType() string
+
+		Accept() []string
+
+		SetStatus(status int)
+
+		Cookie(name string) (*http.Cookie, error)
 	}
 )
