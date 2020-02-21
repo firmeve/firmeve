@@ -14,8 +14,6 @@ type (
 		Value interface{}
 	}
 
-	ContextValues map[string][]string
-
 	Context interface {
 		context.Context
 
@@ -24,6 +22,8 @@ type (
 		Next()
 
 		Handlers() []ContextHandler
+
+		//Values() map[string][]string
 
 		Bind(v interface{}) error
 

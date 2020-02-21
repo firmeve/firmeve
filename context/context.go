@@ -2,7 +2,6 @@ package context
 
 import (
 	"github.com/firmeve/firmeve/binding"
-	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/render"
 	"time"
@@ -41,7 +40,9 @@ func (c *Context) Handlers() []contract.ContextHandler {
 	return c.handlers
 }
 
-//func (c *Context) Values() contract.ContextValues {
+//
+//func (c *Context) Values() map[string][]string {
+//	return c.protocol.Values()
 //}
 
 func (c *Context) Bind(v interface{}) error {
@@ -75,9 +76,9 @@ func (c *Context) Err() error {
 }
 
 func (c *Context) Value(key interface{}) interface{} {
-	if v, ok := key.(string); ok {
-		return c.protocol.Values(v)
-	}
+	//if v, ok := key.(string); ok {
+	//	return c.protocol.Values(v)
+	//}
 
 	return nil
 }
