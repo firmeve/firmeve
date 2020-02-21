@@ -1,17 +1,32 @@
 package render
 
-import "github.com/firmeve/firmeve/kernel/contract"
+import (
+	json2 "encoding/json"
+	"github.com/firmeve/firmeve/kernel/contract"
+)
 
-type Json struct {
+type (
+	json struct {
+	}
+)
 
+var (
+	JSON = json{}
+)
+
+func (json) Name() string {
+	return `json`
 }
 
-func (j *Json) Name() string {
-	panic("implement me")
-}
+func (json) Render(protocol contract.Protocol, v interface{}) error {
+	if p, ok := protocol.(contract.HttpProtocol); ok {
+		p.SetHeader(`Content-Type`, `application/json`)
+	}
 
-func (j *Json) Render(protocol contract.Protocol, v interface{}) error {
-	_, err := protocol.Write(v)
+	bytes, err := json2.Marshal(v)
+	if err != nil {
+		return err
+	}
+	_, err = protocol.Write(bytes)
 	return err
 }
-
