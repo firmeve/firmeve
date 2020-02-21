@@ -39,4 +39,9 @@ type (
 
 		Cookie(name string) (string, error)
 	}
+
+	HttpError interface {
+		Error
+		Status() int
+	}
 )
