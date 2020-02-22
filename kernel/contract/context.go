@@ -9,7 +9,7 @@ import (
 type (
 	ContextHandler func(c Context)
 
-	ContextEntity struct {
+	contextEntity struct {
 		Key   string
 		Value interface{}
 	}
@@ -17,11 +17,17 @@ type (
 	Context interface {
 		context.Context
 
+		Firmeve() Application
+
 		Protocol() Protocol
 
 		Next()
 
 		Handlers() []ContextHandler
+
+		AddEntity(key string, value interface{})
+
+		Entity(key string) *contextEntity
 
 		//Values() map[string][]string
 
