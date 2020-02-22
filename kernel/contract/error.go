@@ -5,7 +5,9 @@ type Error interface {
 
 	Details() []interface{}
 
-	Equal(err Error) bool
+	Equal(err error) bool
 
 	Unwrap() error
+
+	String() string
 }
