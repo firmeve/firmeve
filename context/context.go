@@ -76,9 +76,12 @@ func (c *Context) Err() error {
 }
 
 func (c *Context) Value(key interface{}) interface{} {
-	//if v, ok := key.(string); ok {
-	//	return c.protocol.Values(v)
-	//}
+	if v, ok := key.(string); ok {
+		values := c.protocol.Values()
+		if value, ok := values[v]; ok {
+			return value
+		}
+	}
 
 	return nil
 }
