@@ -12,6 +12,7 @@ type (
 		firmeve  contract.Application
 		protocol contract.Protocol
 		handlers []contract.ContextHandler
+		entries  map[string]*contract.ContextEntity
 		index    int
 	}
 )
@@ -21,8 +22,13 @@ func New(firmeve contract.Application, protocol contract.Protocol, handlers ...c
 		firmeve:  firmeve,
 		protocol: protocol,
 		handlers: handlers,
+		entries:  make(map[string]*contract.ContextEntity, 0),
 		index:    0,
 	}
+}
+
+func (c *Context) Firmeve() contract.Application {
+	return c.firmeve
 }
 
 func (c *Context) Protocol() contract.Protocol {
@@ -40,10 +46,20 @@ func (c *Context) Handlers() []contract.ContextHandler {
 	return c.handlers
 }
 
-//
-//func (c *Context) Values() map[string][]string {
-//	return c.protocol.Values()
-//}
+func (c *Context) AddEntity(key string, value interface{}) {
+	c.entries[key] = &contract.ContextEntity{
+		Key:   key,
+		Value: value,
+	}
+}
+
+func (c *Context) Entity(key string) *contract.ContextEntity {
+	if v, ok := c.entries[key]; ok {
+		return v
+	}
+
+	return nil
+}
 
 func (c *Context) Bind(v interface{}) error {
 	return binding.Bind(c.protocol, v)
