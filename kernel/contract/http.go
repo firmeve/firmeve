@@ -43,5 +43,6 @@ type (
 	HttpError interface {
 		Error
 		Status() int
+		Response(c Context) error
 	}
 )

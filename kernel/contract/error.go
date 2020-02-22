@@ -1,17 +1,11 @@
 package contract
 
-//import "errors"
-type Error2 interface {
+type Error interface {
 	error
-	//Error() string
-
-	Code() int
 
 	Details() []interface{}
 
-	Equal(err error) bool
-}
+	Equal(err Error) bool
 
-//func c()  {
-//	errors.Unwrap()
-//}
+	Unwrap() error
+}
