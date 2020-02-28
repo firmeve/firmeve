@@ -14,8 +14,9 @@ var (
 	Plain = plain{}
 )
 
-func (plain) Render(protocol contract.Protocol, v interface{}) error {
+func (plain) Render(protocol contract.Protocol, status int, v interface{}) error {
 	if p, ok := protocol.(contract.HttpProtocol); ok {
+		p.ResponseWriter().WriteHeader(status)
 		p.SetHeader(`Content-Type`, `text/plain`)
 	}
 

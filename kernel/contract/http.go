@@ -40,9 +40,9 @@ type (
 		Cookie(name string) (string, error)
 	}
 
-	HttpError interface {
-		Error
-		Status() int
-		Response(c Context) error
-	}
+	//HttpError interface {
+	//	Error
+	//	Status() int
+	//	Response(c Context) error
+	//}
 )

@@ -30,7 +30,7 @@ func (h *errorHttp) String() string {
 	return h.Error()
 }
 
-func (h *errorHttp) Equal(err contract.Error) bool {
+func (h *errorHttp) Equal(err error) bool {
 	return errors.Is(h, err)
 }
 
@@ -39,7 +39,16 @@ func (h *errorHttp) Status() int {
 }
 
 func (h *errorHttp) Response(c contract.Context) error {
-	return c.Render(h)
+	//@todo 暂时这样写
+	var err = make(map[string]interface{}, 0)
+	err[`message`] = h.message
+	err[`status`] = h.status
+	if !c.Firmeve().IsProduction() {
+		err[`details`] = h.details
+		err[`err`] = h.err
+	}
+
+	return c.Render(err)
 }
 
 func (h *errorHttp) Error() string {

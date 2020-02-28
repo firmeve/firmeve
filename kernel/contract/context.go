@@ -29,14 +29,20 @@ type (
 
 		Entity(key string) *ContextEntity
 
-		//Values() map[string][]string
+		Abort()
+
+		//SetStatus(status int)
+		//
+		//Status() int
+
+		Error(status int, err error)
 
 		Bind(v interface{}) error
 
 		BindWith(b Binding, v interface{}) error
 
-		Render(v interface{}) error
+		Render(status int, v interface{}) error
 
-		RenderWith(r Render, v interface{}) error
+		RenderWith(status int, r Render, v interface{}) error
 	}
 )

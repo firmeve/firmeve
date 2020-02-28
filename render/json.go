@@ -14,8 +14,9 @@ var (
 	JSON = json{}
 )
 
-func (json) Render(protocol contract.Protocol, v interface{}) error {
+func (json) Render(protocol contract.Protocol, status int, v interface{}) error {
 	if p, ok := protocol.(contract.HttpProtocol); ok {
+		p.ResponseWriter().WriteHeader(status)
 		p.SetHeader(`Content-Type`, `application/json`)
 	}
 
