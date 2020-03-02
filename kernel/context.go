@@ -44,7 +44,7 @@ func (c *context) Error(status int, err error) {
 	if v, ok := err.(contract.ErrorRender); ok {
 		newErr = v
 	} else {
-		newErr = nil //Wrap(err).(contract.ErrorRender)
+		newErr = ErrorWarp(err)
 	}
 
 	if err2 := newErr.Render(status, c); err2 != nil {

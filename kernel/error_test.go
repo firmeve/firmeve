@@ -7,10 +7,10 @@ import (
 
 func TestNew(t *testing.T) {
 	//v := Error("abcdef")
-	//f()
+	f()
 
-	v := Error("abc")
-	fmt.Println(v.StackString())
+	//v := Error("abc")
+	//fmt.Println(v.StackString())
 
 	//fmt.Printf(Errorf("a %w a", errors.New("nnnn")))
 
@@ -37,5 +37,6 @@ func TestNew(t *testing.T) {
 
 func f() {
 	v := Error("abc")
-	fmt.Println(v.StackString())
+	v2 := ErrorWarp(v)
+	fmt.Println(v2.StackString())
 }

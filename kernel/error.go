@@ -91,7 +91,7 @@ func callers() []uintptr {
 
 	const depth = 32
 	var pcs [depth]uintptr
-	n := runtime.Callers(4, pcs[:])
+	n := runtime.Callers(3, pcs[:])
 	return pcs[0:n]
 }
 
@@ -110,13 +110,18 @@ func Errorf(format string, args ...interface{}) *basicError {
 }
 
 //@todo 这个warp重新递归包装
-func Wrap(err error) *basicError {
-	if e, ok := err.(*basicError); ok {
-		return e
-	}
-
+func ErrorWarp(err error) *basicError {
 	return &basicError{
-		message: err.Error(),
+		stack:   callers(),
 		err:     err,
 	}
+
+	//if e, ok := err.(*basicError); ok {
+	//	return e
+	//}
+	//
+	//return &basicError{
+	//	message: err.Error(),
+	//	err:     err,
+	//}
 }
