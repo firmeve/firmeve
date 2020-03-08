@@ -35,6 +35,13 @@ func TestNew(t *testing.T) {
 	//fmt.Printf("a%wa", errors.New("nnnn"))
 }
 
+
+
+
+
+
+
+
 func f() {
 	v := Error("abc")
 	v2 := ErrorWarp(v)

@@ -111,8 +111,14 @@ func Errorf(format string, args ...interface{}) *basicError {
 
 //@todo 这个warp重新递归包装
 func ErrorWarp(err error) *basicError {
+	var stacks = make([]uintptr,0)
+	if v , ok := err.(contract.ErrorStack); ok {
+		stacks = append(callers(),v.Stack()...)
+	} else {
+		stacks = callers()
+	}
 	return &basicError{
-		stack:   callers(),
+		stack:   stacks,
 		err:     err,
 	}
 
