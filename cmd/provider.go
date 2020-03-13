@@ -14,7 +14,7 @@ func (p *Provider) Name() string {
 }
 
 func (p *Provider) Register() {
-	p.Firmeve.Bind("command",New(kernel.Version),container.WithShare(true))
+	p.Firmeve.Bind("command", New(p.Firmeve.Version()), container.WithShare(true))
 }
 
 func (p *Provider) Boot() {

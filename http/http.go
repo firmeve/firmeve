@@ -51,6 +51,21 @@ func (h *Http) Message() ([]byte, error) {
 	return h.message, err
 }
 
+//func (c *Context) SetParams(params Params) *Context {
+//	c.Params = params
+//	return c
+//}
+//
+//func (c *Context) SetRoute(route *Route) *Context {
+//	c.route = route
+//	return c
+//}
+//
+//func (c *Context) Param(key string) string {
+//	value, _ := c.Params[key]
+//	return value
+//}
+
 func (h *Http) Request() *http.Request {
 	return h.request
 }

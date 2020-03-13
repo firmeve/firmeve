@@ -1,11 +1,13 @@
 package http
 
+import "github.com/firmeve/firmeve/kernel/contract"
+
 type Route struct {
 	path           string
 	name           string
-	beforeHandlers []HandlerFunc
-	afterHandlers  []HandlerFunc
-	handler        HandlerFunc
+	beforeHandlers []contract.ContextHandler
+	afterHandlers  []contract.ContextHandler
+	handler        contract.ContextHandler
 }
 
 func (r *Route) Name(name string) *Route {
@@ -13,25 +15,25 @@ func (r *Route) Name(name string) *Route {
 	return r
 }
 
-func (r *Route) Before(handlers ...HandlerFunc) *Route {
+func (r *Route) Before(handlers ...contract.ContextHandler) *Route {
 	r.beforeHandlers = append(r.beforeHandlers, handlers...)
 	return r
 }
 
-func (r *Route) After(handlers ...HandlerFunc) *Route {
+func (r *Route) After(handlers ...contract.ContextHandler) *Route {
 	r.afterHandlers = append(r.afterHandlers, handlers...)
 	return r
 }
 
-func (r *Route) Handlers() []HandlerFunc {
+func (r *Route) Handlers() []contract.ContextHandler {
 	return append(append(r.beforeHandlers, r.handler), r.afterHandlers...)
 }
 
-func newRoute(path string, handler HandlerFunc) *Route {
+func newRoute(path string, handler contract.ContextHandler) *Route {
 	return &Route{
 		path:           path,
 		handler:        handler,
-		beforeHandlers: make([]HandlerFunc, 0),
-		afterHandlers:  make([]HandlerFunc, 0),
+		beforeHandlers: make([]contract.ContextHandler, 0),
+		afterHandlers:  make([]contract.ContextHandler, 0),
 	}
 }

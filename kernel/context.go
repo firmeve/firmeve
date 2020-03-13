@@ -111,6 +111,11 @@ func (c *context) Render(status int, v interface{}) error {
 	return render.Render(c.protocol, status, v)
 }
 
+func (c *context) Clone() contract.Context {
+	//@todo 暂时先返回自己，Context全部完善后再修改clone
+	return c
+}
+
 // --------------------------- context.Context -> Base context ------------------------
 
 func (c *context) Deadline() (deadline time.Time, ok bool) {

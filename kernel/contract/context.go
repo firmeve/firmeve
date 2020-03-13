@@ -42,5 +42,7 @@ type (
 		Render(status int, v interface{}) error
 
 		RenderWith(status int, r Render, v interface{}) error
+
+		Clone() Context
 	}
 )
