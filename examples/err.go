@@ -10,11 +10,11 @@ func main() {
 	error2()
 }
 
-func error2()  {
+func error2() {
 	e := kernel.Error("sss")
 	e2 := kernel.ErrorWarp(e)
 	e3 := kernel.ErrorWarp(e2)
-	fmt.Printf("%v",e3.StackString())
+	fmt.Printf("%v", e3.StackString())
 }
 
 func errorsw() {
@@ -22,5 +22,5 @@ func errorsw() {
 	e2 := errors.WithStack(e)
 	e3 := errors.WithStack(e2)
 
-	fmt.Printf("%+v",e3)
+	fmt.Printf("%+v", e3)
 }

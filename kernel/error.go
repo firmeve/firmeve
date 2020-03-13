@@ -71,7 +71,7 @@ func (b *basicError) StackString() string {
 			stackString = append(stackString, "unknown")
 		} else {
 			file, line := fn.FileLine(b.stack[i])
-			stackString = append(stackString, fmt.Sprintf("%s %d %s", file, line, fn.Name()))
+			stackString = append(stackString, fmt.Sprintf("%s\n        %s:%d", fn.Name(), file, line))
 		}
 	}
 
@@ -109,25 +109,15 @@ func Errorf(format string, args ...interface{}) *basicError {
 	}
 }
 
-//@todo 这个warp重新递归包装
 func ErrorWarp(err error) *basicError {
-	var stacks = make([]uintptr,0)
-	if v , ok := err.(contract.ErrorStack); ok {
-		stacks = append(callers(),v.Stack()...)
+	var stacks = make([]uintptr, 0)
+	if v, ok := err.(contract.ErrorStack); ok {
+		stacks = append(v.Stack(), callers()...)
 	} else {
 		stacks = callers()
 	}
 	return &basicError{
-		stack:   stacks,
-		err:     err,
+		stack: stacks,
+		err:   err,
 	}
-
-	//if e, ok := err.(*basicError); ok {
-	//	return e
-	//}
-	//
-	//return &basicError{
-	//	message: err.Error(),
-	//	err:     err,
-	//}
 }
