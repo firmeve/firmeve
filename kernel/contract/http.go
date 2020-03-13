@@ -38,11 +38,7 @@ type (
 		SetCookie(cookie *http.Cookie)
 
 		Cookie(name string) (string, error)
-	}
 
-	//HttpError interface {
-	//	Error
-	//	Status() int
-	//	Response(c Context) error
-	//}
+		Redirect(status int, location string)
+	}
 )

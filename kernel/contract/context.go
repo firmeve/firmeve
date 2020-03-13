@@ -31,15 +31,13 @@ type (
 
 		Abort()
 
-		//SetStatus(status int)
-		//
-		//Status() int
-
 		Error(status int, err error)
 
 		Bind(v interface{}) error
 
 		BindWith(b Binding, v interface{}) error
+
+		Get(key string) interface{}
 
 		Render(status int, v interface{}) error
 

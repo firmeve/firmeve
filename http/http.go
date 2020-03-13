@@ -109,6 +109,10 @@ func (h *Http) Cookie(name string) (string, error) {
 	return val, nil
 }
 
+func (h *Http) Redirect(status int, location string) {
+	http.Redirect(h.responseWriter, h.request, location, status)
+}
+
 func (h *Http) SetStatus(status int) {
 	h.responseWriter.WriteHeader(status)
 }

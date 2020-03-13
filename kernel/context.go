@@ -52,14 +52,6 @@ func (c *context) Error(status int, err error) {
 	}
 }
 
-//func (c *context) SetStatus(status int) {
-//	c.status = status
-//}
-//
-//func (c *context) Status() int {
-//	return c.status
-//}
-
 func (c *context) Abort() {
 	c.index = abortIndex
 }
@@ -89,6 +81,15 @@ func (c *context) AddEntity(key string, value interface{}) {
 func (c *context) Entity(key string) *contract.ContextEntity {
 	if v, ok := c.entries[key]; ok {
 		return v
+	}
+
+	return nil
+}
+
+func (c *context) Get(key string) interface{} {
+	values := c.protocol.Values()
+	if value, ok := values[key]; ok {
+		return value
 	}
 
 	return nil
@@ -126,10 +127,7 @@ func (c *context) Err() error {
 
 func (c *context) Value(key interface{}) interface{} {
 	if v, ok := key.(string); ok {
-		values := c.protocol.Values()
-		if value, ok := values[v]; ok {
-			return value
-		}
+		return c.Get(v)
 	}
 
 	return nil
