@@ -1,6 +1,7 @@
 package http
 
 import (
+	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -23,27 +24,27 @@ func New(firmeve contract.Application) *Router {
 	}
 }
 
-func (r *Router) GET(path string, handler HandlerFunc) *Route {
+func (r *Router) GET(path string, handler contract.ContextHandler) *Route {
 	return r.createRoute(http.MethodGet, path, handler)
 }
 
-func (r *Router) POST(path string, handler HandlerFunc) *Route {
+func (r *Router) POST(path string, handler contract.ContextHandler) *Route {
 	return r.createRoute(http.MethodPost, path, handler)
 }
 
-func (r *Router) PUT(path string, handler HandlerFunc) *Route {
+func (r *Router) PUT(path string, handler contract.ContextHandler) *Route {
 	return r.createRoute(http.MethodPut, path, handler)
 }
 
-func (r *Router) PATCH(path string, handler HandlerFunc) *Route {
+func (r *Router) PATCH(path string, handler contract.ContextHandler) *Route {
 	return r.createRoute(http.MethodPatch, path, handler)
 }
 
-func (r *Router) DELETE(path string, handler HandlerFunc) *Route {
+func (r *Router) DELETE(path string, handler contract.ContextHandler) *Route {
 	return r.createRoute(http.MethodDelete, path, handler)
 }
 
-func (r *Router) OPTIONS(path string, handler HandlerFunc) *Route {
+func (r *Router) OPTIONS(path string, handler contract.ContextHandler) *Route {
 	return r.createRoute(http.MethodOptions, path, handler)
 }
 
@@ -53,16 +54,18 @@ func (r *Router) Static(path string, root string) *Router {
 	return r
 }
 
-func (r *Router) NotFound(handler HandlerFunc) *Router {
+func (r *Router) NotFound(handler contract.ContextHandler) *Router {
 	r.router.NotFound = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		newContext(r.Firmeve, w, req, handler).Next()
+		kernel.NewContext(r.Firmeve, NewHttp(req, w), handler).Next()
+		//newContext(r.Firmeve, w, req, handler).Next()
 	})
 	return r
 }
 
 func (r *Router) Handler(method, path string, handler http.HandlerFunc) {
-	r.createRoute(method, path, func(c *Context) {
-		handler(c.ResponseWriter, c.Request)
+	r.createRoute(method, path, func(c contract.Context) {
+		protocol := c.Protocol().(contract.HttpProtocol)
+		handler(protocol.ResponseWriter(), protocol.Request())
 	})
 }
 
@@ -75,21 +78,22 @@ func (r *Router) Group(prefix string) *Group {
 	return newGroup(r).Prefix(prefix)
 }
 
-func (r *Router) createRoute(method string, path string, handler HandlerFunc) *Route {
+func (r *Router) createRoute(method string, path string, handler contract.ContextHandler) *Route {
 	key := r.routeKey(method, path)
 	r.routes[key] = newRoute(path, handler)
 
 	//Only http router
 	//r.router.Handler(method, path, r)
 	r.router.Handle(method, path, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		ctxParams := make(Params, 0)
+		ctxParams := make(map[string]string, 0)
 		for _, param := range params {
 			ctxParams[param.Key] = param.Value
 		}
 
-		ctx := newContext(r.Firmeve, w, req, r.routes[key].Handlers()...).
-			SetParams(ctxParams).
-			SetRoute(r.routes[key])
+		ctx := kernel.NewContext(r.Firmeve, NewHttp(req, w), r.routes[key].Handlers()...)
+		//ctx := newContext(r.Firmeve, w, req, r.routes[key].Handlers()...).
+		//	SetParams(ctxParams).
+		//	SetRoute(r.routes[key])
 
 		r.Firmeve.Get(`event`).(contract.Event).Dispatch(`router.match`, map[string]interface{}{
 			`context`: ctx,

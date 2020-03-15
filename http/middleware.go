@@ -1,29 +1,27 @@
 package http
 
 import (
-	"context"
-	"errors"
 	"fmt"
+	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/support/strings"
 	"net/http"
 )
 
-func Recovery(c *Context) {
-	defer panicRecovery(c)
-	c.Next()
+func Recovery(ctx contract.Context) {
+	defer panicRecovery(ctx)
+	ctx.Next()
 }
 
-func panicRecovery(c *Context) {
+func panicRecovery(ctx contract.Context) {
 	if err := recover(); err != nil {
-		render(err, c)
+		render(err, ctx)
 
-		// @todo context未测试，也可以不使用context，但 http.Context 一定只能是只读
-		go report(err, context.WithValue(context.Background(), "context", c))
+		go report(err, ctx.Clone())
 	}
 }
 
-func report(err interface{}, c context.Context) {
+func report(err interface{}, ctx contract.Context) {
 	var (
 		message string
 	)
@@ -35,30 +33,21 @@ func report(err interface{}, c context.Context) {
 		message = `mixed type`
 	}
 
-	ctx := c.Value("context").(*Context)
-	ctx.Firmeve.Get(`logger`).(contract.Loggable).Error(
+	//@todo 这里有问题，后续优化
+	ctx.Firmeve().Get(`logger`).(contract.Loggable).Error(
 		strings.Join(` `, message, "Context: %s", "Error: %#v"),
-		fmt.Sprintf("%#v", *ctx),
+		fmt.Sprintf("%#v", ctx),
 		err,
 	)
 }
 
-func render(err interface{}, c *Context) {
+func render(err interface{}, ctx contract.Context) {
 	message := `Server error`
 	if v, ok := err.(error); ok {
-		var HttpErrorResponse ErrorResponse
-		var HttpError *Error
-		if errors.As(v, &HttpErrorResponse) {
-			HttpErrorResponse.Response(c)
-		} else if errors.As(v, &HttpError) {
-			HttpError.Response(c)
-		} else {
-			//@todo 增加debug 判断 strings2.Join(` `, `Server error`, v.Error())
-			NewError(http.StatusInternalServerError, message).Response(c)
-		}
+		ctx.Error(http.StatusInternalServerError, v)
 	} else if v, ok := err.(string); ok {
-		NewError(http.StatusInternalServerError, string(v)).Response(c)
+		ctx.Error(http.StatusInternalServerError, kernel.Errorf(v))
 	} else {
-		NewError(http.StatusInternalServerError, message).Response(c)
+		ctx.Error(http.StatusInternalServerError, kernel.Errorf(message))
 	}
 }

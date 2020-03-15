@@ -8,10 +8,7 @@ import (
 )
 
 const (
-	Version = "1.0.0"
-	ModeDevelopment uint8 = iota
-	ModeProduction
-	ModeTesting
+	version = "1.0.0"
 )
 
 type (
@@ -27,12 +24,13 @@ var (
 	registerMutex sync.Mutex
 )
 
-func New(mode uint8) contract.Application {
+func New() contract.Application {
 	return &Application{
 		Container: container.New(),
 		providers: make(map[string]contract.Provider, 0),
 		booted:    false,
-		mode:      mode,
+		// default production mode
+		mode: contract.ModeProduction,
 	}
 }
 
@@ -44,16 +42,20 @@ func (a *Application) Mode() uint8 {
 	return a.mode
 }
 
+func (a *Application) Version() string {
+	return version
+}
+
 func (a *Application) IsDevelopment() bool {
-	return a.mode == ModeDevelopment
+	return a.mode == contract.ModeDevelopment
 }
 
 func (a *Application) IsProduction() bool {
-	return a.mode == ModeProduction
+	return a.mode == contract.ModeProduction
 }
 
 func (a *Application) IsTesting() bool {
-	return a.mode == ModeTesting
+	return a.mode == contract.ModeTesting
 }
 
 func (a *Application) Resolve(abstract interface{}, params ...interface{}) interface{} {

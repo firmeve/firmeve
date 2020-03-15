@@ -22,29 +22,45 @@ Those who have achieved nothing can always tell you that you can't make a big de
 package main
 
 import (
-    "github.com/firmeve/firmeve"
-    "github.com/firmeve/firmeve/http"
-    "github.com/firmeve/firmeve/kernel"
-    path2 "github.com/firmeve/firmeve/support/path"
+	"github.com/firmeve/firmeve"
+	"github.com/firmeve/firmeve/http"
+	"github.com/firmeve/firmeve/kernel"
+	"github.com/firmeve/firmeve/kernel/contract"
+	"github.com/firmeve/firmeve/render"
 )
 
-func main() {
-	app := firmeve.Default(kernel.ModeDevelopment,path2.RunRelative(`../../testdata/config`))
+type App struct {
+	kernel.BaseProvider
+}
 
-    router := app.Get(`http.router`).(*http.Router)
+func (a *App) Name() string {
+	return `app`
+}
+
+func (a *App) Register() {
+}
+
+func (a *App) Boot() {
+	router := a.Firmeve.Get(`http.router`).(*http.Router)
 	v1 := router.Group("/api/v1")
 	{
-		v1.GET(`/ping`, func(c *http.Context) {
-			c.Data(map[string]string{
+		v1.GET(`/ping`, func(c contract.Context) {
+			c.RenderWith(200, render.JSON, map[string]string{
 				"message": "pong",
 			})
 			c.Next()
 		})
 	}
-
-	// Command
-	app.Run()
 }
+
+func main() {
+	firmeve.RunDefault(firmeve.WithProviders(
+		[]contract.Provider{
+			new(App),
+		},
+	))
+}
+
 ```
 
 Bootstrap command
