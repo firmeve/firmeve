@@ -8,8 +8,9 @@ import (
 )
 
 func TestingModeFirmeve() contract.Application {
-	app := kernel.New(kernel.ModeTesting)
-	app.Bind(`firmeve`,app)
+	app := kernel.New()
+	app.SetMode(contract.ModeTesting)
+	app.Bind(`firmeve`, app)
 	app.Bind(`config`, config.New(path.RunRelative("../testdata/config")))
 	return app
 }
