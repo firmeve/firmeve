@@ -3,7 +3,8 @@ package http
 import (
 	"context"
 	"fmt"
-	"github.com/firmeve/firmeve/config"
+	"github.com/firmeve/firmeve/bootstrap"
+	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/http2"
@@ -14,42 +15,38 @@ import (
 	"time"
 )
 
-type cmd struct {
-	app     contract.Application
+type HttpCommand struct {
+	kernel.Command
 	command *cobra.Command
-	logger  contract.Loggable
-	config  *config.Config
 }
 
-func NewServer(firmeve contract.Application) *cmd {
-	command := &cmd{
-		app:     firmeve,
-		command: new(cobra.Command),
-	}
-	command.config = firmeve.Get(`config`).(*config.Config)
-	command.logger = firmeve.Get(`logger`).(contract.Loggable)
-
-	return command
-	// base
-	//c.config = c.bootstrap.Firmeve.Get(`config`).(*config.Config)
-	//c.logger = c.bootstrap.Firmeve.Get(`logger`).(logging.Loggable)
-}
-
-func (c *cmd) Cmd() *cobra.Command {
-	c.command.Use = "http:serve"
-	c.command.Flags().StringP("host", "H", ":80", "Http serve address")
-	c.command.Flags().BoolP("http2", "", false, "Open http2 protocol")
-	c.command.Flags().StringP("cert-file", "", "", "Http2 cert file path")
-	c.command.Flags().StringP("key-file", "", "", "Http2 key file path")
-
-	c.command.Run = func(cmd *cobra.Command, args []string) {
-		c.run(cmd, args)
+func (c *HttpCommand) Cmd() *cobra.Command {
+	if c.command == nil {
+		c.command = c.newCmd()
 	}
 
 	return c.command
 }
 
-func (c *cmd) run(cmd *cobra.Command, args []string) {
+func (c *HttpCommand) newCmd() *cobra.Command {
+	c.command = new(cobra.Command)
+	c.command.Use = "http:serve"
+	c.command.Short = "Http server"
+	c.command.Flags().StringP("host", "H", ":80", "Http serve address")
+	c.command.Flags().BoolP("http2", "", false, "Open http2 protocol")
+	c.command.Flags().StringP("cert-file", "", "", "Http2 cert file path")
+	c.command.Flags().StringP("key-file", "", "", "Http2 key file path")
+
+	c.command.Run = c.run
+
+	return c.command
+}
+
+func (c *HttpCommand) run(cmd *cobra.Command, args []string) {
+	// bootstrap
+	bootstrap.Boot(c)
+	//config := c.Firmeve.Get(`config`).(*config.Config)
+	logger := c.Firmeve.Get(`logger`).(contract.Loggable)
 	var (
 		host      = cmd.Flag("host").Value.String()
 		certFile  = cmd.Flag(`cert-file`).Value.String()
@@ -58,7 +55,7 @@ func (c *cmd) run(cmd *cobra.Command, args []string) {
 	)
 	srv := &net_http.Server{
 		Addr:    host,
-		Handler: c.app.Get(`http.router`).(*Router),
+		Handler: c.Firmeve.Get(`http.router`).(*Router),
 	}
 
 	go func() {
@@ -66,6 +63,7 @@ func (c *cmd) run(cmd *cobra.Command, args []string) {
 
 		// ssl
 		if certFile != `` && keyFile != `` {
+
 			err = srv.ListenAndServeTLS(certFile, keyFile)
 
 			// http2
@@ -78,7 +76,7 @@ func (c *cmd) run(cmd *cobra.Command, args []string) {
 		}
 
 		if err != nil && err != net_http.ErrServerClosed {
-			c.logger.Fatal(fmt.Sprintf("listen: %s\n", err))
+			logger.Fatal(fmt.Sprintf("listen: %s\n", err))
 		}
 	}()
 
@@ -91,13 +89,13 @@ func (c *cmd) run(cmd *cobra.Command, args []string) {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	//log.Println("Shutdown Server ...")
-	c.logger.Info("Shutdown Server ...")
+	logger.Info("Shutdown Server ...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		c.logger.Fatal("Server Shutdown: ", err)
+		logger.Fatal("Server Shutdown: ", err)
 	}
 
-	c.logger.Info("Server exiting")
+	logger.Info("Server exiting")
 }

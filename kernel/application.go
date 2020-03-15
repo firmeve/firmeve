@@ -24,12 +24,13 @@ var (
 	registerMutex sync.Mutex
 )
 
-func New(mode uint8) contract.Application {
+func New() contract.Application {
 	return &Application{
 		Container: container.New(),
 		providers: make(map[string]contract.Provider, 0),
 		booted:    false,
-		mode:      mode,
+		// default production mode
+		mode: contract.ModeProduction,
 	}
 }
 
