@@ -8,15 +8,9 @@ import (
 	logging "github.com/firmeve/firmeve/logger"
 )
 
-func Boot(command contract.Command) contract.Application {
-	cmd := command.Cmd()
-	app := command.Application()
-	providers := command.Providers()
-
-	configPath := cmd.Flag(`config`).Value.String()
-	devMode := cmd.Flag(`dev`).Value.String()
+func Boot(configPath string, devMode bool, app contract.Application, providers []contract.Provider) contract.Application {
 	var mode uint8
-	if devMode == `true` {
+	if devMode {
 		mode = contract.ModeDevelopment
 	} else {
 		mode = contract.ModeProduction

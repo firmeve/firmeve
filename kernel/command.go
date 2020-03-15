@@ -2,6 +2,7 @@ package kernel
 
 import (
 	"github.com/fatih/color"
+	"github.com/firmeve/firmeve/bootstrap"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/support/path"
 	"github.com/spf13/cobra"
@@ -15,7 +16,6 @@ const (
 type Command struct {
 	Firmeve  contract.Application
 	Provider []contract.Provider
-	Command  *cobra.Command
 }
 
 func (c *Command) SetProviders(providers []contract.Provider) {
@@ -32,6 +32,17 @@ func (c *Command) SetApplication(app contract.Application) {
 
 func (c *Command) Application() contract.Application {
 	return c.Firmeve
+}
+
+func (c *Command) Boot(cmd *cobra.Command) {
+	configPath := cmd.Flag(`config`).Value.String()
+	devMode := cmd.Flag(`dev`).Value.String()
+	devModeBool := false
+	if devMode == `true` {
+		devModeBool = true
+	}
+
+	bootstrap.Boot(configPath, devModeBool, c.Application(), c.Providers())
 }
 
 func CommandRoot(app contract.Application) *cobra.Command {
