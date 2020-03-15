@@ -42,7 +42,7 @@ func (c *Command) Boot(cmd *cobra.Command) {
 		devModeBool = true
 	}
 
-	bootstrap.Boot(configPath, devModeBool, c.Application(), c.Providers())
+	Bootstrap(configPath, devModeBool, c.Application(), c.Providers())
 }
 
 func CommandRoot(app contract.Application) *cobra.Command {

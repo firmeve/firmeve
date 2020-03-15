@@ -1,4 +1,4 @@
-package bootstrap
+package kernel
 
 import (
 	"github.com/firmeve/firmeve/config"
@@ -8,7 +8,7 @@ import (
 	logging "github.com/firmeve/firmeve/logger"
 )
 
-func Boot(configPath string, devMode bool, app contract.Application, providers []contract.Provider) contract.Application {
+func Bootstrap(configPath string, devMode bool, app contract.Application, providers []contract.Provider) contract.Application {
 	var mode uint8
 	if devMode {
 		mode = contract.ModeDevelopment
