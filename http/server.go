@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"fmt"
+	kernel2 "github.com/firmeve/firmeve/bootstrap"
 	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/spf13/cobra"
@@ -43,7 +44,7 @@ func (c *HttpCommand) newCmd() *cobra.Command {
 
 func (c *HttpCommand) run(cmd *cobra.Command, args []string) {
 	// bootstrap
-	c.Boot(cmd)
+	kernel2.BootFromCommand(c)
 
 	//config := c.Firmeve.Get(`config`).(*config.Config)
 	logger := c.Firmeve.Get(`logger`).(contract.Loggable)
