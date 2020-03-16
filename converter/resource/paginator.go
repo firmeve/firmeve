@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/support/strings"
 	"github.com/guregu/null"
 	"github.com/ulule/paging"
@@ -9,13 +10,13 @@ import (
 )
 
 type Paginator struct {
-	resolveData DataCollection
+	resolveData contract.ResourceDataCollection
 	store       *paging.GORMStore
 	request     *http.Request
 	pageOption  *paging.Options
 	option      *Option
-	meta        Meta
-	link        Link
+	meta        contract.ResourceMetaData
+	link        contract.ResourceLinkData
 }
 
 func NewPaginator(store *paging.GORMStore, option *Option, request *http.Request, pageOption *paging.Options) *Paginator {
@@ -24,9 +25,9 @@ func NewPaginator(store *paging.GORMStore, option *Option, request *http.Request
 		request:     request,
 		pageOption:  setDefaultPageOption(pageOption),
 		option:      option,
-		meta:        make(Meta, 0),
-		link:        make(Link, 0),
-		resolveData: make(DataCollection, 0),
+		meta:        make(contract.ResourceMetaData, 0),
+		link:        make(contract.ResourceLinkData, 0),
+		resolveData: make(contract.ResourceDataCollection, 0),
 	}
 }
 
@@ -41,7 +42,7 @@ func setDefaultPageOption(option *paging.Options) *paging.Options {
 	return option
 }
 
-func (p *Paginator) CollectionData() DataCollection {
+func (p *Paginator) CollectionData() contract.ResourceDataCollection {
 	if len(p.resolveData) > 0 {
 		return p.resolveData
 	}
@@ -52,14 +53,14 @@ func (p *Paginator) CollectionData() DataCollection {
 		panic(err)
 	}
 
-	p.SetLink(Link{
+	p.SetLink(contract.ResourceLinkData{
 		"prev":  p.fullUrl(paginator.PreviousURI, paginator.Options),
 		"next":  p.fullUrl(paginator.NextURI, paginator.Options),
 		"first": p.fullUrl(p.firstUrl(paginator.Limit, paginator.Options), paginator.Options),
 		"last":  p.fullUrl(p.lastUrl(paginator.Count, paginator.Limit, paginator.Options), paginator.Options),
 	})
 
-	p.SetMeta(Meta{
+	p.SetMeta(contract.ResourceMetaData{
 		"current_page": int64(math.Ceil(float64(paginator.Offset)/float64(paginator.Limit)) + 1), //当前页
 		"total":        paginator.Count,                                                          //总条数
 		"per_page":     paginator.Limit,                                                          //每页多少条
@@ -72,19 +73,19 @@ func (p *Paginator) CollectionData() DataCollection {
 	return p.resolveData
 }
 
-func (p *Paginator) SetLink(links Link) {
+func (p *Paginator) SetLink(links contract.ResourceLinkData) {
 	p.link = links
 }
 
-func (p *Paginator) Link() Link {
+func (p *Paginator) Link() contract.ResourceLinkData {
 	return p.link
 }
 
-func (p *Paginator) SetMeta(meta Meta) {
+func (p *Paginator) SetMeta(meta contract.ResourceMetaData) {
 	p.meta = meta
 }
 
-func (p *Paginator) Meta() Meta {
+func (p *Paginator) Meta() contract.ResourceMetaData {
 	return p.meta
 }
 
@@ -128,6 +129,6 @@ func (p *Paginator) fullUrl(uri null.String, options *paging.Options) string {
 	} else {
 		queryString = ``
 	}
-	
+
 	return queryString
 }

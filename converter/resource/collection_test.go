@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"github.com/firmeve/firmeve/kernel/contract"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -41,11 +42,11 @@ func TestCollection_Resolve(t *testing.T) {
 	//	newInterface[i] = s
 	//}
 	collection := NewCollection(structs, &Option{
-		Fields: Fields{"id"},
+		Fields: contract.ResourceFields{"id"},
 	})
-	collection.SetMeta(Meta{"a": "a"})
+	collection.SetMeta(contract.ResourceMetaData{"a": "a"})
 	v := collection.CollectionData()
-	assert.Equal(t,v,collection.CollectionData())
+	assert.Equal(t, v, collection.CollectionData())
 	assert.Equal(t, `a`, collection.Meta()[`a`])
 	assert.Equal(t, uint(10), v[0][`id`].(uint))
 	assert.Equal(t, uint(11), v[1][`id`].(uint))

@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"github.com/firmeve/firmeve/kernel/contract"
 	reflect2 "reflect"
 
 	"github.com/firmeve/firmeve/converter/transform"
@@ -9,10 +10,10 @@ import (
 
 type Collection struct {
 	resource    []interface{}
-	resolveData DataCollection
+	resolveData contract.ResourceDataCollection
 	option      *Option
-	meta        Meta
-	link        Link
+	meta        contract.ResourceMetaData
+	link        contract.ResourceLinkData
 }
 
 // 还不如,直接baseresource直接解析item,item里面包resource,然后 collection直接再包一层item
@@ -23,27 +24,27 @@ func NewCollection(resource interface{}, option *Option) *Collection {
 	return &Collection{
 		resource:    reflect.SliceInterface(reflect2.ValueOf(resource)),
 		option:      option,
-		resolveData: make(DataCollection, 0),
+		resolveData: make(contract.ResourceDataCollection, 0),
 	}
 }
 
-func (c *Collection) SetMeta(meta Meta) {
+func (c *Collection) SetMeta(meta contract.ResourceMetaData) {
 	c.meta = meta
 }
 
-func (c *Collection) Meta() Meta {
+func (c *Collection) Meta() contract.ResourceMetaData {
 	return c.meta
 }
 
-func (c *Collection) SetLink(link Link) {
+func (c *Collection) SetLink(link contract.ResourceLinkData) {
 	c.link = link
 }
 
-func (c *Collection) Link() Link {
+func (c *Collection) Link() contract.ResourceLinkData {
 	return c.link
 }
 
-func (c *Collection) CollectionData() DataCollection {
+func (c *Collection) CollectionData() contract.ResourceDataCollection {
 	if len(c.resolveData) > 0 {
 		return c.resolveData
 	}

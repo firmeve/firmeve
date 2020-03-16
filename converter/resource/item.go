@@ -1,6 +1,7 @@
 package resource
 
 import (
+	"github.com/firmeve/firmeve/kernel/contract"
 	"reflect"
 	"regexp"
 	"strings"
@@ -14,10 +15,10 @@ import (
 type (
 	Item struct {
 		resource    interface{}
-		resolveData Data
+		resolveData contract.ResourceData
 		option      *Option
-		meta        Meta
-		link        Link
+		meta        contract.ResourceMetaData
+		link        contract.ResourceLinkData
 	}
 
 	mapCache map[string]map[string]string
@@ -31,7 +32,7 @@ var (
 func NewItem(resource interface{}, option *Option) *Item {
 	return &Item{
 		resource:    resolveResource(resource, option),
-		resolveData: make(Data, 0),
+		resolveData: make(contract.ResourceData, 0),
 		option:      option,
 	}
 }
@@ -49,18 +50,18 @@ func (i *Item) SetOption(option *Option) *Item {
 	return i
 }
 
-func (i *Item) SetMeta(meta Meta) {
+func (i *Item) SetMeta(meta contract.ResourceMetaData) {
 	i.meta = meta
 }
-func (i *Item) Meta() Meta {
+func (i *Item) Meta() contract.ResourceMetaData {
 	return i.meta
 }
 
-func (i *Item) SetLink(link Link) {
+func (i *Item) SetLink(link contract.ResourceLinkData) {
 	i.link = link
 }
 
-func (i *Item) Link() Link {
+func (i *Item) Link() contract.ResourceLinkData {
 	return i.link
 }
 
@@ -68,7 +69,7 @@ func (i *Item) resolveFields() []string {
 	return i.option.Fields
 }
 
-func (i *Item) Data() Data {
+func (i *Item) Data() contract.ResourceData {
 	if len(i.resolveData) > 0 {
 		return i.resolveData
 	}
@@ -78,10 +79,10 @@ func (i *Item) Data() Data {
 	return i.resolveData
 }
 
-func (i *Item) resolve() Data {
+func (i *Item) resolve() contract.ResourceData {
 	reflectType := reflect.TypeOf(i.resource)
 	reflectValue := reflect.ValueOf(i.resource)
-	var data Data
+	var data contract.ResourceData
 
 	if _, ok := i.resource.(transform.Transformer); ok {
 		data = i.resolveTransformer(reflectType, reflectValue)
@@ -99,11 +100,11 @@ func (i *Item) resolve() Data {
 	return data
 }
 
-func (i *Item) resolveMap(reflectType reflect.Type, reflectValue reflect.Value) Data {
+func (i *Item) resolveMap(reflectType reflect.Type, reflectValue reflect.Value) contract.ResourceData {
 	var alias string
-	collection := make(Data, 0)
+	collection := make(contract.ResourceData, 0)
 	for _, field := range i.resolveFields() {
-		for k, v := range i.resource.(Data) {
+		for k, v := range i.resource.(contract.ResourceData) {
 			alias = strings2.SnakeCase(k)
 			if field != alias {
 				continue
@@ -118,13 +119,13 @@ func (i *Item) resolveMap(reflectType reflect.Type, reflectValue reflect.Value) 
 	return collection
 }
 
-func (i *Item) resolveTransformer(reflectType reflect.Type, reflectValue reflect.Value) Data {
+func (i *Item) resolveTransformer(reflectType reflect.Type, reflectValue reflect.Value) contract.ResourceData {
 	resource := i.resource.(transform.Transformer).Resource()
 	resourceReflectType := reflect.TypeOf(resource)
 	resourceReflectValue := reflect.ValueOf(resource)
 	fields := i.transpositionFields(resourceReflectType)
 	methods := i.transpositionMethods(reflectType)
-	collection := make(Data, 0)
+	collection := make(contract.ResourceData, 0)
 
 	for _, field := range i.resolveFields() {
 		// method 优先
@@ -144,9 +145,9 @@ func (i *Item) resolveTransformer(reflectType reflect.Type, reflectValue reflect
 	return collection
 }
 
-func (i *Item) resolveStruct(reflectType reflect.Type, reflectValue reflect.Value) Data {
+func (i *Item) resolveStruct(reflectType reflect.Type, reflectValue reflect.Value) contract.ResourceData {
 	fields := i.transpositionFields(reflectType)
-	collection := make(Data, 0)
+	collection := make(contract.ResourceData, 0)
 
 	for _, field := range i.resolveFields() {
 		// method 优先
