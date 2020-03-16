@@ -13,9 +13,18 @@ import (
 )
 
 var (
-	directory = path.RunRelative("../testdata/config")
-	wg        sync.WaitGroup
+	directory  = path.RunRelative("../testdata/config")
+	configPath = path.RunRelative("../testdata/config/config.yaml")
+	wg         sync.WaitGroup
 )
+
+func TestConfig_File(t *testing.T) {
+	config := New(configPath)
+
+	assert.NotEqual(t, fmt.Sprintf("%p", config.Item(`database`)), fmt.Sprintf("%p", config.Item(`cache`)))
+	assert.Equal(t, `mysql`, config.Item(`database`).Get(`default`).(string))
+	assert.Equal(t, `firmeve_cache`, config.Item(`cache`).Get(`prefix`).(string))
+}
 
 func TestConfig_Set(t *testing.T) {
 	config := New(directory)
@@ -71,13 +80,13 @@ func TestConfig_Get(t *testing.T) {
 
 func TestConfig_Load(t *testing.T) {
 	assert.Panics(t, func() {
-		New(directory).Load("abc.yaml")
+		New(directory).loadFile("abc.yaml")
 	}, "open yaml")
 }
 
 func TestConfig_Item(t *testing.T) {
 	assert.Panics(t, func() {
-		New(directory).Load("abc.yaml")
+		New(directory).loadFile("abc.yaml")
 	}, "open yaml")
 }
 

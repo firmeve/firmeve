@@ -1,0 +1,13 @@
+database:
+  default: mysql
+  connections:
+    mysql:
+      addr: "root:@(127.0.0.1)/test?charset=utf8mb4&parseTime=True&loc=Local"
+cache:
+  prefix: firmeve_cache
+  default: redis
+  repositories:
+    redis:
+      host: 127.0.0.1
+      port: 6379
+      db: 0

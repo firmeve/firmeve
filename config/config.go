@@ -3,6 +3,7 @@ package config
 import (
 	"fmt"
 	"github.com/firmeve/firmeve/kernel/contract"
+	"github.com/firmeve/firmeve/support/filesystem"
 	"os"
 	"path/filepath"
 	"strings"
@@ -14,7 +15,7 @@ import (
 
 type (
 	Config struct {
-		directory string
+		path      string
 		items     map[string]*item
 		delimiter string
 		extension string
@@ -31,19 +32,23 @@ var (
 )
 
 // Create a new config instance
-func New(directory string) *Config {
-	directory, err := filepath.Abs(directory)
-	if err != nil {
-		panic(err)
-	}
-
+func New(path string) *Config {
 	config := &Config{
-		directory: directory,
+		path:      path,
 		delimiter: `.`,
 		extension: `.yaml`,
 		items:     make(map[string]*item),
 	}
-	config.loadAll()
+
+	if filesystem.IsFile(path) {
+		config.load(path)
+	} else {
+		directory, err := filepath.Abs(path)
+		if err != nil {
+			panic(err)
+		}
+		config.loadFiles(directory)
+	}
 
 	return config
 }
@@ -62,14 +67,14 @@ func (c *Config) Item(item string) contract.Configuration {
 }
 
 // Load all configuration files at once
-func (c *Config) loadAll() {
-	err := filepath.Walk(c.directory, func(path string, info os.FileInfo, err error) error {
+func (c *Config) loadFiles(directory string) {
+	err := filepath.Walk(directory, func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
 		if strings.Contains(filepath.Base(path), c.extension) && !info.IsDir() {
-			c.Load(path)
+			c.loadFile(path)
 		}
 
 		return nil
@@ -80,7 +85,7 @@ func (c *Config) loadAll() {
 	}
 }
 
-func (c *Config) Load(file string) {
+func (c *Config) loadFile(file string) {
 	mutex.Lock()
 	defer mutex.Unlock()
 
@@ -93,6 +98,21 @@ func (c *Config) Load(file string) {
 
 	c.items[strings.Replace(filepath.Base(file), c.extension, "", 1)] = &item{
 		config: conf,
+	}
+}
+
+func (c *Config) load(path string) {
+	conf := viper.New()
+	conf.SetConfigFile(path)
+	err := conf.ReadInConfig()
+	if err != nil {
+		panic(err)
+	}
+
+	for key := range conf.AllSettings() {
+		c.items[key] = &item{
+			config: conf.Sub(key),
+		}
 	}
 }
 
