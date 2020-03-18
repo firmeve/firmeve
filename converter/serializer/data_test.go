@@ -3,6 +3,7 @@ package serializer
 import (
 	"encoding/json"
 	"encoding/xml"
+	"github.com/firmeve/firmeve/kernel/contract"
 	"testing"
 
 	"fmt"
@@ -40,9 +41,9 @@ func mockCollectionStruct() []struct {
 
 func TestNewData_Resolve(t *testing.T) {
 	collection := resource.NewCollection(mockCollectionStruct(), &resource.Option{
-		Fields: resource.Fields{`id`, `title`},
+		Fields: contract.ResourceFields{`id`, `title`},
 	})
-	collection.SetMeta(resource.Meta{"a": 1, "head": "head"})
+	collection.SetMeta(contract.ResourceMetaData{"a": 1, "head": "head"})
 	//fmt.Printf("%#v", collection.CollectionData())
 	v := NewData(collection).Resolve()
 
