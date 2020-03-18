@@ -14,7 +14,7 @@ func TestRecovery(t *testing.T) {
 	firmeve := testing2.TestingModeFirmeve()
 	firmeve.Register(new(logging.Provider), true)
 	req := testing2.NewMockRequest(http.MethodPost, "/?query=queryValue", "").Request
-	req.Header.Set(`Content-Type`, contract.HttpMimeForm)
+	req.Header.Set(`Content-Type`, contract.HttpMimePlain)
 	req.ParseMultipartForm(32 << 20)
 
 	c := kernel.NewContext(
