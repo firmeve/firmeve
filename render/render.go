@@ -1,7 +1,6 @@
 package render
 
 import (
-	"fmt"
 	"github.com/firmeve/firmeve/kernel/contract"
 )
 
@@ -22,7 +21,8 @@ func Render(protocol contract.Protocol, status int, v interface{}) error {
 			}
 		}
 
-		return fmt.Errorf("non-existent type %v", accept)
+		return Plain.Render(protocol, status, v)
+		//return fmt.Errorf("non-existent type %v", accept)
 	}
 
 	return nil
