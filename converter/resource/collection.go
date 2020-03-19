@@ -4,7 +4,6 @@ import (
 	"github.com/firmeve/firmeve/kernel/contract"
 	reflect2 "reflect"
 
-	"github.com/firmeve/firmeve/converter/transform"
 	"github.com/firmeve/firmeve/support/reflect"
 )
 
@@ -55,7 +54,7 @@ func (c *Collection) CollectionData() contract.ResourceDataCollection {
 		} else {
 			//@todo 这里后面操作可能会有问题,collection的原始transformer会被覆盖
 			if c.option.Transformer != nil {
-				c.option.Transformer = reflect2.New(reflect2.TypeOf(c.option.Transformer).Elem()).Interface().(transform.Transformer)
+				c.option.Transformer = reflect2.New(reflect2.TypeOf(c.option.Transformer).Elem()).Interface().(contract.ResourceTransformer)
 				//temp := *c.option.Transformer
 				//c.option.Transformer = &temp
 			}
