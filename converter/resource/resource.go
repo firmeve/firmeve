@@ -1,8 +1,10 @@
 package resource
 
-import "github.com/firmeve/firmeve/converter/transform"
+import (
+	"github.com/firmeve/firmeve/kernel/contract"
+)
 
 type Option struct {
-	Transformer transform.Transformer
+	Transformer contract.ResourceTransformer
 	Fields      []string
 }

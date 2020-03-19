@@ -9,7 +9,7 @@ type Data struct {
 }
 
 func (d *Data) Resolve() interface{} {
-	collection := make(ResolveData, 0)
+	collection := make(contract.ResourceResolveData, 0)
 
 	if data, ok := d.resource.(contract.ResourceDatable); ok {
 		collection[`data`] = data.Data()
