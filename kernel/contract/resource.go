@@ -28,4 +28,15 @@ type (
 	ResourceCollectionData interface {
 		CollectionData() ResourceDataCollection
 	}
+
+	ResourceResolver interface {
+		Resolve() interface{}
+	}
+
+	ResourceResolveData map[string]interface{}
+
+	ResourceTransformer interface {
+		Resource() interface{}
+		SetResource(resource interface{})
+	}
 )

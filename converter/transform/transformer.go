@@ -1,11 +1,6 @@
 package transform
 
 type (
-	Transformer interface {
-		Resource() interface{}
-		SetResource(resource interface{})
-	}
-
 	BaseTransformer struct {
 		Original interface{}
 	}

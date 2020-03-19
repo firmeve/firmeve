@@ -6,8 +6,6 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/firmeve/firmeve/converter/transform"
-
 	reflect2 "github.com/firmeve/firmeve/support/reflect"
 	strings2 "github.com/firmeve/firmeve/support/strings"
 )
@@ -84,7 +82,7 @@ func (i *Item) resolve() contract.ResourceData {
 	reflectValue := reflect.ValueOf(i.resource)
 	var data contract.ResourceData
 
-	if _, ok := i.resource.(transform.Transformer); ok {
+	if _, ok := i.resource.(contract.ResourceTransformer); ok {
 		data = i.resolveTransformer(reflectType, reflectValue)
 	} else {
 		kindType := reflect2.KindElemType(reflectType)
@@ -120,7 +118,7 @@ func (i *Item) resolveMap(reflectType reflect.Type, reflectValue reflect.Value) 
 }
 
 func (i *Item) resolveTransformer(reflectType reflect.Type, reflectValue reflect.Value) contract.ResourceData {
-	resource := i.resource.(transform.Transformer).Resource()
+	resource := i.resource.(contract.ResourceTransformer).Resource()
 	resourceReflectType := reflect.TypeOf(resource)
 	resourceReflectValue := reflect.ValueOf(resource)
 	fields := i.transpositionFields(resourceReflectType)
