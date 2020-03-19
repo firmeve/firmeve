@@ -28,7 +28,7 @@ func report(err interface{}, ctx contract.Context) {
 	if v, ok := err.(error); ok {
 		message = v.Error()
 	} else if v, ok := err.(string); ok {
-		message = string(v)
+		message = v
 	} else {
 		message = `mixed type`
 	}

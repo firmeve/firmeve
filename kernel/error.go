@@ -55,6 +55,10 @@ func (b *basicError) Render(status int, ctx contract.Context) error {
 		v[`meta`] = b.meta
 		v[`stack`] = b.StackString()
 	}
+	//
+	//if protocol, ok := ctx.Protocol().(contract.HttpProtocol); ok {
+	//	if protocol.IsContentType(contract.HttpMimeJson)
+	//}
 
 	return ctx.Render(status, v)
 }
