@@ -1,7 +1,6 @@
 package contract
 
 import (
-	http2 "github.com/firmeve/firmeve/http"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 )
@@ -31,9 +30,9 @@ type (
 
 		Param(key string) httprouter.Param
 
-		SetRoute(route *http2.Route)
-
-		Route() *http2.Route
+		//SetRoute(route *http2.Route)
+		//
+		//Route() *http2.Route
 
 		Header(key string) string
 
