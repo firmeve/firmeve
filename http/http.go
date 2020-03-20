@@ -2,6 +2,7 @@ package http
 
 import (
 	"github.com/firmeve/firmeve/kernel/contract"
+	"github.com/julienschmidt/httprouter"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -13,7 +14,8 @@ type (
 		request        *http.Request
 		responseWriter http.ResponseWriter
 		message        []byte
-		status         int
+		params         []httprouter.Param
+		route          *Route
 	}
 )
 
@@ -21,10 +23,12 @@ var (
 	defaultMaxSize int64 = 32 << 20
 )
 
-func NewHttp(request *http.Request, responseWriter http.ResponseWriter) contract.Protocol {
+func NewHttp(request *http.Request, responseWriter http.ResponseWriter) contract.HttpProtocol {
 	return &Http{
 		request:        request,
 		responseWriter: responseWriter,
+		params:         make([]httprouter.Param, 0),
+		route:          nil,
 	}
 }
 
@@ -50,21 +54,6 @@ func (h *Http) Message() ([]byte, error) {
 
 	return h.message, err
 }
-
-//func (c *Context) SetParams(params Params) *Context {
-//	c.Params = params
-//	return c
-//}
-//
-//func (c *Context) SetRoute(route *Route) *Context {
-//	c.route = route
-//	return c
-//}
-//
-//func (c *Context) Param(key string) string {
-//	value, _ := c.Params[key]
-//	return value
-//}
 
 func (h *Http) Request() *http.Request {
 	return h.request
@@ -138,6 +127,32 @@ func (h *Http) ContentType() string {
 
 func (h *Http) Accept() []string {
 	return strings.Split(h.Header(`Accept`), `,`)
+}
+
+func (h *Http) SetParams(params []httprouter.Param) {
+	h.params = params
+}
+
+func (h *Http) Params() []httprouter.Param {
+	return h.params
+}
+
+func (h *Http) Param(key string) httprouter.Param {
+	for i := range h.params {
+		if h.params[i].Key == key {
+			return h.params[i]
+		}
+	}
+
+	return httprouter.Param{Value: nil, Key: key}
+}
+
+func (h *Http) SetRoute(route *Route) {
+	h.route = route
+}
+
+func (h *Http) Route() *Route {
+	return h.route
 }
 
 func (h *Http) Values() map[string][]string {

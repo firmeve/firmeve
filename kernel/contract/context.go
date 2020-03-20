@@ -2,8 +2,6 @@ package contract
 
 import (
 	"context"
-	//"encoding/json"
-	//"io"
 )
 
 type (
