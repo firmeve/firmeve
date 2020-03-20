@@ -144,7 +144,7 @@ func (h *Http) Param(key string) httprouter.Param {
 		}
 	}
 
-	return httprouter.Param{Value: nil, Key: key}
+	return httprouter.Param{Value: ``, Key: key}
 }
 
 func (h *Http) SetRoute(route *Route) {

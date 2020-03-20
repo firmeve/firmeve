@@ -85,7 +85,7 @@ func (r *Router) createRoute(method string, path string, handler contract.Contex
 	r.router.Handle(method, path, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		currentHttp := NewHttp(req, w)
 		currentHttp.SetParams(params)
-		currentHttp.SetRoute(r.routes[key])
+		//currentHttp.SetRoute(r.routes[key])
 
 		ctx := kernel.NewContext(r.Firmeve, currentHttp, r.routes[key].Handlers()...)
 
