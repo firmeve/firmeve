@@ -15,7 +15,7 @@ type (
 		responseWriter http.ResponseWriter
 		message        []byte
 		params         []httprouter.Param
-		route          *Route
+		route          contract.HttpRoute
 	}
 )
 
@@ -147,11 +147,11 @@ func (h *Http) Param(key string) httprouter.Param {
 	return httprouter.Param{Value: ``, Key: key}
 }
 
-func (h *Http) SetRoute(route *Route) {
+func (h *Http) SetRoute(route contract.HttpRoute) {
 	h.route = route
 }
 
-func (h *Http) Route() *Route {
+func (h *Http) Route() contract.HttpRoute {
 	return h.route
 }
 
