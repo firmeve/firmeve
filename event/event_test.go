@@ -13,7 +13,7 @@ type mockHandler struct {
 	err    error
 }
 
-func (m *mockHandler) Handle(params map[string]interface{}) (interface{}, error) {
+func (m *mockHandler) Handle(params contract.EventInParams) (interface{}, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -27,12 +27,12 @@ func TestBaseDispatcher(t *testing.T) {
 		&mockHandler{},
 		&mockHandler{},
 	})
-	results := dispatch.Dispatch("a", map[string]interface{}{`p1`: 1, `p2`: 2})
+	results := dispatch.Dispatch("a", contract.EventInParams{`p1`: 1, `p2`: 2})
 	assert.Equal(t, 2, len(results))
 	assert.Equal(t, 3, results[0].(int))
 	assert.Equal(t, 3, results[0].(int))
 
-	nothingResult := dispatch.Dispatch("nothing", map[string]interface{}{`p1`: 1, `p2`: 2})
+	nothingResult := dispatch.Dispatch("nothing", contract.EventInParams{`p1`: 1, `p2`: 2})
 	assert.Nil(t, nothingResult)
 }
 

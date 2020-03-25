@@ -37,7 +37,7 @@ func (e *event) ListenMany(name string, handlerMany []contract.EventHandler) {
 	}
 }
 
-func (e *event) Dispatch(name string, params map[string]interface{}) []interface{} {
+func (e *event) Dispatch(name string, params contract.EventInParams) []interface{} {
 	if !e.Has(name) {
 		return nil
 	}
