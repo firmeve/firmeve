@@ -118,6 +118,10 @@ func (c *context) Clone() contract.Context {
 	return c
 }
 
+func (c *context) Resolve(abstract interface{}, params ...interface{}) interface{} {
+	return c.firmeve.Make(abstract, params...)
+}
+
 // --------------------------- context.Context -> Base context ------------------------
 
 func (c *context) Deadline() (deadline time.Time, ok bool) {
