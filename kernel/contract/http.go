@@ -30,9 +30,9 @@ type (
 
 		Param(key string) httprouter.Param
 
-		//SetRoute(route *http2.Route)
-		//
-		//Route() *http2.Route
+		SetRoute(route HttpRoute)
+
+		Route() HttpRoute
 
 		Header(key string) string
 
@@ -53,5 +53,62 @@ type (
 		Cookie(name string) (string, error)
 
 		Redirect(status int, location string)
+	}
+
+	HttpRoute interface {
+		Name(name string) HttpRoute
+
+		Before(handlers ...ContextHandler) HttpRoute
+
+		After(handlers ...ContextHandler) HttpRoute
+
+		Handlers() []ContextHandler
+	}
+
+	HttpRouteGroup interface {
+		Prefix(prefix string) HttpRouteGroup
+
+		After(handlers ...ContextHandler) HttpRouteGroup
+
+		Before(handlers ...ContextHandler) HttpRouteGroup
+
+		GET(path string, handler ContextHandler) HttpRoute
+
+		POST(path string, handler ContextHandler) HttpRoute
+
+		PUT(path string, handler ContextHandler) HttpRoute
+
+		PATCH(path string, handler ContextHandler) HttpRoute
+
+		DELETE(path string, handler ContextHandler) HttpRoute
+
+		OPTIONS(path string, handler ContextHandler) HttpRoute
+
+		Group(prefix string) HttpRouteGroup
+	}
+
+	HttpRouter interface {
+		GET(path string, handler ContextHandler) HttpRoute
+
+		POST(path string, handler ContextHandler) HttpRoute
+
+		PUT(path string, handler ContextHandler) HttpRoute
+
+		PATCH(path string, handler ContextHandler) HttpRoute
+
+		DELETE(path string, handler ContextHandler) HttpRoute
+
+		OPTIONS(path string, handler ContextHandler) HttpRoute
+
+		// serve static files
+		Static(path string, root string) HttpRouter
+
+		Handler(method, path string, handler http.HandlerFunc)
+
+		HttpRouter() *httprouter.Router
+
+		Group(prefix string) HttpRouteGroup
+
+		ServeHTTP(w http.ResponseWriter, req *http.Request)
 	}
 )

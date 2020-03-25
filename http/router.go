@@ -11,50 +11,50 @@ import (
 type Router struct {
 	Firmeve   contract.Application
 	router    *httprouter.Router
-	routes    map[string]*Route
+	routes    map[string]contract.HttpRoute
 	routeKeys []string
 }
 
-func New(firmeve contract.Application) *Router {
+func New(firmeve contract.Application) contract.HttpRouter {
 	return &Router{
 		Firmeve:   firmeve,
 		router:    httprouter.New(),
-		routes:    make(map[string]*Route, 0),
+		routes:    make(map[string]contract.HttpRoute, 0),
 		routeKeys: make([]string, 0),
 	}
 }
 
-func (r *Router) GET(path string, handler contract.ContextHandler) *Route {
+func (r *Router) GET(path string, handler contract.ContextHandler) contract.HttpRoute {
 	return r.createRoute(http.MethodGet, path, handler)
 }
 
-func (r *Router) POST(path string, handler contract.ContextHandler) *Route {
+func (r *Router) POST(path string, handler contract.ContextHandler) contract.HttpRoute {
 	return r.createRoute(http.MethodPost, path, handler)
 }
 
-func (r *Router) PUT(path string, handler contract.ContextHandler) *Route {
+func (r *Router) PUT(path string, handler contract.ContextHandler) contract.HttpRoute {
 	return r.createRoute(http.MethodPut, path, handler)
 }
 
-func (r *Router) PATCH(path string, handler contract.ContextHandler) *Route {
+func (r *Router) PATCH(path string, handler contract.ContextHandler) contract.HttpRoute {
 	return r.createRoute(http.MethodPatch, path, handler)
 }
 
-func (r *Router) DELETE(path string, handler contract.ContextHandler) *Route {
+func (r *Router) DELETE(path string, handler contract.ContextHandler) contract.HttpRoute {
 	return r.createRoute(http.MethodDelete, path, handler)
 }
 
-func (r *Router) OPTIONS(path string, handler contract.ContextHandler) *Route {
+func (r *Router) OPTIONS(path string, handler contract.ContextHandler) contract.HttpRoute {
 	return r.createRoute(http.MethodOptions, path, handler)
 }
 
 // serve static files
-func (r *Router) Static(path string, root string) *Router {
+func (r *Router) Static(path string, root string) contract.HttpRouter {
 	r.router.ServeFiles(strings.Join([]string{path, `/*filepath`}, ``), http.Dir(root))
 	return r
 }
 
-func (r *Router) NotFound(handler contract.ContextHandler) *Router {
+func (r *Router) NotFound(handler contract.ContextHandler) contract.HttpRouter {
 	r.router.NotFound = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 		kernel.NewContext(r.Firmeve, NewHttp(req, w), handler).Next()
 	})
@@ -74,18 +74,18 @@ func (r *Router) HttpRouter() *httprouter.Router {
 }
 
 //
-func (r *Router) Group(prefix string) *Group {
+func (r *Router) Group(prefix string) contract.HttpRouteGroup {
 	return newGroup(r).Prefix(prefix)
 }
 
-func (r *Router) createRoute(method string, path string, handler contract.ContextHandler) *Route {
+func (r *Router) createRoute(method string, path string, handler contract.ContextHandler) contract.HttpRoute {
 	key := r.routeKey(method, path)
 	r.routes[key] = newRoute(path, handler)
 
 	r.router.Handle(method, path, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
 		currentHttp := NewHttp(req, w)
 		currentHttp.SetParams(params)
-		//currentHttp.SetRoute(r.routes[key])
+		currentHttp.SetRoute(r.routes[key])
 
 		ctx := kernel.NewContext(r.Firmeve, currentHttp, r.routes[key].Handlers()...)
 

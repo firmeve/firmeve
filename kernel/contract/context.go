@@ -42,5 +42,8 @@ type (
 		RenderWith(status int, r Render, v interface{}) error
 
 		Clone() Context
+
+		// application make method
+		Resolve(abstract interface{}, params ...interface{}) interface{}
 	}
 )

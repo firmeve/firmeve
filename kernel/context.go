@@ -50,6 +50,8 @@ func (c *context) Error(status int, err error) {
 	if err2 := newErr.Render(status, c); err2 != nil {
 		panic(err2)
 	}
+
+	c.Abort()
 }
 
 func (c *context) Abort() {
@@ -114,6 +116,10 @@ func (c *context) Render(status int, v interface{}) error {
 func (c *context) Clone() contract.Context {
 	//@todo 暂时先返回自己，Context全部完善后再修改clone
 	return c
+}
+
+func (c *context) Resolve(abstract interface{}, params ...interface{}) interface{} {
+	return c.firmeve.Make(abstract, params...)
 }
 
 // --------------------------- context.Context -> Base context ------------------------

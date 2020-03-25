@@ -39,9 +39,9 @@ func assertBaseRoute(t *testing.T, router *Router, method, path, name string, be
 	key := router.routeKey(method, path)
 	assert.NotNil(t, router.routes[key])
 	assert.IsType(t, &Route{}, router.routes[key])
-	assert.Equal(t, beforeHandlerLen, len(router.routes[key].beforeHandlers))
-	assert.Equal(t, afterHandlerLen, len(router.routes[key].afterHandlers))
-	assert.Equal(t, name, router.routes[key].name)
+	assert.Equal(t, beforeHandlerLen, len(router.routes[key].(*Route).beforeHandlers))
+	assert.Equal(t, afterHandlerLen, len(router.routes[key].(*Route).afterHandlers))
+	assert.Equal(t, name, router.routes[key].(*Route).name)
 }
 
 func TestRouter_BaseRoute(t *testing.T) {
@@ -60,42 +60,42 @@ func TestRouter_BaseRoute(t *testing.T) {
 		ctx.Next()
 	}).Name("gets.1")
 
-	assertBaseRoute(t, router, http.MethodGet, "/gets/1", "gets.1", 1, 2)
+	assertBaseRoute(t, router.(*Router), http.MethodGet, "/gets/1", "gets.1", 1, 2)
 
 	router.POST("/posts", func(ctx contract.Context) {
 		ctx.RenderWith(200, render2.Plain, "Body")
 		ctx.Next()
 	}).Name("posts.1")
-	assertBaseRoute(t, router, http.MethodPost, "/posts", "posts.1", 0, 0)
+	assertBaseRoute(t, router.(*Router), http.MethodPost, "/posts", "posts.1", 0, 0)
 
 	router.PUT("/resources/1/put", func(ctx contract.Context) {
 		ctx.RenderWith(200, render2.Plain, "Body")
 		ctx.Next()
 	})
-	assertBaseRoute(t, router, http.MethodPut, "/resources/1/put", "", 0, 0)
+	assertBaseRoute(t, router.(*Router), http.MethodPut, "/resources/1/put", "", 0, 0)
 
 	router.DELETE("/1/delete", func(ctx contract.Context) {
 		ctx.RenderWith(200, render2.Plain, "Body")
 		ctx.Next()
 	})
-	assertBaseRoute(t, router, http.MethodDelete, "/1/delete", "", 0, 0)
+	assertBaseRoute(t, router.(*Router), http.MethodDelete, "/1/delete", "", 0, 0)
 
 	router.PATCH("/patch", func(ctx contract.Context) {
 		ctx.RenderWith(200, render2.Plain, "Body")
 		ctx.Next()
 	}).Name("patch")
-	assertBaseRoute(t, router, http.MethodPatch, "/patch", "patch", 0, 0)
+	assertBaseRoute(t, router.(*Router), http.MethodPatch, "/patch", "patch", 0, 0)
 
 	router.OPTIONS("/options", func(ctx contract.Context) {
 		ctx.RenderWith(200, render2.Plain, "Body")
 		ctx.Next()
 	})
-	assertBaseRoute(t, router, http.MethodOptions, "/options", "", 0, 0)
+	assertBaseRoute(t, router.(*Router), http.MethodOptions, "/options", "", 0, 0)
 
 	router.Handler("GET", "/original", func(writer http.ResponseWriter, request *http.Request) {
 
 	})
-	assertBaseRoute(t, router, http.MethodGet, "/original", "", 0, 0)
+	assertBaseRoute(t, router.(*Router), http.MethodGet, "/original", "", 0, 0)
 
 	//	http.ListenAndServe("127.0.0.1:28082",router)
 }
@@ -119,29 +119,29 @@ func TestRouter_Group(t *testing.T) {
 			ctx.RenderWith(200, render2.Plain, "bdc")
 			ctx.Next()
 		}).Name("gets.1")
-		assertBaseRoute(t, router, http.MethodGet, "/v1/gets/1", "gets.1", 2, 1)
+		assertBaseRoute(t, router.(*Router), http.MethodGet, "/v1/gets/1", "gets.1", 2, 1)
 
 		v1.POST("/posts", func(ctx contract.Context) {
 			ctx.Next()
 		}).Name("v1.posts")
-		assertBaseRoute(t, router, http.MethodPost, "/v1/posts", "v1.posts", 2, 1)
+		assertBaseRoute(t, router.(*Router), http.MethodPost, "/v1/posts", "v1.posts", 2, 1)
 
 		//
 		v1.DELETE("/delete", func(ctx contract.Context) {
 		})
-		assertBaseRoute(t, router, http.MethodDelete, "/v1/delete", "", 2, 1)
+		assertBaseRoute(t, router.(*Router), http.MethodDelete, "/v1/delete", "", 2, 1)
 
 		v1.PUT("/put", func(ctx contract.Context) {
 		})
-		assertBaseRoute(t, router, http.MethodPut, "/v1/put", "", 2, 1)
+		assertBaseRoute(t, router.(*Router), http.MethodPut, "/v1/put", "", 2, 1)
 
 		v1.PATCH("/patch", func(ctx contract.Context) {
 		})
-		assertBaseRoute(t, router, http.MethodPatch, "/v1/patch", "", 2, 1)
+		assertBaseRoute(t, router.(*Router), http.MethodPatch, "/v1/patch", "", 2, 1)
 
 		v1.OPTIONS("/options", func(ctx contract.Context) {
 		})
-		assertBaseRoute(t, router, http.MethodOptions, "/v1/options", "", 2, 1)
+		assertBaseRoute(t, router.(*Router), http.MethodOptions, "/v1/options", "", 2, 1)
 	}
 
 	v1Dep := v1.Group("/dep").Before(func(ctx contract.Context) {
@@ -153,5 +153,5 @@ func TestRouter_Group(t *testing.T) {
 
 		})
 	}
-	assertBaseRoute(t, router, http.MethodGet, "/v1/dep/gets/1", "", 3, 1)
+	assertBaseRoute(t, router.(*Router), http.MethodGet, "/v1/dep/gets/1", "", 3, 1)
 }
