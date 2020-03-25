@@ -50,6 +50,8 @@ func (c *context) Error(status int, err error) {
 	if err2 := newErr.Render(status, c); err2 != nil {
 		panic(err2)
 	}
+
+	c.Abort()
 }
 
 func (c *context) Abort() {
