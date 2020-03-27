@@ -162,9 +162,15 @@ func (h *Http) Values() map[string][]string {
 
 	switch h.ContentType() {
 	case contract.HttpMimeForm:
-		return h.request.Form
+		err := h.request.ParseForm()
+		if err == nil {
+			return h.request.Form
+		}
 	case contract.HttpMimeMultipartForm:
-		h.request.ParseMultipartForm(defaultMaxSize)
+		err := h.request.ParseMultipartForm(defaultMaxSize)
+		if err == nil {
+			return h.request.MultipartForm.Value
+		}
 		return h.request.Form
 	}
 

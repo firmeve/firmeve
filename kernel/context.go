@@ -90,8 +90,10 @@ func (c *context) Entity(key string) *contract.ContextEntity {
 
 func (c *context) Get(key string) interface{} {
 	values := c.protocol.Values()
-	if value, ok := values[key]; ok {
-		return value
+	if values != nil {
+		if value, ok := values[key]; ok {
+			return value
+		}
 	}
 
 	return nil
