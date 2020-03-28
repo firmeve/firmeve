@@ -14,21 +14,17 @@ const (
 	defaultConfigPath2 = `../testdata/config`
 )
 
-type Command struct {
-	Firmeve  contract.Application
-	Provider []contract.Provider
-	//commands []*cobra.Command
-	root *cobra.Command
+type command struct {
+	firmeve   contract.Application
+	providers []contract.Provider
+	root      *cobra.Command
 }
 
-//@todo 暂时这样，后面可以做移除命令
-//@todo 而且这个还有问题，命令可以重复添加，可以考虑reflect.Type惟一性
-func (c *Command) AddCommand(cmds ...contract.Command) {
-	for _, v := range cmds {
-		cmd := v.Cmd()
+func (c *command) AddCommand(commands ...contract.Command) {
+	for _, v := range commands {
+		cmd := v.CobraCmd()
 		cmd.Run = func(cmd *cobra.Command, args []string) {
-			// bootstrap
-			// kernel.BootFromCommand(c, cmd)
+			// init params --> *important*
 			configPath := cmd.Flag(`config`).Value.String()
 			devMode := cmd.Flag(`dev`).Value.String()
 			devModeBool := false
@@ -36,66 +32,60 @@ func (c *Command) AddCommand(cmds ...contract.Command) {
 				devModeBool = true
 			}
 
-			//kernel.Boot(configPath, devModeBool, root.Application(), root.Providers())
-			c.Boot(configPath, devModeBool)
+			// bootstrap
+			c.boot(configPath, devModeBool)
 
 			v.Run(c, cmd, args)
 		}
 
 		c.root.AddCommand(cmd)
-		//c.commands = append(c.commands, cmd)
 	}
 }
-func (c *Command) Boot(configPath string, devMode bool) contract.Application {
+
+func (c *command) boot(configPath string, devMode bool) {
 	var mode uint8
 	if devMode {
 		mode = contract.ModeDevelopment
 	} else {
 		mode = contract.ModeProduction
 	}
-	c.Firmeve.SetMode(mode)
+	c.firmeve.SetMode(mode)
 
-	c.Firmeve.Bind("firmeve", c.Firmeve)
+	c.firmeve.Bind("firmeve", c.firmeve)
 
-	c.Firmeve.Bind(`config`, config.New(configPath), container.WithShare(true))
+	c.firmeve.Bind(`config`, config.New(configPath), container.WithShare(true))
 
-	//registerBaseProvider(app)
-	//if providers != nil && len(providers) != 0 {
-	c.Firmeve.RegisterMultiple(c.Provider, false)
-	//}
+	c.firmeve.RegisterMultiple(c.providers, false)
 
-	c.Firmeve.Boot()
-
-	return c.Firmeve
+	c.firmeve.Boot()
 }
 
-//func (c *Command) SetProviders(providers []contract.Provider) {
-//	c.Provider = providers
-//}
-
-func (c *Command) Run() error {
+func (c *command) Run() error {
 	return c.root.Execute()
 }
 
-func (c *Command) Providers() []contract.Provider {
-	return c.Provider
+func (c *command) Root() *cobra.Command {
+	return c.root
 }
 
-//func (c *Command) SetApplication(app contract.Application) {
-//	c.Firmeve = app
-//}
+func (c *command) Providers() []contract.Provider {
+	return c.providers
+}
 
-func (c *Command) Application() contract.Application {
-	return c.Firmeve
+func (c *command) Resolve(abstract interface{}, params ...interface{}) interface{} {
+	return c.Application().Make(abstract, params...)
+}
+
+func (c *command) Application() contract.Application {
+	return c.firmeve
 }
 
 func NewCommand(providers []contract.Provider, commands ...contract.Command) contract.BaseCommand {
 	app := New()
-	command := &Command{
-		Firmeve:  app,
-		Provider: providers,
-		//commands: make([]*cobra.Command, 0),
-		root: rootCommand(app),
+	command := &command{
+		firmeve:   app,
+		providers: providers,
+		root:      rootCommand(app),
 	}
 	command.AddCommand(commands...)
 	return command

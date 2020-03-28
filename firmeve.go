@@ -62,33 +62,18 @@ func RunDefault(options ...support.Option) (contract.Application, contract.BaseC
 
 func Run(options ...support.Option) (contract.Application, contract.BaseCommand) {
 	option := parseOption(options)
-	//app := kernel.New()
-	//root := kernel.CommandRoot(app)
-	option.providers = append(initProviders, option.providers...)
-	command := kernel.NewCommand(option.providers, option.commands...)
-	//command.AddCommand(option.commands...)
 
-	err := command.Run()
-	if err != nil && err != cobra.ErrSubCommandRequired {
+	// init providers
+	option.providers = append(initProviders, option.providers...)
+
+	command := kernel.NewCommand(option.providers, option.commands...)
+
+	if err := command.Run(); err != nil && err != cobra.ErrSubCommandRequired {
 		panic(err)
 	}
-	//for i, _ := range option.commands {
-	//	option.commands[i].SetApplication(app)
-	//	option.commands[i].SetProviders(option.providers)
-	//	root.AddCommand(option.commands[i].Cmd())
-	//}
-	//
-	//run(root)
 
 	return command.Application(), command
 }
-
-//func run(cmd *cobra.Command) {
-//	err := cmd.Execute()
-//	if err != nil && err != cobra.ErrSubCommandRequired {
-//		panic(err)
-//	}
-//}
 
 func parseOption(options []support.Option) *option {
 	return support.ApplyOption(&option{

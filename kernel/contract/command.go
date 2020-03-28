@@ -4,25 +4,22 @@ import "github.com/spf13/cobra"
 
 type (
 	BaseCommand interface {
-		//SetApplication(app Application)
-
-		//SetProviders(providers []Provider)
-
 		Application() Application
 
 		Providers() []Provider
 
-		AddCommand(cmds ...Command)
+		AddCommand(commands ...Command)
 
 		Run() error
+
+		Root() *cobra.Command
+
+		Resolve(abstract interface{}, params ...interface{}) interface{}
 	}
 
 	Command interface {
-		Cmd() *cobra.Command
+		CobraCmd() *cobra.Command
 
 		Run(root BaseCommand, cmd *cobra.Command, args []string)
-		//Name() string
-		//Run()
-
 	}
 )
