@@ -2,6 +2,8 @@ package kernel
 
 import (
 	"github.com/fatih/color"
+	"github.com/firmeve/firmeve/config"
+	"github.com/firmeve/firmeve/container"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/support/path"
 	"github.com/spf13/cobra"
@@ -12,28 +14,84 @@ const (
 	defaultConfigPath2 = `../testdata/config`
 )
 
-type Command struct {
-	Firmeve  contract.Application
-	Provider []contract.Provider
+type command struct {
+	firmeve   contract.Application
+	providers []contract.Provider
+	root      *cobra.Command
 }
 
-func (c *Command) SetProviders(providers []contract.Provider) {
-	c.Provider = providers
+func (c *command) AddCommand(commands ...contract.Command) {
+	for _, v := range commands {
+		cmd := v.CobraCmd()
+		cmd.Run = func(cmd *cobra.Command, args []string) {
+			// init params --> *important*
+			configPath := cmd.Flag(`config`).Value.String()
+			devMode := cmd.Flag(`dev`).Value.String()
+			devModeBool := false
+			if devMode == `true` {
+				devModeBool = true
+			}
+
+			// bootstrap
+			c.boot(configPath, devModeBool)
+
+			v.Run(c, cmd, args)
+		}
+
+		c.root.AddCommand(cmd)
+	}
 }
 
-func (c *Command) Providers() []contract.Provider {
-	return c.Provider
+func (c *command) boot(configPath string, devMode bool) {
+	var mode uint8
+	if devMode {
+		mode = contract.ModeDevelopment
+	} else {
+		mode = contract.ModeProduction
+	}
+	c.firmeve.SetMode(mode)
+
+	c.firmeve.Bind("firmeve", c.firmeve)
+
+	c.firmeve.Bind(`config`, config.New(configPath), container.WithShare(true))
+
+	c.firmeve.RegisterMultiple(c.providers, false)
+
+	c.firmeve.Boot()
 }
 
-func (c *Command) SetApplication(app contract.Application) {
-	c.Firmeve = app
+func (c *command) Run() error {
+	return c.root.Execute()
 }
 
-func (c *Command) Application() contract.Application {
-	return c.Firmeve
+func (c *command) Root() *cobra.Command {
+	return c.root
 }
 
-func CommandRoot(app contract.Application) *cobra.Command {
+func (c *command) Providers() []contract.Provider {
+	return c.providers
+}
+
+func (c *command) Resolve(abstract interface{}, params ...interface{}) interface{} {
+	return c.Application().Make(abstract, params...)
+}
+
+func (c *command) Application() contract.Application {
+	return c.firmeve
+}
+
+func NewCommand(providers []contract.Provider, commands ...contract.Command) contract.BaseCommand {
+	app := New()
+	command := &command{
+		firmeve:   app,
+		providers: providers,
+		root:      rootCommand(app),
+	}
+	command.AddCommand(commands...)
+	return command
+}
+
+func rootCommand(app contract.Application) *cobra.Command {
 	logo := `
  _____   _   _____        ___  ___   _____   _     _   _____
 |  ___| | | |  _  \      /   |/   | | ____| | |   / / | ____|

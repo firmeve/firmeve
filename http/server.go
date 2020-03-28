@@ -3,8 +3,6 @@ package http
 import (
 	"context"
 	"fmt"
-	kernel2 "github.com/firmeve/firmeve/bootstrap"
-	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/spf13/cobra"
 	"golang.org/x/net/http2"
@@ -16,19 +14,10 @@ import (
 )
 
 type HttpCommand struct {
-	kernel.Command
 	command *cobra.Command
 }
 
-func (c *HttpCommand) Cmd() *cobra.Command {
-	if c.command == nil {
-		c.command = c.newCmd()
-	}
-
-	return c.command
-}
-
-func (c *HttpCommand) newCmd() *cobra.Command {
+func (c *HttpCommand) CobraCmd() *cobra.Command {
 	c.command = new(cobra.Command)
 	c.command.Use = "http:serve"
 	c.command.Short = "Http server"
@@ -37,17 +26,11 @@ func (c *HttpCommand) newCmd() *cobra.Command {
 	c.command.Flags().StringP("cert-file", "", "", "Http2 cert file path")
 	c.command.Flags().StringP("key-file", "", "", "Http2 key file path")
 
-	c.command.Run = c.run
-
 	return c.command
 }
 
-func (c *HttpCommand) run(cmd *cobra.Command, args []string) {
-	// bootstrap
-	kernel2.BootFromCommand(c)
-
-	//config := c.Firmeve.Get(`config`).(*config.Config)
-	logger := c.Firmeve.Get(`logger`).(contract.Loggable)
+func (c *HttpCommand) Run(root contract.BaseCommand, cmd *cobra.Command, args []string) {
+	logger := root.Resolve(`logger`).(contract.Loggable)
 	var (
 		host      = cmd.Flag("host").Value.String()
 		certFile  = cmd.Flag(`cert-file`).Value.String()
@@ -56,7 +39,7 @@ func (c *HttpCommand) run(cmd *cobra.Command, args []string) {
 	)
 	srv := &net_http.Server{
 		Addr:    host,
-		Handler: c.Firmeve.Get(`http.router`).(*Router),
+		Handler: root.Resolve(`http.router`).(*Router),
 	}
 
 	go func() {

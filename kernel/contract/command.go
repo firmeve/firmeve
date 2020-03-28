@@ -2,14 +2,24 @@ package contract
 
 import "github.com/spf13/cobra"
 
-type Command interface {
-	Cmd() *cobra.Command
+type (
+	BaseCommand interface {
+		Application() Application
 
-	SetApplication(app Application)
+		Providers() []Provider
 
-	SetProviders(providers []Provider)
+		AddCommand(commands ...Command)
 
-	Application() Application
+		Run() error
 
-	Providers() []Provider
-}
+		Root() *cobra.Command
+
+		Resolve(abstract interface{}, params ...interface{}) interface{}
+	}
+
+	Command interface {
+		CobraCmd() *cobra.Command
+
+		Run(root BaseCommand, cmd *cobra.Command, args []string)
+	}
+)
