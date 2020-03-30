@@ -9,10 +9,10 @@
   * [提供者](docs/zh-CN/provider.md)
   * [事件](docs/zh-CN/event.md)
   * [日志](docs/zh-CN/logger.md)
+  * [命令](docs/zh-CN/command.md)
 * [基础组件]
   * [Http服务](docs/zh-CN/http.md)
   * [数据库](docs/zh-CN/databases.md)
   * [缓存](docs/zh-CN/cache.md)
-  * [命令](docs/zh-CN/command.md)
   * [队列](docs/zh-CN/queue.md)
   * [计划任务](docs/zh-CN/cron.md)
