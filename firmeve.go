@@ -7,7 +7,6 @@ import (
 	"github.com/firmeve/firmeve/kernel/contract"
 	logging "github.com/firmeve/firmeve/logger"
 	"github.com/firmeve/firmeve/support"
-	"github.com/spf13/cobra"
 )
 
 var (
@@ -30,8 +29,6 @@ type (
 		providers []contract.Provider
 		commands  []contract.Command
 	}
-
-	//Running func(options ...support.Option) (contract.Application, *cobra.Command)
 )
 
 func WithProviders(providers []contract.Provider) support.Option {
@@ -44,12 +41,6 @@ func WithCommands(commands []contract.Command) support.Option {
 	return func(object support.Object) {
 		object.(*option).commands = commands
 	}
-}
-func registerBaseProvider(f contract.Application) {
-	f.RegisterMultiple([]contract.Provider{
-		new(event.Provider),
-		new(logging.Provider),
-	}, false)
 }
 
 func RunDefault(options ...support.Option) (contract.Application, contract.BaseCommand) {
@@ -68,7 +59,7 @@ func Run(options ...support.Option) (contract.Application, contract.BaseCommand)
 
 	command := kernel.NewCommand(option.providers, option.commands...)
 
-	if err := command.Run(); err != nil && err != cobra.ErrSubCommandRequired {
+	if err := command.Run(); err != nil {
 		panic(err)
 	}
 
