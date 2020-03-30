@@ -79,7 +79,7 @@ go run main.go http:serve
     - [x] [Provider](./docs/zh-CN/provider.md)
     - [x] [Event](./docs/zh-CN/event.md)
     - [x] [Logger](./docs/zh-CN/logger.md)
-    - [ ] [Command](./docs/zh-CN/command.md)
+    - [x] [Command](./docs/zh-CN/command.md)
 - **Base**
     - [x] [Http](./docs/zh-CN/http.md)
     - [x] [Database](./docs/zh-CN/databases.md)
