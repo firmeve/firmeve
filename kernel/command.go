@@ -21,7 +21,8 @@ type command struct {
 }
 
 func (c *command) AddCommand(commands ...contract.Command) {
-	for _, v := range commands {
+	for i := range commands {
+		v := commands[i]
 		cmd := v.CobraCmd()
 		cmd.Run = func(cmd *cobra.Command, args []string) {
 			// init params --> *important*
