@@ -6,6 +6,7 @@ require (
 	github.com/fatih/color v1.9.0
 	github.com/go-playground/form/v4 v4.1.1
 	github.com/go-redis/redis v6.15.6+incompatible
+	github.com/golang/protobuf v1.4.0-rc.4
 	github.com/guregu/null v3.4.0+incompatible
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible // indirect
 	github.com/jinzhu/gorm v1.9.11
@@ -27,9 +28,11 @@ require (
 	go.uber.org/multierr v1.4.0 // indirect
 	go.uber.org/zap v1.12.0
 	golang.org/x/crypto v0.0.0-20191227163750-53104e6ec876 // indirect
-	golang.org/x/net v0.0.0-20191209160850-c0dbc17a3553
-	golang.org/x/sys v0.0.0-20200302150141-5c8b2ff67527 // indirect
+	golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e
+	golang.org/x/sys v0.0.0-20200331124033-c3d80250170d // indirect
 	golang.org/x/text v0.3.2 // indirect
 	golang.org/x/tools v0.0.0-20191107235519-f7ea15e60b12 // indirect
+	google.golang.org/grpc v1.28.0
+	google.golang.org/protobuf v1.20.1
 	gopkg.in/natefinch/lumberjack.v2 v2.0.0
 )
