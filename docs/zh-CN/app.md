@@ -7,6 +7,8 @@
 
 ## 生命周期
 
+![firmeve process](../images/process.png)
+
 ### Main
 在 Main 中我们需要执行`firmeve.Run`或者`firmeve.RunDefault`函数，并且进行 Provider 和 Command 挂载
 
