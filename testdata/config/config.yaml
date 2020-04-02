@@ -1,3 +1,5 @@
+framework:
+  lang: zh-CN
 database:
   default: mysql
   connections:
