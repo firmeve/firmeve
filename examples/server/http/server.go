@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/firmeve/firmeve"
-	"github.com/firmeve/firmeve/http"
 	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/render"
@@ -20,7 +19,7 @@ func (a *App) Register() {
 }
 
 func (a *App) Boot() {
-	router := a.Firmeve.Get(`http.router`).(*http.Router)
+	router := a.Firmeve.Get(`http.router`).(contract.HttpRouter)
 	v1 := router.Group("/api/v1")
 	{
 		v1.GET(`/ping`, func(c contract.Context) {
