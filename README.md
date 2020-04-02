@@ -13,11 +13,22 @@ Those who have achieved nothing can always tell you that you can't make a big de
 [![GitHub license](https://img.shields.io/github/license/firmeve/firmeve.svg)](https://github.com/firmeve/firmeve/blob/master/LICENSE)
 [![Go Report Card](https://goreportcard.com/badge/github.com/firmeve/firmeve)](https://goreportcard.com/report/github.com/firmeve/firmeve)
 
+
+## Quick start
+
+```bash
+go get -u github.com/firmeve/firmeve@develop
+```
+
+## 
+![base](docs/images/base.png)
+
 ## Docs
 
 [https://docs.firmeve.com/v/develop/](https://docs.firmeve.com/v/develop/)
 
-## Quick start
+
+## Example
 ```go
 package main
 
@@ -41,7 +52,7 @@ func (a *App) Register() {
 }
 
 func (a *App) Boot() {
-	router := a.Firmeve.Get(`http.router`).(*http.Router)
+	router := a.Firmeve.Get(`http.router`).(contract.HttpRouter)
 	v1 := router.Group("/api/v1")
 	{
 		v1.GET(`/ping`, func(c contract.Context) {
