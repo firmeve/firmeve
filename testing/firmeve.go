@@ -11,6 +11,6 @@ func TestingModeFirmeve() contract.Application {
 	app := kernel.New()
 	app.SetMode(contract.ModeTesting)
 	app.Bind(`firmeve`, app)
-	app.Bind(`config`, config.New(path.RunRelative("../testdata/config")))
+	app.Bind(`config`, config.New(path.RunRelative("../testdata/config/config.yaml")))
 	return app
 }
