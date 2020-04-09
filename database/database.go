@@ -45,9 +45,9 @@ func (d *DB) Connection(driver string) *gorm.DB {
 	}
 
 	// 连接池设置
-	db.DB().SetMaxIdleConns(d.config.GetInt(`poll.max_idle`))
-	db.DB().SetMaxOpenConns(d.config.GetInt(`poll.max_connection`))
-	db.DB().SetConnMaxLifetime(time.Duration(d.config.GetInt(`poll.max_lifetime`)) * time.Minute)
+	db.DB().SetMaxIdleConns(d.config.GetInt(`pool.max_idle`))
+	db.DB().SetMaxOpenConns(d.config.GetInt(`pool.max_connection`))
+	db.DB().SetConnMaxLifetime(time.Duration(d.config.GetInt(`pool.max_lifetime`)) * time.Minute)
 
 	d.connections[driver] = db
 
