@@ -10,10 +10,6 @@ func IndirectType(reflectType reflect.Type) reflect.Type {
 	if kind == reflect.Ptr {
 		return reflectType.Elem()
 	}
-	//// type's Kind is Array, Chan, Map, Ptr, or Slice.
-	//if kind == reflect.Array || kind == reflect.Ptr || kind == reflect.Chan || kind == reflect.Map || kind == reflect.Slice {
-	//	return reflectType.Elem()
-	//}
 
 	return reflectType
 }
@@ -21,14 +17,6 @@ func IndirectType(reflectType reflect.Type) reflect.Type {
 func KindElemType(reflectType reflect.Type) reflect.Kind {
 	return IndirectType(reflectType).Kind()
 }
-
-//func KindType(object interface{}) reflect.Kind {
-//	if t, ok := object.(reflect.Type); ok {
-//		return t.Kind()
-//	}
-//
-//	return reflect.TypeOf(object).Kind()
-//}
 
 type CallInParameterFunc func(i int, param reflect.Type) interface{}
 
@@ -38,15 +26,7 @@ func CallInParameterType(reflectType reflect.Type, paramFunc CallInParameterFunc
 	results := make([]interface{}, 0)
 	for i := 0; i < reflectType.NumIn(); i++ {
 		values := paramFunc(i, reflectType.In(i))
-		//valueKind := reflect.TypeOf(values).Kind()
-		//if valueKind == reflect.Slice {
-		//
-		//}
-		//if len(values) > 1 {
-		//	results = append(results, values...)
-		//} else {
 		results = append(results, values)
-		//}
 	}
 
 	return results
