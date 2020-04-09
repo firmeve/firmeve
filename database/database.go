@@ -2,13 +2,13 @@ package database
 
 import (
 	"github.com/firmeve/firmeve/kernel/contract"
-	"strings"
-
 	"github.com/jinzhu/gorm"
 	_ "github.com/jinzhu/gorm/dialects/mssql"
 	_ "github.com/jinzhu/gorm/dialects/mysql"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	_ "github.com/jinzhu/gorm/dialects/sqlite"
+	"strings"
+	"time"
 )
 
 type (
@@ -43,6 +43,11 @@ func (d *DB) Connection(driver string) *gorm.DB {
 	if err != nil {
 		panic(err)
 	}
+
+	// 连接池设置
+	db.DB().SetMaxIdleConns(d.config.GetInt(`poll.max_idle`))
+	db.DB().SetMaxOpenConns(d.config.GetInt(`poll.max_connection`))
+	db.DB().SetConnMaxLifetime(time.Duration(d.config.GetInt(`poll.max_lifetime`)) * time.Minute)
 
 	d.connections[driver] = db
 
