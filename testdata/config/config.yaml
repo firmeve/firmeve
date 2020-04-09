@@ -15,9 +15,8 @@ cache:
   default: redis
   repositories:
     redis:
-      host: 127.0.0.1
-      port: 6379
-      db: 0
+      connection: cache
+
 logging:
   default: console
   channels:
@@ -36,4 +35,17 @@ logging:
       level: debug
 
 
-
+redis:
+  clusters:
+    default:
+      hosts:
+        - 127.0.0.1:9000
+        - 127.0.0.1:9001
+        - 127.0.0.1:9002
+  connections:
+    default:
+      host: 127.0.0.1:6379
+      db: 0
+    cache:
+      host: 127.0.0.1:6379
+      db: 1

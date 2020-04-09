@@ -3,13 +3,13 @@ package cache
 import (
 	"fmt"
 	"github.com/firmeve/firmeve/kernel/contract"
+	redis2 "github.com/firmeve/firmeve/redis"
+	testing2 "github.com/firmeve/firmeve/testing"
 	"math/rand"
 	"strconv"
 	"testing"
 	"time"
 
-	"github.com/firmeve/firmeve/config"
-	"github.com/firmeve/firmeve/support/path"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -19,7 +19,11 @@ func TestCache_Implement(t *testing.T) {
 
 //Create a cache manager
 func Default() contract.Cache {
-	return New(config.New(path.RunRelative("../testdata/config")).Item(`cache`))
+	app := testing2.TestingModeFirmeve()
+	app.Register(new(redis2.Provider), true)
+	app.Register(new(Provider), true)
+
+	return app.Resolve(`cache`).(contract.Cache)
 }
 
 func TestRepository_Get(t *testing.T) {
