@@ -2,6 +2,7 @@ package context
 
 import (
 	"github.com/firmeve/firmeve/binding"
+	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/render"
 	"time"
@@ -44,7 +45,7 @@ func (c *context) Error(status int, err error) {
 	if v, ok := err.(contract.ErrorRender); ok {
 		newErr = v
 	} else {
-		newErr = ErrorWarp(err)
+		newErr = kernel.ErrorWarp(err)
 	}
 
 	if err2 := newErr.Render(status, c); err2 != nil {
