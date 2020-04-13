@@ -1,7 +1,7 @@
 package http
 
 import (
-	"github.com/firmeve/firmeve/kernel"
+	"github.com/firmeve/firmeve/context"
 	"github.com/firmeve/firmeve/kernel/contract"
 	logging "github.com/firmeve/firmeve/logger"
 	testing2 "github.com/firmeve/firmeve/testing"
@@ -17,7 +17,7 @@ func TestRecovery(t *testing.T) {
 	req.Header.Set(`Content-Type`, contract.HttpMimePlain)
 	req.ParseMultipartForm(32 << 20)
 
-	c := kernel.NewContext(
+	c := context.NewContext(
 		firmeve,
 		NewHttp(req, testing2.NewMockResponseWriter()),
 		func(c contract.Context) {
