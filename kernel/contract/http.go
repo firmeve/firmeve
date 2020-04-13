@@ -36,6 +36,12 @@ type (
 
 		Header(key string) string
 
+		SetSession(session Session)
+
+		Session() Session
+
+		SessionValue(key string) interface{}
+
 		IsContentType(key string) bool
 
 		IsAccept(key string) bool
@@ -110,5 +116,22 @@ type (
 		Group(prefix string) HttpRouteGroup
 
 		ServeHTTP(w http.ResponseWriter, req *http.Request)
+	}
+
+	Session interface {
+		Id() string
+
+		Get(key string) interface{}
+
+		GetString(key string) string
+		GetInt(key string) int
+		GetBool(key string) bool
+		GetFloat(key string) float64
+
+		Put(key string, value interface{}) error
+
+		Flush()
+
+		Delete(key string)
 	}
 )

@@ -1,5 +1,6 @@
 framework:
   lang: zh-CN
+  key: "%#@1123effr%%"
 database:
   default: mysql
   connections:
@@ -49,3 +50,11 @@ redis:
     cache:
       host: 127.0.0.1:6379
       db: 1
+
+http:
+  session:
+    name: firmeve-session
+    path:   "/",
+    domain: "",
+    lifetime: 86400,
+  cookie:

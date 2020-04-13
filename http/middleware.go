@@ -5,6 +5,7 @@ import (
 	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/support/strings"
+	"github.com/gorilla/sessions"
 	"net/http"
 )
 
@@ -50,4 +51,17 @@ func render(err interface{}, ctx contract.Context) {
 	} else {
 		ctx.Error(http.StatusInternalServerError, kernel.Errorf(message))
 	}
+}
+
+func Session(ctx contract.Context) {
+	httpProtocol := ctx.Protocol().(contract.HttpProtocol)
+	httpProtocol.SetSession(
+		NewSession(
+			ctx.Resolve(`http.session.store`).(sessions.Store),
+			httpProtocol.Request(),
+			httpProtocol.ResponseWriter(),
+		),
+	)
+
+	ctx.Next()
 }
