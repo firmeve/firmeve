@@ -26,6 +26,18 @@ type Http struct {
 	mock.Mock
 }
 
+func (h Http) SetSession(session contract.Session) {
+	panic("implement me")
+}
+
+func (h Http) Session() contract.Session {
+	panic("implement me")
+}
+
+func (h Http) SessionValue(key string) interface{} {
+	panic("implement me")
+}
+
 func (h Http) Read(p []byte) (n int, err error) {
 	return 0, nil
 }
