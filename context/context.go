@@ -5,6 +5,7 @@ import (
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/render"
 	"github.com/firmeve/firmeve/validator"
+	validator2 "github.com/go-playground/validator/v10"
 	"time"
 )
 
@@ -107,8 +108,7 @@ func (c *context) BindValidate(v interface{}) error {
 		return err
 	}
 
-	validator.Validator{}
-	//validate
+	return c.Resolve(`validator`).(contract.Validator).Validate(v)
 }
 
 func (c *context) BindWith(b contract.Binding, v interface{}) error {

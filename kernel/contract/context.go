@@ -33,6 +33,8 @@ type (
 
 		Bind(v interface{}) error
 
+		BindValidate(v interface{}) error
+
 		BindWith(b Binding, v interface{}) error
 
 		Get(key string) interface{}
