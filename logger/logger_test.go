@@ -8,6 +8,10 @@ import (
 	"testing"
 )
 
+var (
+	configPath = "../testdata/config/config.yaml"
+)
+
 func TestDefault(t *testing.T) {
 	logger := Default()
 	logger.Debug("Debug")
@@ -19,7 +23,7 @@ func TestDefault(t *testing.T) {
 }
 
 func Default() contract.Loggable {
-	return New(config.New(path.RunRelative("../testdata/config")).Item(`logging`))
+	return New(config.New(path.RunRelative(configPath)).Item(`logging`))
 }
 
 func TestLogger_Channel(t *testing.T) {
@@ -27,7 +31,7 @@ func TestLogger_Channel(t *testing.T) {
 }
 
 func TestLogger_Logger_Config(t *testing.T) {
-	logger := New(config.New(path.RunRelative("../testdata/config")).Item(`logging`))
+	logger := New(config.New(path.RunRelative(configPath)).Item(`logging`))
 
 	logger.Debug("Debug")
 	logger.Info("Info")
@@ -39,7 +43,7 @@ func TestLogger_Logger_Config(t *testing.T) {
 }
 
 func TestLogger_File(t *testing.T) {
-	logger := New(config.New(path.RunRelative("../testdata/config")).Item(`logging`))
+	logger := New(config.New(path.RunRelative(configPath)).Item(`logging`))
 
 	logger.Warn("File")
 }

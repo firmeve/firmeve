@@ -9,8 +9,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var (
+	configPath = "../testdata/config/config.yaml"
+)
+
 func TestNew(t *testing.T) {
-	db := New(config.New(path.RunRelative("../testdata/config")).Item(`database`))
+	db := New(config.New(path.RunRelative(configPath)).Item(`database`))
 	assert.NotPanics(t, func() {
 		db.ConnectionDefault()
 		db.CloseDefault()
@@ -19,7 +23,7 @@ func TestNew(t *testing.T) {
 }
 
 func TestNew_Connection_Error(t *testing.T) {
-	config := config.New(path.RunRelative("../testdata/config")).Item(`database`)
+	config := config.New(path.RunRelative(configPath)).Item(`database`)
 	config.Set("error_connection.addr", "nothing")
 	db := New(config)
 	assert.Panics(t, func() {
@@ -28,7 +32,7 @@ func TestNew_Connection_Error(t *testing.T) {
 }
 
 func TestNew_Close_Error(t *testing.T) {
-	db := New(config.New(path.RunRelative("../testdata/config")).Item(`database`))
+	db := New(config.New(path.RunRelative(configPath)).Item(`database`))
 	assert.NotPanics(t, func() {
 		db.ConnectionDefault()
 		db.CloseDefault()
@@ -38,21 +42,7 @@ func TestNew_Close_Error(t *testing.T) {
 
 func TestDB_Provider(t *testing.T) {
 	firmeve := testing2.TestingModeFirmeve()
-	//firmeve.Bind(`config`, config.New(path.RunRelative("../testdata/config")))
-	firmeve.Register(new(Provider),true)
-
-	//z := &Provider{
-	//	firmeve2.BaseFirmeve{
-	//		Firmeve: firmeve,
-	//	},
-	//}
-	//z2 := cache.Provider{
-	//	firmeve2.BaseFirmeve{
-	//		Firmeve: firmeve,
-	//	},
-	//}
-	//fmt.Printf("%#v\n", z)
-	//fmt.Printf("%#v", z2)
+	firmeve.Register(new(Provider), true)
 
 	firmeve.Boot()
 	assert.Equal(t, true, firmeve.HasProvider("db"))
