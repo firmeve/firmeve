@@ -7,7 +7,7 @@
 
 ### 创建一个`Config`
 ```go
-directory := "./testdata/config"
+directory := "./testdata/config/config.yaml"
 config := config.New(directory)
 ```
 

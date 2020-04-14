@@ -1,7 +1,8 @@
-package kernel
+package context
 
 import (
 	"github.com/firmeve/firmeve/binding"
+	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/render"
 	"time"
@@ -44,7 +45,7 @@ func (c *context) Error(status int, err error) {
 	if v, ok := err.(contract.ErrorRender); ok {
 		newErr = v
 	} else {
-		newErr = ErrorWarp(err)
+		newErr = kernel.ErrorWarp(err)
 	}
 
 	if err2 := newErr.Render(status, c); err2 != nil {
@@ -99,6 +100,14 @@ func (c *context) Get(key string) interface{} {
 
 func (c *context) Bind(v interface{}) error {
 	return binding.Bind(c.protocol, v)
+}
+
+func (c *context) BindValidate(v interface{}) error {
+	if err := binding.Bind(c.protocol, v); err != nil {
+		return err
+	}
+
+	return c.Resolve(`validator`).(contract.Validator).Validate(v)
 }
 
 func (c *context) BindWith(b contract.Binding, v interface{}) error {

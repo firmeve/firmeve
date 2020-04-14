@@ -16,6 +16,7 @@ type (
 		message        []byte
 		params         []httprouter.Param
 		route          contract.HttpRoute
+		session        contract.Session
 	}
 )
 
@@ -29,6 +30,7 @@ func NewHttp(request *http.Request, responseWriter http.ResponseWriter) contract
 		responseWriter: responseWriter,
 		params:         make([]httprouter.Param, 0),
 		route:          nil,
+		session:        nil,
 	}
 }
 
@@ -57,6 +59,18 @@ func (h *Http) Message() ([]byte, error) {
 
 func (h *Http) Request() *http.Request {
 	return h.request
+}
+
+func (h *Http) SetSession(session contract.Session) {
+	h.session = session
+}
+
+func (h *Http) Session() contract.Session {
+	return h.session
+}
+
+func (h *Http) SessionValue(key string) interface{} {
+	return h.session.Get(key)
 }
 
 func (h *Http) ResponseWriter() http.ResponseWriter {

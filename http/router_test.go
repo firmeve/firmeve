@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-var configPath = "../testdata/config"
+var configPath = "../testdata/config/config.yaml"
 
 type MockResponseWriter struct {
 	mock.Mock

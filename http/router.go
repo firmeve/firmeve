@@ -1,7 +1,7 @@
 package http
 
 import (
-	"github.com/firmeve/firmeve/kernel"
+	"github.com/firmeve/firmeve/context"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
@@ -56,7 +56,7 @@ func (r *Router) Static(path string, root string) contract.HttpRouter {
 
 func (r *Router) NotFound(handler contract.ContextHandler) contract.HttpRouter {
 	r.router.NotFound = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		kernel.NewContext(r.Firmeve, NewHttp(req, w), handler).Next()
+		context.NewContext(r.Firmeve, NewHttp(req, w), handler).Next()
 	})
 
 	return r
@@ -87,7 +87,7 @@ func (r *Router) createRoute(method string, path string, handler contract.Contex
 		currentHttp.SetParams(params)
 		currentHttp.SetRoute(r.routes[key])
 
-		ctx := kernel.NewContext(r.Firmeve, currentHttp, r.routes[key].Handlers()...)
+		ctx := context.NewContext(r.Firmeve, currentHttp, r.routes[key].Handlers()...)
 
 		r.Firmeve.Get(`event`).(contract.Event).Dispatch(`router.match`, map[string]interface{}{
 			`context`: ctx,

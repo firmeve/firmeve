@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	defaultConfigPath2 = `../testdata/config`
+	defaultConfigPath2 = `../testdata/config/config.yaml`
 )
 
 type command struct {
