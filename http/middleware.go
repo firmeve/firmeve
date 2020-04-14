@@ -1,7 +1,9 @@
 package http
 
 import (
+	"errors"
 	"fmt"
+	jwt2 "github.com/firmeve/firmeve/jwt"
 	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/support/strings"
@@ -64,4 +66,35 @@ func Session(ctx contract.Context) {
 	)
 
 	ctx.Next()
+}
+
+func Auth(ctx contract.Context) {
+	httpProtocol := ctx.Protocol().(contract.HttpProtocol)
+	token := httpProtocol.Header("Authorization")
+	if token == `` {
+		ctx.Error(http.StatusUnauthorized, errors.New("unauthorized"))
+		return
+	}
+
+	jwt := ctx.Resolve(`jwt`).(contract.Jwt)
+
+	// token valid
+	if ok, err := jwt.Valid(token); !ok {
+		if errors.Is(err, jwt2.ErrorExpired) {
+			tokenData, _ := jwt.Refresh(token)
+			token = tokenData.Token
+		} else {
+			ctx.Error(http.StatusUnauthorized, err)
+			return
+		}
+	}
+
+	// token parse
+	parse, _ := jwt.Parse(token)
+	ctx.AddEntity(`uid`, parse.Audience)
+
+	ctx.Next()
+
+	// response
+	httpProtocol.ResponseWriter().Header().Set("Authorization", token)
 }

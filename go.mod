@@ -3,6 +3,7 @@ module github.com/firmeve/firmeve
 go 1.13
 
 require (
+	github.com/dgrijalva/jwt-go v3.2.0+incompatible
 	github.com/fatih/color v1.9.0
 	github.com/go-playground/form/v4 v4.1.1
 	github.com/go-playground/locales v0.13.0

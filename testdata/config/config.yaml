@@ -5,7 +5,7 @@ database:
   default: mysql
   connections:
     mysql:
-      addr: "root:root@(127.0.0.1)/default?charset=utf8mb4&parseTime=True&loc=Local"
+      addr: "root:@(127.0.0.1)/default?charset=utf8mb4&parseTime=True&loc=Local"
     pool:
       max_idle: 100
       max_connection: 50
@@ -58,3 +58,7 @@ http:
     domain: ""
     lifetime: 86400
   cookie:
+
+jwt:
+  issuer: "firmeve"
+  lifetime: 86400
