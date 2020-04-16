@@ -5,28 +5,37 @@ import (
 	"github.com/firmeve/firmeve/kernel/contract"
 )
 
-type validateError struct {
-	message string
-	errors  map[string]string
-}
+type (
+	validateError struct {
+		message string
+		errors  []*MessageStruct
+	}
 
-func Error(message string, errors map[string]string) *validateError {
+	MessageStruct struct {
+		Key       string `json:"key"`
+		Message   string `json:"message"`
+		Namespace string `json:"namespace"`
+	}
+)
+
+func Error(message string, errors []*MessageStruct) *validateError {
 	return &validateError{
 		message: message,
 		errors:  errors,
 	}
 }
 
-func (v *validateError) Errors() map[string]string {
+func (v *validateError) Errors() []*MessageStruct {
 	return v.errors
 }
 
 func (v *validateError) Error() string {
 	var firstMessage string
-	for key, msg := range v.errors {
-		firstMessage = fmt.Sprintf("%s:%s", key, msg)
+	for _, msg := range v.errors {
+		firstMessage = msg.Message
 		break
 	}
+
 	return fmt.Sprintf("%s: %s", v.message, firstMessage)
 }
 

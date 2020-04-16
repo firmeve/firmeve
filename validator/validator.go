@@ -40,10 +40,14 @@ func (v *Validator) RegisterTranslationValidation(tag string, validationFunc val
 
 func (v *Validator) Validate(val interface{}) error {
 	err := v.validate.Struct(val)
-	var errors = make(map[string]string, 0)
+	var errors = make([]*MessageStruct, 0)
 	if e, ok := err.(validator2.ValidationErrors); ok {
 		for _, ve := range e {
-			errors[ve.Field()] = ve.Translate(v.trans)
+			errors = append(errors, &MessageStruct{
+				Key:       ve.StructField(),
+				Message:   ve.Translate(v.trans),
+				Namespace: ve.StructNamespace(),
+			})
 		}
 	}
 

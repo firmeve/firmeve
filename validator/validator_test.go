@@ -41,7 +41,7 @@ func TestValidator_RegisterValidation(t *testing.T) {
 type User struct {
 	FirstName      string     `validate:"required"`
 	LastName       string     `validate:"required"`
-	Age            uint8      `validate:"gte=0,lte=130" alias:"中文"`
+	Age            uint8      `validate:"gte=0,lte=130" alias:"中文" json:"age"`
 	Email          string     `validate:"required,email"`
 	FavouriteColor string     `validate:"iscolor"`                // alias for 'hexcolor|rgb|rgba|hsl|hsla'
 	Addresses      []*Address `validate:"required,dive,required"` // a person can have a home and cottage...
@@ -59,7 +59,6 @@ func TestValidator_Validate(t *testing.T) {
 	app := app()
 
 	validator2 := app.Resolve(`validator`).(contract.Validator)
-	//trans := app.Resolve(`validator.trans`).(ut.Translator)
 
 	address := &Address{
 		Street: "Eavesdown Docks",
@@ -78,5 +77,5 @@ func TestValidator_Validate(t *testing.T) {
 
 	err := validator2.Validate(user)
 	assert.NotNil(t, err)
-	fmt.Printf("%v", err)
+	fmt.Printf("%v", err.(*validateError).errors)
 }
