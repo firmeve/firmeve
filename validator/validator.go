@@ -15,14 +15,11 @@ func New(validate *validator2.Validate, trans ut.Translator) *Validator {
 	validate.RegisterTagNameFunc(func(field reflect.StructField) string {
 		return field.Tag.Get(`alias`)
 	})
-	//translations.RegisterDefaultTranslations(validate, trans)
 
-	validator := &Validator{
+	return &Validator{
 		validate: validate,
 		trans:    trans,
 	}
-
-	return validator
 }
 
 func (v *Validator) RegisterTranslation(tag string, registerFn validator2.RegisterTranslationsFunc, translationFn validator2.TranslationFunc) error {
@@ -42,5 +39,13 @@ func (v *Validator) RegisterTranslationValidation(tag string, validationFunc val
 }
 
 func (v *Validator) Validate(val interface{}) error {
-	return v.validate.Struct(val)
+	err := v.validate.Struct(val)
+	var errors = make(map[string]string, 0)
+	if e, ok := err.(validator2.ValidationErrors); ok {
+		for _, ve := range e {
+			errors[ve.Field()] = ve.Translate(v.trans)
+		}
+	}
+
+	return Error("validation error", errors)
 }
