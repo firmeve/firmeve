@@ -52,20 +52,3 @@ func TestErrorDispatcher(t *testing.T) {
 	results := dispatch.Dispatch("b", map[string]interface{}{`p1`: 1, `p2`: 2})
 	assert.Equal(t, 1, len(results))
 }
-
-//func TestNamePanic(t *testing.T) {
-//	assert.Panics(t, func() {
-//		dispatch := New()
-//		dispatch.Dispatch("c", listenBOne)
-//	}, `the event not exists`)
-//}
-//
-//func TestProvider_Register(t *testing.T) {
-//	firmeve := testing2.TestingModeFirmeve()
-//	//firmeve.Register(new(Provider),true)
-//	//assert.Equal(t, true, firmeve.HasProvider("event"))
-//	//assert.Equal(t, true, firmeve.Has(`event`))
-//	//
-//	//provider := firmeve.Resolve(new(Provider)).(*Provider)
-//	//assert.Equal(t, firmeve, provider.Firmeve)
-//}

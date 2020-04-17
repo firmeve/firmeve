@@ -7,6 +7,7 @@ import (
 	"github.com/firmeve/firmeve/testing"
 	"github.com/stretchr/testify/assert"
 	testing2 "testing"
+	"time"
 )
 
 func newJwt() contract.Jwt {
@@ -33,4 +34,33 @@ func TestJwt_Create(t *testing2.T) {
 	assert.NotNil(t, err)
 	assert.Equal(t, false, valid)
 	fmt.Println(newV)
+}
+
+func TestJwt_Parse_Error(t *testing2.T) {
+	jwt := newJwt()
+	v, _ := jwt.Create(newAudience("1"))
+	_, err := jwt.Parse(v.Token + "!")
+	assert.NotNil(t, err)
+	//
+	b, err := jwt.Valid(v.Token + "!")
+	assert.NotNil(t, err)
+	assert.Equal(t, false, b)
+	//
+	err = jwt.Invalidate(v.Token + "!")
+	assert.Nil(t, err)
+}
+
+func TestJwt_Parse_Valid_Expired(t *testing2.T) {
+	app := testing.TestingModeFirmeve()
+	frameConfig := app.Resolve(`config`).(*config2.Config).Item("framework")
+	jwtConfig := app.Resolve(`config`).(*config2.Config).Item("jwt")
+	jwtConfig.Set("lifetime", 1)
+	jwt := New(frameConfig.GetString("key"), jwtConfig, NewMemoryStore())
+
+	v, _ := jwt.Create(newAudience("2"))
+
+	time.Sleep(time.Second * 3)
+	b, err := jwt.Valid(v.Token)
+	assert.Equal(t, false, b)
+	assert.Equal(t, ErrorExpired, err)
 }
