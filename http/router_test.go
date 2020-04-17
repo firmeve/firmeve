@@ -22,6 +22,12 @@ type MockResponseWriter struct {
 	Headers    http.Header
 }
 
+func (m *MockResponseWriter) DoSomething(number int) (bool, error) {
+
+	args := m.Called(number)
+	return args.Bool(0), args.Error(1)
+
+}
 func (m *MockResponseWriter) Header() http.Header {
 	return m.Headers
 }
@@ -34,6 +40,22 @@ func (m *MockResponseWriter) Write(p []byte) (int, error) {
 func (m *MockResponseWriter) WriteHeader(statusCode int) {
 	m.StatusCode = statusCode
 }
+
+//func TestSomethingElse(t *testing.T) {
+//
+//	// create an instance of our test object
+//	testObj := new(MockResponseWriter)
+//
+//	// setup expectations with a placeholder in the argument list
+//	testObj.On("DoSomething", mock.Anything).Return(true, nil)
+//
+//	// call the code we are testing
+//	targetFuncThatDoesSomethingWithObj(testObj)
+//
+//	// assert that the expectations were met
+//	testObj.AssertExpectations(t)
+//
+//}
 
 func assertBaseRoute(t *testing.T, router *Router, method, path, name string, beforeHandlerLen int, afterHandlerLen int) {
 	key := router.routeKey(method, path)

@@ -22,7 +22,7 @@ type (
 )
 
 var (
-	ErrorExpired = errors.New("token parse error")
+	ErrorExpired = errors.New("token expired")
 )
 
 func New(secret string, config contract.Configuration, store contract.JwtStore) contract.Jwt {
@@ -64,29 +64,20 @@ func (j *Jwt) Create(aud contract.JwtAudience) (*contract.Token, error) {
 	}, err
 }
 
+// Just parse without any valid verification
 func (j *Jwt) Parse(token string) (*jwt.StandardClaims, error) {
 	claims := new(jwt.StandardClaims)
 	token2, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
 		return []byte(j.secret), nil
 	})
-	if err != nil {
-		return nil, err
-	}
 
-	if claims2, ok := token2.Claims.(*jwt.StandardClaims); ok && token2.Valid {
-		return claims2, nil
-	} else {
-		return nil, ErrorExpired
-	}
+	return token2.Claims.(*jwt.StandardClaims), err
 }
 
 func (j *Jwt) Invalidate(token string) error {
-	claims, err := j.Parse(token)
-	if err != nil {
-		return err
-	}
+	claims, _ := j.Parse(token)
 
-	err = j.store.Forget(newAudience(claims.Audience))
+	err := j.store.Forget(newAudience(claims.Audience))
 	if err != nil {
 		return err
 	}
@@ -98,11 +89,11 @@ func (j *Jwt) Valid(token string) (bool, error) {
 	claims, err := j.Parse(token)
 
 	if err != nil {
+		// 过期单独处理
+		if e, ok := err.(*jwt.ValidationError); ok && e.Errors == jwt.ValidationErrorExpired {
+			return false, ErrorExpired
+		}
 		return false, err
-	}
-
-	if time.Now().Unix() > claims.ExpiresAt {
-		return false, errors.New("token is expired")
 	}
 
 	if j.store.Has(claims.Id) {

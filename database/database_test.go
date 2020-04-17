@@ -1,38 +1,48 @@
 package database
 
 import (
+	"github.com/firmeve/firmeve/kernel/contract"
 	testing2 "github.com/firmeve/firmeve/testing"
 	"testing"
 
 	"github.com/firmeve/firmeve/config"
-	"github.com/firmeve/firmeve/support/path"
 	"github.com/stretchr/testify/assert"
 )
 
 var (
-	configPath = "../testdata/config/config.yaml"
+	app contract.Application
 )
 
-func TestNew(t *testing.T) {
-	db := New(config.New(path.RunRelative(configPath)).Item(`database`))
-	assert.NotPanics(t, func() {
-		db.ConnectionDefault()
-		db.CloseDefault()
-	})
-	assert.Equal(t, db.ConnectionDefault(), db.ConnectionDefault())
+func TestMain(m *testing.M) {
+	//set up
+	app = testing2.TestingMode()
+	app.Register(new(Provider), true)
+
+	// testing
+	m.Run()
+
+	//teardown
 }
 
+//func TestNew(t *testing.T) {
+//	db := New(config.New(path.RunRelative(configPath)).Item(`database`))
+//	assert.NotPanics(t, func() {
+//		db.ConnectionDefault()
+//		db.CloseDefault()
+//	})
+//	assert.Equal(t, db.ConnectionDefault(), db.ConnectionDefault())
+//}
+
 func TestNew_Connection_Error(t *testing.T) {
-	config := config.New(path.RunRelative(configPath)).Item(`database`)
-	config.Set("error_connection.addr", "nothing")
-	db := New(config)
+	//config := config.New(path.RunRelative(configPath)).Item(`database`)
+	app.Resolve(`config`).(*config.Config).Item(`database`).Set("error_connection.addr", "nothing")
 	assert.Panics(t, func() {
-		db.Connection(`error_connection`)
+		app.Resolve(`db`).(*DB).Connection(`error_connection`)
 	})
 }
 
 func TestNew_Close_Error(t *testing.T) {
-	db := New(config.New(path.RunRelative(configPath)).Item(`database`))
+	db := app.Resolve(`db`).(*DB)
 	assert.NotPanics(t, func() {
 		db.ConnectionDefault()
 		db.CloseDefault()
@@ -41,7 +51,7 @@ func TestNew_Close_Error(t *testing.T) {
 }
 
 func TestDB_Provider(t *testing.T) {
-	firmeve := testing2.TestingModeFirmeve()
+	firmeve := testing2.TestingMode()
 	firmeve.Register(new(Provider), true)
 
 	firmeve.Boot()
