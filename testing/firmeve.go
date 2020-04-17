@@ -7,6 +7,14 @@ import (
 	"github.com/firmeve/firmeve/support/path"
 )
 
+var (
+	TestingApplication contract.Application
+)
+
+func init() {
+	TestingApplication = TestingMode()
+}
+
 func TestingModeFirmeve() contract.Application {
 	return application("../testdata/config/config.testing.yaml")
 }

@@ -1,16 +1,17 @@
 package logging
 
 import (
-	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/kernel/contract"
-	"github.com/firmeve/firmeve/support/path"
+	testing2 "github.com/firmeve/firmeve/testing"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
-var (
-	configPath = "../testdata/config/config.yaml"
-)
+func TestMain(m *testing.M) {
+	testing2.TestingApplication.Register(new(Provider), true)
+
+	m.Run()
+}
 
 func TestDefault(t *testing.T) {
 	logger := Default()
@@ -23,7 +24,7 @@ func TestDefault(t *testing.T) {
 }
 
 func Default() contract.Loggable {
-	return New(config.New(path.RunRelative(configPath)).Item(`logging`))
+	return testing2.TestingApplication.Resolve(`logging`).(contract.Loggable)
 }
 
 func TestLogger_Channel(t *testing.T) {
@@ -31,7 +32,7 @@ func TestLogger_Channel(t *testing.T) {
 }
 
 func TestLogger_Logger_Config(t *testing.T) {
-	logger := New(config.New(path.RunRelative(configPath)).Item(`logging`))
+	logger := Default()
 
 	logger.Debug("Debug")
 	logger.Info("Info")
@@ -43,15 +44,7 @@ func TestLogger_Logger_Config(t *testing.T) {
 }
 
 func TestLogger_File(t *testing.T) {
-	logger := New(config.New(path.RunRelative(configPath)).Item(`logging`))
+	logger := Default()
 
 	logger.Warn("File")
 }
-
-//func TestProvider_Register(t *testing.T) {
-//	firmeve := testing2.TestingModeFirmeve()
-//	firmeve.Register(new(Provider),true)
-//	firmeve.Boot()
-//	assert.Equal(t, true, firmeve.HasProvider("logger"))
-//	assert.Equal(t, true, firmeve.Has(`logger`))
-//}
