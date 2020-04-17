@@ -56,6 +56,12 @@ func (g *Group) Group(prefix string) contract.HttpRouteGroup {
 	return newGroup(g.router).Prefix(strings.Join([]string{g.prefix, prefix}, ``)).After(g.afterHandlers...).Before(g.beforeHandlers...)
 }
 
+func (g *Group) Handler(method, path string, handler http.HandlerFunc) {
+	path = strings.Join([]string{g.prefix, path}, ``)
+
+	g.router.(*Router).Handler(method, path, handler)
+}
+
 func (g *Group) createRoute(method string, path string, handler contract.ContextHandler) contract.HttpRoute {
 	path = strings.Join([]string{g.prefix, path}, ``)
 

@@ -91,6 +91,8 @@ type (
 		OPTIONS(path string, handler ContextHandler) HttpRoute
 
 		Group(prefix string) HttpRouteGroup
+
+		Handler(method, path string, handler http.HandlerFunc)
 	}
 
 	HttpRouter interface {
