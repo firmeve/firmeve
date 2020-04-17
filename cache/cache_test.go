@@ -19,9 +19,10 @@ func TestCache_Implement(t *testing.T) {
 
 //Create a cache manager
 func Default() contract.Cache {
-	app := testing2.TestingModeFirmeve()
+	app := testing2.TestingMode()
 	app.Register(new(redis2.Provider), true)
 	app.Register(new(Provider), true)
+	app.Boot()
 
 	return app.Resolve(`cache`).(contract.Cache)
 }
@@ -300,13 +301,3 @@ func TestRepository_Flush(t *testing.T) {
 		t.Fail()
 	}
 }
-
-//func TestProvider_Register(t *testing.T) {
-//	firmeve := testing2.TestingModeFirmeve()
-//	//firmeve.Bind(`config`, config.New(path.RunRelative("../testdata/config")))
-//	firmeve.Register(new(Provider),true)
-//	firmeve.Boot()
-//
-//	//assert.Equal(t, true, firmeve.HasProvider("cache"))
-//	//assert.Equal(t, true, firmeve.Has(`cache`))
-//}

@@ -25,24 +25,12 @@ func New(current string) contract.Cache {
 	}
 }
 
-func (c *Cache) SetCurrent(driver string) contract.CacheSerializable {
-	var current contract.CacheSerializable
-	var ok bool
-
-	mutex.Lock()
-	defer mutex.Unlock()
-
-	if current, ok = c.repositories[driver]; ok {
-		return current
-	}
-
-	panic(ErrDriverNotFound)
-}
-
 // Get the cache driver of the finger
 func (c *Cache) Driver(driver string) contract.CacheSerializable {
-	var current contract.CacheSerializable
-	var ok bool
+	var (
+		current contract.CacheSerializable
+		ok      bool
+	)
 
 	//mutex.Lock()
 	//defer mutex.Unlock()
