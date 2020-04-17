@@ -105,7 +105,7 @@ func (h *Http) IsAccept(key string) bool {
 }
 
 func (h *Http) IsMethod(key string) bool {
-	return h.request.Method == key
+	return strings.ToUpper(h.request.Method) == strings.ToUpper(key)
 }
 
 func (h *Http) SetCookie(cookie *http.Cookie) {
@@ -178,7 +178,10 @@ func (h *Http) Values() map[string][]string {
 	case contract.HttpMimeForm:
 		return h.request.Form
 	case contract.HttpMimeMultipartForm:
-		h.request.ParseMultipartForm(defaultMaxSize)
+		err := h.request.ParseMultipartForm(defaultMaxSize)
+		if err != nil {
+			panic(err)
+		}
 		return h.request.Form
 	}
 

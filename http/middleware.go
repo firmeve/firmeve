@@ -2,7 +2,6 @@ package http
 
 import (
 	"errors"
-	"fmt"
 	jwt2 "github.com/firmeve/firmeve/jwt"
 	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
@@ -37,9 +36,11 @@ func report(err interface{}, ctx contract.Context) {
 	}
 
 	//@todo 这里有问题，后续优化
-	ctx.Firmeve().Get(`logger`).(contract.Loggable).Error(
+	ctx.Resolve(`logger`).(contract.Loggable).Error(
 		strings.Join(` `, message, "Context: %s", "Error: %#v"),
-		fmt.Sprintf("%#v", ctx),
+		"ctx",
+		ctx,
+		"error",
 		err,
 	)
 }

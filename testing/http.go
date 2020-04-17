@@ -2,12 +2,11 @@ package testing
 
 import (
 	"bytes"
-	"github.com/stretchr/testify/mock"
 	"net/http"
 )
 
 type MockResponseWriter struct {
-	mock.Mock
+	//mock.Mock
 	Bytes      []byte
 	StatusCode int
 	Headers    http.Header
