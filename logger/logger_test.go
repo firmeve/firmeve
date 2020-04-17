@@ -24,7 +24,7 @@ func TestDefault(t *testing.T) {
 }
 
 func Default() contract.Loggable {
-	return testing2.TestingApplication.Resolve(`logging`).(contract.Loggable)
+	return testing2.TestingApplication.Resolve(`logger`).(contract.Loggable)
 }
 
 func TestLogger_Channel(t *testing.T) {
