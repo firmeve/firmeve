@@ -7,6 +7,7 @@ type (
 		Warn(message string, context ...interface{})
 		Error(message string, context ...interface{})
 		Fatal(message string, context ...interface{})
-		Channel(stack string) Loggable
+		Panic(message string, context ...interface{})
+		//Channel(stack string) Loggable
 	}
 )

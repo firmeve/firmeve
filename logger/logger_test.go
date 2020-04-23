@@ -19,6 +19,10 @@ func TestDefault(t *testing.T) {
 	logger.Info("Info")
 	logger.Error("Error")
 	logger.Warn("Warn")
+	assert.Panics(t, func() {
+		logger.Panic("panic")
+	})
+	//assert.Fail(t,"")
 	//
 	//assert.Equal(t, true, true)
 }
@@ -27,9 +31,9 @@ func Default() contract.Loggable {
 	return testing2.TestingApplication.Resolve(`logger`).(contract.Loggable)
 }
 
-func TestLogger_Channel(t *testing.T) {
-	Default().Channel(`file`).Debug("Debug")
-}
+//func TestLogger_Channel(t *testing.T) {
+//	Default().Channel(`file`).Debug("Debug")
+//}
 
 func TestLogger_Logger_Config(t *testing.T) {
 	logger := Default()
