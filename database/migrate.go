@@ -7,6 +7,7 @@ import (
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/support/path"
 	"github.com/firmeve/firmeve/support/slices"
+	"github.com/firmeve/firmeve/support/strings"
 	"github.com/golang-migrate/migrate"
 	_ "github.com/golang-migrate/migrate/database/mysql"
 	_ "github.com/golang-migrate/migrate/source/file"
@@ -23,19 +24,39 @@ type (
 	}
 )
 
+var (
+	actions = []string{
+		`create`, `up`, `down`, `step`, `rollback`, `force`, `version`, //`drop`,
+	}
+)
+
 func (m *MigrateCommand) CobraCmd() *cobra.Command {
 	command := new(cobra.Command)
 	command.Use = "migrate"
+	command.Long = `Usage: migrate OPTIONS COMMAND [arg...]
+       migrate [ -version | -help ]
+Options:
+  -driver       Run migrations against this driver (driver://url)
+  -path         Shorthand for -path=path (Only create command)
+Commands:
+  create        NAME Create a set of timestamped up/down migrations titled NAME
+  step N        Migrate to version V
+  rollback N    Migrate rollback to version V
+  up            Apply all up migrations
+  down          Apply all down migrations
+  drop          Drop everything inside database
+  force V       Set version V but don't run migration (ignores dirty state)
+  version       Print current migration version
+`
 	command.Short = "Migrate files"
 	command.Args = func(cmd *cobra.Command, args []string) error {
-		if !slices.InString([]string{
-			`create`, `up`, `down`, `step`, `rollback`,
-		}, args[0]) {
-			return errors.New("the first parameter must be [create|up|down|step|rollback] range")
+		if !slices.InString(actions, args[0]) {
+			return errors.New("the first parameter must be [" + strings.Join(`|`, actions...) + "] range")
 		}
 
 		return nil
 	}
+
 	command.Flags().StringP("driver", "D", "mysql", "migration driver example: mysql")
 	command.Flags().StringP("path", "", "", "migration file create path")
 
@@ -94,7 +115,9 @@ func (m *MigrateCommand) Run(root contract.BaseCommand, cmd *cobra.Command, args
 		if err != nil {
 			logger.Error("migration connection error", "error", err)
 		}
-
+		/*else if action == `drop` {
+			err = m2.Drop()
+		}*/
 		if action == `up` {
 			err = m2.Up()
 		} else if action == `down` {
@@ -102,9 +125,17 @@ func (m *MigrateCommand) Run(root contract.BaseCommand, cmd *cobra.Command, args
 		} else if action == `step` {
 			step, _ := strconv.Atoi(args[1])
 			err = m2.Steps(step)
-		} else { // rollback
+		} else if action == `rollback` { // rollback
 			step, _ := strconv.Atoi(args[1])
 			err = m2.Steps(-step)
+		} else if action == `force` {
+			version, _ := strconv.Atoi(args[1])
+			err = m2.Force(version)
+		} else { //version
+			var version uint
+			version, _, err = m2.Version()
+			greenColor := color.New(color.FgRed)
+			greenColor.Printf("current version %d\n", version)
 		}
 		if err != nil {
 			logger.Error("migration error", "error", err)
