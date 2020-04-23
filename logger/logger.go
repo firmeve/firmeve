@@ -3,21 +3,21 @@ package logging
 import (
 	"fmt"
 	"github.com/firmeve/firmeve/kernel/contract"
-	"io"
-	"os"
-	"strings"
-	"sync"
-
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
+	"io"
+	"os"
+	"strings"
+	"time"
 )
 
 type (
 	logger struct {
-		channels channels
-		config   contract.Configuration
-		current  string
+		channels       channels
+		config         contract.Configuration
+		current        string
+		currentChannel internalLogger
 	}
 
 	Level string
@@ -35,117 +35,95 @@ const (
 	Warn        = `warn`
 	Error       = `error`
 	Fatal       = `fatal`
+	Panic       = `panic`
 )
 
 var (
-	mu       sync.Mutex
 	levelMap = map[Level]zapcore.Level{
 		Debug: zapcore.DebugLevel,
 		Info:  zapcore.InfoLevel,
 		Warn:  zapcore.WarnLevel,
 		Error: zapcore.ErrorLevel,
 		Fatal: zapcore.FatalLevel,
+		Panic: zapcore.PanicLevel,
 	}
 	channelMap = map[string]func(config contract.Configuration) io.Writer{
 		`file`:    newFileChannel,
 		`console`: newConsoleChannel,
 	}
 	consoleZapEncoder = zapcore.NewConsoleEncoder(zapcore.EncoderConfig{
-		TimeKey:        "time",
-		LevelKey:       "level",
-		NameKey:        "logger",
-		CallerKey:      "caller",
-		MessageKey:     "message",
-		StacktraceKey:  "stacktrace",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.CapitalColorLevelEncoder,
-		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		TimeKey:       "time",
+		LevelKey:      "level",
+		NameKey:       "logger",
+		CallerKey:     "caller",
+		MessageKey:    "message",
+		StacktraceKey: "stacktrace",
+		LineEnding:    zapcore.DefaultLineEnding,
+		EncodeLevel:   zapcore.CapitalColorLevelEncoder,
+		EncodeTime: func(time time.Time, encoder zapcore.PrimitiveArrayEncoder) {
+			encoder.AppendString(time.Format("2006-01-02 15:04:05"))
+		},
 		EncodeDuration: zapcore.StringDurationEncoder,
 		EncodeCaller:   zapcore.FullCallerEncoder,
 	})
 	fileZapEncoder = zapcore.NewJSONEncoder(zapcore.EncoderConfig{
-		TimeKey:        "time",
-		LevelKey:       "level",
-		NameKey:        "logger",
-		CallerKey:      "caller",
-		MessageKey:     "message",
-		StacktraceKey:  "stacktrace",
-		LineEnding:     zapcore.DefaultLineEnding,
-		EncodeLevel:    zapcore.CapitalLevelEncoder,
-		EncodeTime:     zapcore.ISO8601TimeEncoder,
+		TimeKey:       "time",
+		LevelKey:      "level",
+		NameKey:       "logger",
+		CallerKey:     "caller",
+		MessageKey:    "message",
+		StacktraceKey: "stacktrace",
+		LineEnding:    zapcore.DefaultLineEnding,
+		EncodeLevel:   zapcore.CapitalLevelEncoder,
+		EncodeTime: func(time time.Time, encoder zapcore.PrimitiveArrayEncoder) {
+			encoder.AppendString(time.Format("2006-01-02 15:04:05"))
+		},
 		EncodeDuration: zapcore.StringDurationEncoder,
 		EncodeCaller:   zapcore.FullCallerEncoder,
 	})
 )
 
 func New(config contract.Configuration) contract.Loggable {
+	var (
+		channels = allChannels(config)
+		current  = config.GetString(`default`)
+	)
 	return &logger{
-		config:   config,
-		current:  config.GetString(`default`),
-		channels: make(channels, 0),
+		config:         config,
+		current:        current,
+		channels:       channels,
+		currentChannel: channels[current],
 	}
 }
 
 func (l *logger) Debug(message string, context ...interface{}) {
-	l.channel(l.current).Debugw(message, context...)
+	l.currentChannel.Debugw(message, context...)
 }
 
 func (l *logger) Info(message string, context ...interface{}) {
-	l.channel(l.current).Infow(message, context...)
+	l.currentChannel.Infow(message, context...)
 }
 
 func (l *logger) Warn(message string, context ...interface{}) {
-	l.channel(l.current).Warnw(message, context...)
+	l.currentChannel.Warnw(message, context...)
 }
 
 func (l *logger) Error(message string, context ...interface{}) {
-	l.channel(l.current).Errorw(message, context...)
+	l.currentChannel.Errorw(message, context...)
 }
 
 func (l *logger) Fatal(message string, context ...interface{}) {
-	l.channel(l.current).Fatalw(message, context...)
+	l.currentChannel.Fatalw(message, context...)
 }
 
-// Return a new Logger instance
-// But still using internal channels
-func (l *logger) Channel(stack string) contract.Loggable {
-	return &logger{
-		config:   l.config,
-		channels: l.channels,
-		current:  stack,
-	}
-}
-
-// Get designated channel
-func (l *logger) channel(stack string) internalLogger {
-	if channel, ok := l.channels[stack]; ok {
-		return channel
-	}
-
-	mu.Lock()
-	defer mu.Unlock()
-
-	l.channels[stack] = factory(stack, l.config)
-	return l.channels[stack]
+func (l *logger) Panic(message string, context ...interface{}) {
+	l.currentChannel.Panicw(message, context...)
 }
 
 // ---------------------------------------------- func --------------------------------------------------
 
 // Default internal logger
 func zapLogger(config contract.Configuration, writers writers) internalLogger {
-	//zapcore.EncoderConfig{
-	//	TimeKey:        "time",
-	//	LevelKey:       "level",
-	//	NameKey:        "logger",
-	//	CallerKey:      "caller",
-	//	MessageKey:     "message",
-	//	StacktraceKey:  "stacktrace",
-	//	LineEnding:     zapcore.DefaultLineEnding,
-	//	EncodeLevel:    zapcore.LowercaseLevelEncoder,
-	//	EncodeTime:     zapcore.ISO8601TimeEncoder,
-	//	EncodeDuration: zapcore.StringDurationEncoder,
-	//	EncodeCaller:   zapcore.FullCallerEncoder,
-	//}
 	cores := make([]zapcore.Core, 0)
 	var zapEncoder zapcore.Encoder
 	for stack, write := range writers {
@@ -167,7 +145,7 @@ func zapLogger(config contract.Configuration, writers writers) internalLogger {
 	}
 
 	return zap.New(
-		zapcore.NewTee(cores...), zap.AddCallerSkip(2), zap.AddStacktrace(zap.DebugLevel),
+		zapcore.NewTee(cores...), zap.AddCallerSkip(3), zap.AddStacktrace(levelMap[Level(config.GetString(`stack_level`))]),
 	).Sugar()
 }
 
@@ -186,6 +164,17 @@ func factory(stack string, config contract.Configuration) internalLogger {
 	}
 
 	return zapLogger(config, channels)
+}
+
+func allChannels(config contract.Configuration) channels {
+	stacks := config.Get(`channels`).(map[string]interface{})
+	channels := make(channels, 3)
+
+	for key := range stacks {
+		channels[key] = factory(key, config)
+	}
+
+	return channels
 }
 
 // New file channel
