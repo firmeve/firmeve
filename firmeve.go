@@ -59,9 +59,7 @@ func Run(options ...support.Option) (contract.Application, contract.BaseCommand)
 
 	command := kernel.NewCommand(option.providers, option.commands...)
 
-	if err := command.Run(); err != nil {
-		panic(err)
-	}
+	command.Run()
 
 	return command.Application(), command
 }
