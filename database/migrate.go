@@ -110,10 +110,10 @@ func (m *MigrateCommand) Run(root contract.BaseCommand, cmd *cobra.Command, args
 			logger.Error("migration error", "error", err)
 			return
 		}
-
-		greenColor := color.New(color.FgGreen)
-		greenColor.Println(action + " migration successfully")
 	}
+
+	greenColor := color.New(color.FgGreen)
+	greenColor.Println(action + " migration successfully")
 }
 
 func (m *MigrateCommand) targetDir(currentPath, defaultPath string) (string, error) {
