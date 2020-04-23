@@ -39,7 +39,7 @@ Options:
   -driver       Run migrations against this driver (driver://url)
   -path         Shorthand for -path=path (Only create command)
 Commands:
-  create        NAME Create a set of timestamped up/down migrations titled NAME
+  create NAME   Create a set of timestamped up/down migrations titled NAME
   step N        Migrate to version V
   rollback N    Migrate rollback to version V
   up            Apply all up migrations
