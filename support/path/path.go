@@ -1,6 +1,7 @@
 package path
 
 import (
+	"os"
 	"path"
 	"path/filepath"
 	"runtime"
@@ -31,4 +32,9 @@ func RunDir() string {
 func RunRelative(rpath string) string {
 	rpath, _ = filepath.Abs(filepath.Join(path.Dir(callerStepFile(2)), rpath))
 	return rpath
+}
+
+func Exists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }

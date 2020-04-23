@@ -1,4 +1,4 @@
-package type_extension
+package gorm
 
 import (
 	"database/sql/driver"
@@ -45,4 +45,18 @@ func (s *IntArray) Value() (driver.Value, error) {
 	}
 
 	return json.Marshal(s.Source)
+}
+
+func NewStringArray(source []string) *StringArray {
+	return &StringArray{
+		Source: source,
+		Valid:  true,
+	}
+}
+
+func NewIntArray(source []string) *IntArray {
+	return &IntArray{
+		Source: source,
+		Valid:  true,
+	}
 }

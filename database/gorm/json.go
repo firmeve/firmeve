@@ -1,4 +1,4 @@
-package type_extension
+package gorm
 
 import (
 	"database/sql/driver"
@@ -6,17 +6,17 @@ import (
 )
 
 type (
-	Json struct {
+	JSON struct {
 		Source map[string]interface{}
 		Valid  bool
 	}
 )
 
-func (s *Json) Scan(src interface{}) error {
+func (s *JSON) Scan(src interface{}) error {
 	return json.Unmarshal(src.([]byte), &s.Source)
 }
 
-func (s *Json) Value() (driver.Value, error) {
+func (s *JSON) Value() (driver.Value, error) {
 	if s == nil {
 		return nil, nil
 	}
@@ -25,4 +25,11 @@ func (s *Json) Value() (driver.Value, error) {
 	}
 
 	return json.Marshal(s.Source)
+}
+
+func NewJSON(source map[string]interface{}) *JSON {
+	return &JSON{
+		Source: source,
+		Valid:  true,
+	}
 }

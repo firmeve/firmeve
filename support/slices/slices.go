@@ -36,3 +36,13 @@ func UniqueInterface(v interface{}) []interface{} {
 
 	return newUs
 }
+
+func InString(iss []string, v string) bool {
+	for i := range iss {
+		if v == iss[i] {
+			return true
+		}
+	}
+
+	return false
+}
