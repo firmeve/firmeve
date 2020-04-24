@@ -1,177 +1,113 @@
 ## 简介
-Ioc 单实例容器绑定
+
+`Container`是`Firmeve`的基础，一切都是以`Container`为基础实现`ioc`开始。
+
+
 
 ## 基础示例
 
-### 准备数据
-```go
-type (
-    Nesting struct {
-        NId        int
-        NTitle     string
-        NBoolean   bool
-        NArray     [3]int
-        NMapString map[string]string
-        NSlice     []string
-        nprivate   string
-    }
-    
-    Sample struct {
-    	Id        int
-    	Title     string
-    	Boolean   bool
-    	Array     [3]int
-    	MapString map[string]string
-    	Slice     []string
-    	private   string
-    }
-)
+### 新建容器
 
-func Sample() *structs.Sample {
-	return &Sample{
-		Id: 15,
-	}
+```go
+var c = container.New()
+```
+
+
+
+### 数据绑定
+
+```go
+// 单例数据绑定
+foo := new(Foo)
+c.Bind("foo", foo)
+
+// 绑定函数
+var f = func() string {
+  return "rand string"
 }
+c.Bind("f", f)
+
+// 绑定slice
+var s = []string{"a", "b"}
+c.Bind("s", s)
+
+// 强制覆盖已存在的单例
+c.Bind("foo", new(Foo2), WithCover(true))
 ```
 
-以下只是简单`Api`的示例
-[**更多示例请参考此处**](https://github.com/firmeve/firmeve/blob/develop/container/container2_test.go)
+> **注意**
+>
+> 1. 绑定的类型仅支持：array, slice, map, func, prt(struct), struct
+> 2. 只有函数类型是非单例类型，每次调用时会自动执行函数方法来获取结果
+> 3. 更多高级用户请参见 [container_test](https://github.com/firmeve/firmeve/blob/develop/container/container2_test.go)
 
-### 新建一个基础容器
-```go
-// 新建一个容器
-c := container.New()
-```
 
-### 结构体绑定
 
-```go
-c.Bind("nesting", &Nesting{
-    NId: 10,
-})
-```
-
-> 默认非函数型绑定是单例对象
-
-### 函数绑定
+### 数据获取
 
 ```go
-c.Bind("sample", Sample)
-```
+// 判断原有对象是否存在
+if c.Has("Foo") {
+	// 获取一个已存在的对象
+  c.Get("Foo").(*Foo)
+}
 
-> 函数绑定不支持单例
+// 删除一个对象
+c.Remove("Foo")
 
-### 自动解析
-
-```go
-fmt.Printf("%#v\n", c.Make("sample"))
-```
-
-> 注意：暂时不支持...params动态扩展参数函数解析
-
-### 强制已绑定值覆盖
-
-我们通过`WithCover(true)`方法可以轻松设定覆盖参数
-
-```go
-c.Bind("nesting", &Nesting{
-    NId: 10,
-})
-
-c.Bind("nesting", &Nesting{
-    NId: 11,
-}, WithCover(true))
-```
-
-## 对象获取
-
-### 验证对象是否存在
-
-在不确定容器中是否包含此对象时，请使用`Has`方法进行判断
-
-```go
-c.Has(`foo`)
-```
-### 对象获取
-
-直接获取容器中的值
-```go
-c.Get(`foo`)
-
-// 或
-c.Make(`foo`)
-```
-> 注意：`Get`只能获取已存在的对象，如果需要自动解析新对象请使用`Make`方法
-
-### 对象删除
-```go
-// 清除指定对象
-c.Remove(`foo`)
-
-// 全部清除
+// 清除容器所有对象
 c.Flush()
 ```
 
-## 自动解析
 
-通过`Make`方法可以轻松完成自动解析，目前解析对象包括
+
+### 实例解析
+
+通过`Make`方法可以轻松完成自动解析，目前解析对象包括：
 - 容器中已存在对象
 - 结构体
 - 函数
 
-### 函数自动解析
-
-函数解析中，如果遇到的参数类型已存在于容器中，并且参数未提供，则会自动注入容器中的参数。
-如果存在，则会使用提供的函数参数，标量类型的参数则必须提供
-
-让我们来看一个简单的示例
-
 ```go
-//Sample函数如上
-fmt.Printf("%#v\n", c.Make(Sample))
+// 解析容器中已存在的对象，同Get()
+c.Make("Foo")
 
+// 解析结构体
+type Person struct {
+   Bar *Bar `inject:"bar"`
+   Foo *Foo `inject:"foo"`
+}
+c.Make(new(Person))
+
+// 解析函数
+
+// 普通标量函数
 func NormalSample(id int, str string) (int, string) {
-	return id, str
+   return id, str
 }
-
-fmt.Printf("%#v\n", NormalSample, 10, `foo`)
-
-func StructFunc(ptr *Sample, nesting structs.Nesting) int {
-	return ptr.Id + nesting.NId
-}
-
-fmt.Printf("%#v\n", StructFunc)
+fmt.Printf("%v", c.Make(NormalSample, 10, `foo`))
 
 // 支持多级函数嵌套
+// 假设 *Nesting *Sample 已存在于容器中
 func StructFuncFunc(id int, nesting *Nesting, fn func(nesting *Nesting) int, prt *Sample) int {
-	return id + fn(nesting) + prt.Id
+   return id + fn(nesting) + prt.Id
 }
-fmt.Printf("%#v\n", StructFuncFunc, 10)
 
-// 更复杂的解析
-func MultipleParamSample(ptr *Sample, nestingPtr *Nesting, nesting structs.Nesting, notPtr structs.Sample) (*Sample, *Nesting, Nesting, Sample) {
-	return ptr, nestingPtr, nesting, notPtr
-}
-fmt.Printf("%#v\n", MultipleParamSample)
+// 容器会自动解析已存在的 *Nesting *Sample
+// 对于手动定义的参数，必须放在函数前置
+fmt.Printf("%v", c.Make(StructFuncFunc, 10))
 ```
 
-> 带有动态参数...params的函数暂时无法解析
+> 注意：
+>
+> - 如果解析注入的对象不是指针类型则会自动忽略，不会自动赋值。
+> - 带有动态参数`...params`的函数暂时无法解析
 
-### 结构体tag自动解析
 
-tag解析的对象，必须容器中已存在，并且是指针类型，普通结构体无法设置，会自动忽略。
 
-```go
+## 单独使用
 
-c.Bind(`foo`, FooStruct{})
-c.Bind(`bar`, FooStruct{})
-
-type Person struct {
-	Foo1 PersonName `inject:"foo"`
-	Bar *Bar `inject:"bar"`
-	Foo *Foo `inject:"foo"`
-}
-
-fmt.Printf("%#v", c.Make(new(NewPerson)))
+```bash
+go get -u github.com/firmeve/firmeve/container
 ```
-> 注意：此时 `Person`中的`Foo1`字段并不是指针类型，所以会自动忽略。
+
