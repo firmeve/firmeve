@@ -1,63 +1,87 @@
 ## 简介
-系统日志，所需要配置参见：`testdata/config/logging.yaml`
+日志模块是`Firmeve`框架最基础的模块之一，在默认系统启动时就会自动加载。
+
+`Firmeve`日志是继承于`uber zap`。
+
+`Firmeve`日志目前支持`console`和`file`以及`stack`混合等3种类型。
+
+
+
+## 配置
+
+```yaml
+# 默认日志信道
+default: stack
+channels:
+  stack:
+    - file
+    - console
+  # 文件日志
+	file:
+		# 日志文件路径
+    path: "../../../testdata/logs"
+    # megabytes
+    size:    100
+    # 最大备份天数
+    backup: 3
+    age:     1
+    # 日志级别
+    level: debug
+  
+  # 控制台日志 os.Stdout
+	console:
+		level: debug
+
+# 记录消息栈级别
+stack_level: error
+```
+
+
 
 ## 基础示例
 
-### 获取实例
+### 创建日志实例
+
 ```go
-// Get firmeve container logger
-logger := firmeve.Instance().Get(`logger`)
-// Create a new logger
-logger := logger.New(&Config{
-    Current: `console`,
-    Channels: ConfigChannelType{
-        `stack`: []string{`file`, `console`},
-        `console`: ConfigChannelType{
-            `level`: `debug`,
-        },
-        `file`: ConfigChannelType{
-            `level`:  `debug`,
-            `path`:   "../testdata/logs",
-            `size`:   100,
-            `backup`: 3,
-            `age`:    1,
-        },
-    },
-})
-// Or
-logger := logger.Default()
+loggerConfig := config.(*config2.Config).Item(`logging`)
+var logger = logger.New(loggerConfig)
 ```
+
+> config 请参见config模块配置获取
+
+
 
 ### 基础用法
+
 ```go
-logger.Debug("message")
+// debug
+logger.Debug("Debug info")
 
-logger.Error("message")
+// 附加参数
+// {"level":"DEBUG","time":"2020-04-23 13:17:59","message":"Debug info","error":"something","stacktrace":"...."}
+logger.Debug("Debug info" , "error" , errors.New("something")) 
 
-// 传入附加的参数
-logger.Debug("message", "url", "https://firmeve.com")
+logger.Warn("Warn info")
+
 ```
 
-### 指定日志通道
-```go
-channel := logger.Channel(`console`)
-```
-> 注意：此时的新日志通道并不是原日志记录通道
+
+
+### 日志级别
+
+- debug
+- info
+- warn
+- error
+- fatal
+- panic
+
+
 
 ### 支持的类型
-| 类型 | 说明 |
-| :-----| :---- |
-| console | 直接输出到console的日志 |
-| file | 写入到指定的文件日志 |
-| stack | 多种类型通道合并记录 |
 
-### 错误级别
-- Debug
-- Info
-- Notice
-- Warn
-- Error
-- Fatal
-- ~~Critical~~
-- ~~Alert~~
-- ~~Emergency~~
+| 类型    | 说明                    |
+| :------ | :---------------------- |
+| console | 直接输出到console的日志 |
+| file    | 写入到指定的文件日志    |
+| stack   | 多种类型通道合并记录    |

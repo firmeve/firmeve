@@ -1,33 +1,14 @@
 ## 简介
-`Firmeve` 是一个提供了多基础组件的web框架
 
-## 基础架构
+### `Firmeve`框架的诞生
 
-![base](../images/base.png)
 
-## 生命周期
 
-### Main
-在 Main 中我们需要执行`firmeve.Run`或者`firmeve.RunDefault`函数，并且进行 Provider 和 Command 挂载
+### 为什么要开发这个框架
 
-### RootCommand
-一切都是从RootCommand创建后开始
-RootCommand中会首先启动一个新的应用容器kernel.New()和一个新的Root Command
-并且会注册main中加入的provider和sub command，注册命令时，会自动包装所有子命令的Run方法
-
-### Run包装
-获取RootCommand的运行配置文件，以及运行模式等基础参数，并进行boot启动加载
-
-### Boot
-在Boot方法中，会设置应用运行模式，绑定基础实例，挂载Provider以及启动已存在的Provider
-
-### SubCommand
-最后在各子命令中执行需要运行的最后方法
 
 
 ## 基础示例
-
-在`main.go`中增加此代码
 
 ```go
 package main
@@ -37,6 +18,7 @@ import (
 	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/render"
+	"net/http/pprof"
 )
 
 type App struct {
@@ -61,6 +43,14 @@ func (a *App) Boot() {
 			c.Next()
 		})
 	}
+	debug := router.Group("/debug")
+	{
+		debug.Handler("GET", "/pprof", pprof.Index)
+		debug.Handler("GET", "/cmdline", pprof.Cmdline)
+		debug.Handler("GET", "/profile", pprof.Profile)
+		debug.Handler("GET", "/symbol", pprof.Symbol)
+		debug.Handler("GET", "/trace", pprof.Trace)
+	}
 }
 
 func main() {
@@ -70,8 +60,30 @@ func main() {
 		},
 	))
 }
+
 ```
-运行启动命令
+
+运行`main`
+
 ```bash
-go run main.go http:serve
+go run main.go -c config.yaml http:serve
 ```
+
+
+
+## 基础架构
+
+![base](../images/base.png)
+
+
+
+## 生命周期
+
+todo ....
+
+在 Main 中我们需要执行`firmeve.Run`或者`firmeve.RunDefault`函数，并且进行 Provider 和 Command 挂载
+
+
+
+## 后续开发计划
+
