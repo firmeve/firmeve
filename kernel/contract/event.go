@@ -1,16 +1,14 @@
 package contract
 
 type (
-	EventInParams map[string]interface{}
-
 	EventHandler interface {
-		Handle(params EventInParams) (interface{}, error)
+		Handle(params ...interface{}) (interface{}, error)
 	}
 
 	Event interface {
 		Listen(name string, handler EventHandler)
 		ListenMany(name string, handlers []EventHandler)
-		Dispatch(name string, params EventInParams) []interface{}
+		Dispatch(name string, params ...interface{}) []interface{}
 		Has(name string) bool
 	}
 )

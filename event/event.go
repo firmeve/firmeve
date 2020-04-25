@@ -37,14 +37,14 @@ func (e *event) ListenMany(name string, handlerMany []contract.EventHandler) {
 	}
 }
 
-func (e *event) Dispatch(name string, params contract.EventInParams) []interface{} {
+func (e *event) Dispatch(name string, params ...interface{}) []interface{} {
 	if !e.Has(name) {
 		return nil
 	}
 
 	results := make([]interface{}, 0)
 	for _, listener := range e.listeners[name] {
-		result, err := listener.Handle(params)
+		result, err := listener.Handle(params...)
 		if err != nil {
 			break
 		}
