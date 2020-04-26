@@ -1,42 +1,58 @@
 ## 简介
-`Firmeve` Config
+
+配置模块是Firmeve中基础模块之一，Firmeve的启动必须带上`config`配置，在cli中使用`-c`选项指定`config`路径
+
+
+
+## 配置文件示例
+
+```yaml
+framework:
+  lang: zh-CN
+  key: "!!@#$123^%"
+database:
+  default: mysql
+  connections:
+    mysql:
+      addr: "root:root@(127.0.0.1)/default?charset=utf8mb4&parseTime=True&loc=Local"
+    pool:
+      max_idle: 100
+      max_connection: 50
+      max_lifetime: 60
+  migration:
+    path: "../../../testdata/migrations"
+
+cache:
+  prefix: firmeve_cache
+  default: redis
+  repositories:
+    redis:
+      connection: cache
+```
 
 
 
 ## 基础示例
 
-### 创建一个`Config`
 ```go
-directory := "./testdata/config/config.yaml"
-config := config.New(directory)
-```
+// 创建config
+var c = config.New()
 
-### Config Item
-在`Config`内部每个扫描的文件名（去除后缀名）作为`item`的调用名称，如下
-`Item`是`Configurator Interface`的实现
-```go
-config.Item("app")
-```
-> 注意：目前只支持yaml格式配置文件
+// 调用节点，如上配置示例
+databaseConfig := c.Item("database")
 
-### 值的设置
-```go
-// 设置一个默认值
-config.Item("app").SetDefault("key", "value")
-// 修改或添加一个值
-config.Item("app").Set("key", "value")
-```
+// 基本用法
+databaseConfig.Get("default")
 
-> 虽然提供了修改值的接口，但强烈建议不使用该方法
-> http.Context内不可直接使用Set来修改值，多个goroutine并发会导致不可知问题
-> 如果确实需要修改，请copy一份config副本，并后续使用此副本
-
-### 值的获取
-```go
-config.Item("app").Get("key")
 // 多层级调用
-config.Item("app").Get("key.foo.bar")
+databaseConfig.Get("connections.mysql.addr")
+
+// 判断一个key是否存在
+if databaseConfig.Has("default") {
+  fmt.Println("exists")
+}
 ```
+
 其它可用方法：
 - GetBool()
 - GetString()
@@ -49,22 +65,14 @@ config.Item("app").Get("key.foo.bar")
 - GetTime()
 - GetDuration()
 
-### 判断Key是否存在 
-```go
-config.Item("app").Exists("key")
-```
 
-### 加载一个Item
-```go
-file := "./config/tmp.yaml"
-config.Load(file)
-```
 
 ## 环境变量
 
-使用`Config`环境变量的键会统一转换为大写，**不支持小写**环境变量名
+环境变量的键会统一转换为大写，**不支持小写**环境变量名
 
 ### 环境变量设置
+
 ```go
 // go自动环境变量的设置
 os.Setenv("FOO", "foo")
@@ -72,8 +80,9 @@ os.Setenv("FOO", "foo")
 SetEnv("bar", "bar")
 // 
 os.Setenv("baz","baz")
-``` 
+```
 ### 环境变量读取
+
 ```go
 // 可以读取
 fmt.Println(GetEnv("FOO"))
