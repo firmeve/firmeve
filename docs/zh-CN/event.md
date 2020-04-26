@@ -1,50 +1,35 @@
 ## 简介
-`Firmeve`提供一了个简洁的`Event`事件绑定
+
+事件模块是`Firmeve`的基础核心模块之一，事件模式可以让你的代码轻松解偶，更主要的是事件钩子可以让你轻松控制运行流程。
+
+
 
 ## 基本用法
 
-### 创建事件
-```go
-event := event.New()
-```
-
-### 事件接口
-
-事件的处理需要实现`Handler`接口
+任何事件都必须实现`contract.EventHandler`接口
 
 ```go
-type Handler interface {
-    Handle(params ...interface{}) (interface{}, error)
+type EventHandler interface {
+  Handle(params ...interface{}) (interface{}, error)
 }
-
 ```
 
-### 注册事件
+
+
 ```go
-// 注册单个事件
-event.Listen("foo", Handler)
+// 
+var e = event.New()
+
+// 注册事件
+e.Listen("foo", EventHandler)
 
 // 注册多个事件
-event.ListenMany("foo", []Handler)
+e.ListenMany("foo", []EventHandler)
 
+// 调度事件
+e.Dispatch("foo", "params1", "params2")
 ```
 
-### 触发事件
-```go
-if event.Has("foo") {
-    results := event.Dispatch("foo")
-    fmt.Println(results)	
-}
-```
-
-> 注意：当事件中的函数执行失败后(err != nil)，后续函数将不会执行，但会返回之前执行的全部结果
-
-## 自定义事件接口
-```go
-IDispatcher interface {
-    Listen(name string, df Handler)
-    ListenMany(name string, df handlers)
-    Dispatch(name string, params ...interface{}) []interface{}
-    Has(name string) bool
-}
-```
+> 注意：
+>
+> 当事件中的函数执行失败后(err != nil)，后续函数将不会执行，但会返回之前执行的全部结果

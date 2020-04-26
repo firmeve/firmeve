@@ -1,10 +1,8 @@
 ## 简介
 
-### `Firmeve`框架的诞生
+为什么要开发这个框架？
 
-
-
-### 为什么要开发这个框架
+强如`gin`,`iris`这类web框架，虽然性能非常但是在开发应用过程中我们还是要使用大量的第三方包封装组合使用，所以才有的Firmeve的作用，Firmeve中包装整合了常用的第三方稳定包，并且提供了快速集成规范。同时本身也提供了稳定的框架底层基础，让开发者可以轻松快速上手和集成任何第三方扩展。
 
 
 
@@ -80,8 +78,6 @@ go run main.go -c config.yaml http:serve
 ## 生命周期
 
 todo ....
-
-在 Main 中我们需要执行`firmeve.Run`或者`firmeve.RunDefault`函数，并且进行 Provider 和 Command 挂载
 
 
 
