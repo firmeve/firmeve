@@ -5,44 +5,18 @@ import (
 	jwt2 "github.com/firmeve/firmeve/jwt"
 	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
-	"github.com/firmeve/firmeve/support/strings"
 	"github.com/gorilla/sessions"
 	"net/http"
 )
 
 func Recovery(ctx contract.Context) {
-	defer panicRecovery(ctx)
-	ctx.Next()
-}
-
-func panicRecovery(ctx contract.Context) {
-	if err := recover(); err != nil {
+	var logger = ctx.Resolve(`logger`).(contract.Loggable)
+	defer kernel.RecoverCallback(logger, func(err interface{}, params ...interface{}) {
 		render(err, ctx)
+		ctx.Abort()
+	}, ctx)
 
-		go report(err, ctx.Clone())
-	}
-}
-
-func report(err interface{}, ctx contract.Context) {
-	var (
-		message string
-	)
-	if v, ok := err.(error); ok {
-		message = v.Error()
-	} else if v, ok := err.(string); ok {
-		message = v
-	} else {
-		message = `mixed type`
-	}
-
-	//@todo 这里有问题，后续优化
-	ctx.Resolve(`logger`).(contract.Loggable).Error(
-		strings.Join(` `, message, "Context: %s", "Error: %#v"),
-		"ctx",
-		ctx,
-		"error",
-		err,
-	)
+	ctx.Next()
 }
 
 func render(err interface{}, ctx contract.Context) {
