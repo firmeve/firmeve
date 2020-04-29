@@ -36,6 +36,9 @@ func (c *command) AddCommand(commands ...contract.Command) {
 			// bootstrap
 			c.boot(configPath, devModeBool)
 
+			// panic handler
+			defer Recover(c.Resolve(`logger`).(contract.Loggable))
+
 			v.Run(c, cmd, args)
 		}
 
