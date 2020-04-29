@@ -98,7 +98,7 @@ func (i *Item) resolve() contract.ResourceData {
 	return data
 }
 
-func (i *Item) resolveMap(reflectType reflect.Type, reflectValue reflect.Value) contract.ResourceData {
+func (i *Item) resolveMap() contract.ResourceData {
 	var alias string
 	collection := make(contract.ResourceData, 0)
 	for _, field := range i.resolveFields() {
