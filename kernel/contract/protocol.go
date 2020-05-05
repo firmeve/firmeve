@@ -9,6 +9,8 @@ type (
 		io.Reader
 		io.Writer
 
+		Application() Application
+
 		Name() string
 
 		// Protocol metadata

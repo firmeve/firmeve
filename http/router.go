@@ -56,7 +56,7 @@ func (r *Router) Static(path string, root string) contract.HttpRouter {
 
 func (r *Router) NotFound(handler contract.ContextHandler) contract.HttpRouter {
 	r.router.NotFound = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		context.NewContext(r.Firmeve, NewHttp(req, w), handler).Next()
+		context.NewContext(r.Firmeve, NewHttp(r.Firmeve, req, w), handler).Next()
 	})
 
 	return r
@@ -83,7 +83,7 @@ func (r *Router) createRoute(method string, path string, handler contract.Contex
 	r.routes[key] = newRoute(path, handler)
 
 	r.router.Handle(method, path, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		currentHttp := NewHttp(req, w)
+		currentHttp := NewHttp(r.Firmeve, req, w)
 		currentHttp.SetParams(params)
 		currentHttp.SetRoute(r.routes[key])
 

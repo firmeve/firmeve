@@ -11,6 +11,7 @@ import (
 
 type (
 	Http struct {
+		application    contract.Application
 		request        *http.Request
 		responseWriter http.ResponseWriter
 		message        []byte
@@ -24,8 +25,9 @@ var (
 	defaultMaxSize int64 = 32 << 20
 )
 
-func NewHttp(request *http.Request, responseWriter http.ResponseWriter) contract.HttpProtocol {
+func NewHttp(application contract.Application, request *http.Request, responseWriter http.ResponseWriter) contract.HttpProtocol {
 	return &Http{
+		application:    application,
 		request:        request,
 		responseWriter: responseWriter,
 		params:         make([]httprouter.Param, 0),
@@ -36,6 +38,10 @@ func NewHttp(request *http.Request, responseWriter http.ResponseWriter) contract
 
 func (*Http) Name() string {
 	return `http`
+}
+
+func (h *Http) Application() contract.Application {
+	return h.application
 }
 
 func (h *Http) Read(p []byte) (n int, err error) {
