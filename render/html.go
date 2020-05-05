@@ -2,33 +2,58 @@ package render
 
 import (
 	"fmt"
+	config2 "github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/kernel/contract"
+	template2 "html/template"
+	path2 "path"
+	"strings"
 )
 
 type (
 	html struct {
 	}
+
+	Template struct {
+		Name   string
+		Data   interface{}
+		Append []string //附加模板，多个模板关联，后期测试是否需要
+	}
 )
 
 var (
-	Html = html{}
+	Html     = html{}
+	basePath string
+	suffix   string
 )
 
 func (html) Render(protocol contract.Protocol, status int, v interface{}) error {
 	if p, ok := protocol.(contract.HttpProtocol); ok {
 		p.ResponseWriter().WriteHeader(status)
 		p.SetHeader(`Content-Type`, `text/html`)
+
+		// template parse
+		if tmpl, ok := v.(Template); ok {
+			// Get base views config
+			if basePath == "" || suffix == "" {
+				config := p.Application().Make(`config`).(*config2.Config).Item("view")
+				basePath = config.GetString("path")
+				suffix = config.GetString("suffix")
+			}
+
+			// template name to conver path
+			path := strings.ReplaceAll(tmpl.Name, ".", "/")
+			fullPath := path2.Join(basePath, path+suffix)
+			// @todo mutil files parse
+			t, err := template2.ParseFiles(fullPath)
+			if err != nil {
+				return err
+			}
+			return t.Execute(p.ResponseWriter(), tmpl.Data)
+		}
 	}
 
-	var err error
-
-	_, err = protocol.Write([]byte(fmt.Sprintf("%v", v)))
-	//if bytes, ok := v.([]byte); ok {
-	//	_, err = protocol.Write(bytes)
-	//} else {
-	//	_, err = protocol.Write([]byte(fmt.Sprintf("%v", v)))
-	//}
+	// except tmpl parse
+	_, err := protocol.Write([]byte(fmt.Sprintf("%v", v)))
 
 	return err
-	//return fmt.Errorf("value conversion failed %#v", v)
 }

@@ -64,3 +64,8 @@ http:
 jwt:
   issuer: "firmeve"
   lifetime: 86400
+
+view:
+  #path: "../../../testdata/views"
+  path: "./views"
+  suffix: ".html"

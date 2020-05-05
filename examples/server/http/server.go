@@ -44,6 +44,17 @@ func (a *App) Boot() {
 		debug.Handler("GET", "/symbol", pprof.Symbol)
 		debug.Handler("GET", "/trace", pprof.Trace)
 	}
+	web := router.Group("")
+	{
+		web.GET("/", func(c contract.Context) {
+			c.RenderWith(200, render.Html, render.Template{
+				Name:   "index",
+				Data:   "海河小王子",
+				Append: nil,
+			})
+			c.Next()
+		})
+	}
 }
 
 func main() {
