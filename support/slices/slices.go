@@ -46,3 +46,25 @@ func InString(iss []string, v string) bool {
 
 	return false
 }
+
+func InInt(iss []int, v int) bool {
+	for i := range iss {
+		if v == iss[i] {
+			return true
+		}
+	}
+
+	return false
+}
+
+func InInterface(iss interface{}, v interface{}) bool {
+	us := reflect.SliceInterface(reflect2.ValueOf(iss))
+
+	for i := range us {
+		if v == us[i] {
+			return true
+		}
+	}
+
+	return false
+}
