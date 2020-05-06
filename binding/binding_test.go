@@ -26,6 +26,10 @@ type Http struct {
 	mock.Mock
 }
 
+func (h Http) Application() contract.Application {
+	panic("implement me")
+}
+
 func (h Http) SetSession(session contract.Session) {
 	panic("implement me")
 }

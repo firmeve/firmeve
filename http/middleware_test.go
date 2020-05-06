@@ -19,7 +19,7 @@ func TestRecovery(t *testing.T) {
 
 	c := context.NewContext(
 		firmeve,
-		NewHttp(req, testing2.NewMockResponseWriter()),
+		NewHttp(firmeve, req, testing2.NewMockResponseWriter()),
 		func(c contract.Context) {
 			panic(errors.New(`testing error`))
 		},
