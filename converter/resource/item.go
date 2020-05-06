@@ -87,7 +87,7 @@ func (i *Item) resolve() contract.ResourceData {
 	} else {
 		kindType := reflect2.KindElemType(reflectType)
 		if kindType == reflect.Map {
-			data = i.resolveMap(reflectType, reflectValue)
+			data = i.resolveMap()
 		} else if kindType == reflect.Struct {
 			data = i.resolveStruct(reflectType, reflectValue)
 		} else {
