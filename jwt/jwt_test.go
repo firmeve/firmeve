@@ -11,7 +11,7 @@ import (
 )
 
 func newJwt() contract.Jwt {
-	app := testing.TestingModeFirmeve()
+	app := testing.ApplicationDefault()
 	frameConfig := app.Resolve(`config`).(*config2.Config).Item("framework")
 	jwtConfig := app.Resolve(`config`).(*config2.Config).Item("jwt")
 	return New(frameConfig.GetString("key"), jwtConfig, NewMemoryStore())
@@ -51,7 +51,7 @@ func TestJwt_Parse_Error(t *testing2.T) {
 }
 
 func TestJwt_Parse_Valid_Expired(t *testing2.T) {
-	app := testing.TestingModeFirmeve()
+	app := testing.ApplicationDefault()
 	frameConfig := app.Resolve(`config`).(*config2.Config).Item("framework")
 	jwtConfig := app.Resolve(`config`).(*config2.Config).Item("jwt")
 	jwtConfig.Set("lifetime", 1)

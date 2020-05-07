@@ -15,8 +15,7 @@ var (
 
 func TestMain(m *testing.M) {
 	//set up
-	app = testing2.TestingMode()
-	app.Register(new(Provider), true)
+	app = testing2.ApplicationDefault(new(Provider))
 
 	// testing
 	m.Run()
@@ -51,8 +50,7 @@ func TestNew_Close_Error(t *testing.T) {
 }
 
 func TestDB_Provider(t *testing.T) {
-	firmeve := testing2.TestingMode()
-	firmeve.Register(new(Provider), true)
+	firmeve := testing2.ApplicationDefault(new(Provider))
 
 	firmeve.Boot()
 	assert.Equal(t, true, firmeve.HasProvider("db"))

@@ -67,7 +67,7 @@ func assertBaseRoute(t *testing.T, router *Router, method, path, name string, be
 }
 
 func TestRouter_BaseRoute(t *testing.T) {
-	router := New(testing2.TestingModeFirmeve())
+	router := New(testing2.ApplicationDefault())
 	router.GET("/gets/1", func(ctx contract.Context) {
 		ctx.RenderWith(200, render2.Plain, "Body")
 		ctx.Next()
@@ -123,12 +123,12 @@ func TestRouter_BaseRoute(t *testing.T) {
 }
 
 func TestRouter_HttpRouter(t *testing.T) {
-	router := New(testing2.TestingModeFirmeve())
+	router := New(testing2.ApplicationDefault())
 	assert.IsType(t, &httprouter.Router{}, router.HttpRouter())
 }
 
 func TestRouter_Group(t *testing.T) {
-	router := New(testing2.TestingModeFirmeve())
+	router := New(testing2.ApplicationDefault())
 	v1 := router.Group("/v1").After(func(ctx contract.Context) {
 		ctx.RenderWith(200, render2.Plain, "Group v1 After")
 		ctx.Next()

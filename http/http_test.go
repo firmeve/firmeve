@@ -14,10 +14,11 @@ import (
 
 var (
 	httpGet contract.HttpProtocol
+	app     contract.Application
 )
 
 func TestMain(t *testing.M) {
-	testing2.TestingApplication.Register(new(Provider), true)
+	app = testing2.ApplicationDefault(new(Provider))
 	//req, _ := http2.NewRequest(
 	//	http2.MethodGet,
 	//	"/get",
@@ -67,7 +68,7 @@ func samplePostRequest() *http2.Request {
 
 func TestHttp_Request_Sample(t *testing.T) {
 	req := sampleGetRequest()
-	http := NewHttp(testing2.TestingApplication, req, nil)
+	http := NewHttp(app, req, nil)
 	accepts := http.Accept()
 	assert.Equal(t, []string{"application/json", "text/html"}, accepts)
 
@@ -106,7 +107,7 @@ func TestHttp_Request_Sample(t *testing.T) {
 }
 
 func TestHttp_Request_Post_Sample(t *testing.T) {
-	http := NewHttp(testing2.TestingApplication, samplePostRequest(), nil)
+	http := NewHttp(app, samplePostRequest(), nil)
 	assert.Equal(t, contract.HttpMimeMultipartForm, http.ContentType())
 }
 

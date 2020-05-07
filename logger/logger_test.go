@@ -7,9 +7,12 @@ import (
 	"testing"
 )
 
-func TestMain(m *testing.M) {
-	testing2.TestingApplication.Register(new(Provider), true)
+var (
+	app contract.Application
+)
 
+func TestMain(m *testing.M) {
+	app = testing2.ApplicationDefault(new(Provider))
 	m.Run()
 }
 
@@ -28,7 +31,7 @@ func TestDefault(t *testing.T) {
 }
 
 func Default() contract.Loggable {
-	return testing2.TestingApplication.Resolve(`logger`).(contract.Loggable)
+	return app.Resolve(`logger`).(contract.Loggable)
 }
 
 //func TestLogger_Channel(t *testing.T) {

@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"github.com/firmeve/firmeve/kernel/contract"
 	testing2 "github.com/firmeve/firmeve/testing"
 	redis2 "github.com/go-redis/redis"
 	"github.com/stretchr/testify/assert"
@@ -9,12 +10,13 @@ import (
 
 var (
 	redis *Redis
+	app   contract.Application
 )
 
 func TestMain(m *testing.M) {
 	// setup
-	testing2.TestingApplication.Register(new(Provider), true)
-	redis = testing2.TestingApplication.Resolve(`redis.client`).(*Redis)
+	app = testing2.ApplicationDefault(new(Provider))
+	redis = app.Resolve(`redis.client`).(*Redis)
 
 	m.Run()
 

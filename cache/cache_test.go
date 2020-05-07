@@ -19,10 +19,7 @@ func TestCache_Implement(t *testing.T) {
 
 //Create a cache manager
 func Default() contract.Cache {
-	app := testing2.TestingMode()
-	app.Register(new(redis2.Provider), true)
-	app.Register(new(Provider), true)
-	app.Boot()
+	app := testing2.ApplicationDefault(new(redis2.Provider), new(Provider))
 
 	return app.Resolve(`cache`).(contract.Cache)
 }

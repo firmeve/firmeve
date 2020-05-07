@@ -13,16 +13,16 @@ import (
 	"testing"
 )
 
-func app() contract.Application {
-	firmeve := testing2.TestingModeFirmeve()
-	firmeve.Register(new(Provider), true)
-	firmeve.Boot()
-	return firmeve
+var (
+	app contract.Application
+)
+
+func TestMain(m *testing.M) {
+	app = testing2.ApplicationDefault(new(Provider))
+	m.Run()
 }
 
 func TestValidator_RegisterValidation(t *testing.T) {
-	app := app()
-
 	v := app.Get(`validator`).(*Validator)
 	err := v.RegisterTranslationValidation(`mobile`, func(fl validator.FieldLevel) bool {
 		return true
@@ -56,8 +56,6 @@ type Address struct {
 }
 
 func TestValidator_Validate(t *testing.T) {
-	app := app()
-
 	validator2 := app.Resolve(`validator`).(contract.Validator)
 
 	address := &Address{

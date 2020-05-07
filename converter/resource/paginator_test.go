@@ -29,10 +29,7 @@ var (
 )
 
 func init() {
-	f := testing2.TestingModeFirmeve()
-	//f.Bind(`config`, config.New(path.RunRelative("../../testdata/config")), container.WithShare(true))
-	f.Register(new(database.Provider),true)
-	f.Boot()
+	f := testing2.ApplicationDefault(new(database.Provider))
 	db = f.Get(`db.connection`).(*gorm.DB)
 }
 
@@ -64,12 +61,12 @@ func TestNewPaginator2(t *testing.T) {
 	req := testing2.NewMockRequest(http.MethodGet, "http://firmeve.com/any/testing?any_param=1&limit=15000&offset=1000", "").Request
 	paginator := NewPaginator(store, option, req, pageOption)
 	fmt.Println("==================")
-	fmt.Printf("%#v\n",paginator.CollectionData())
+	fmt.Printf("%#v\n", paginator.CollectionData())
 	meta := paginator.Meta()
 	link := paginator.Link()
-	fmt.Printf("%#v\n",meta)
+	fmt.Printf("%#v\n", meta)
 	fmt.Println("==================")
-	fmt.Printf("%#v\n",link)
+	fmt.Printf("%#v\n", link)
 
 	//assert.Equal(t, int64(1), meta[`current_page`].(int64))
 	//assert.Equal(t, int64(36), meta[`total`].(int64))
@@ -98,8 +95,8 @@ func TestNewPaginator(t *testing.T) {
 	var tests []*Test
 	limit := int64(15) //strconv.ParseInt(req.URL.Query().Get("limit"), 10, 64)
 	pageOption := &paging.Options{
-		DefaultLimit:  limit,
-		MaxLimit:      limit + 10,
+		DefaultLimit: limit,
+		MaxLimit:     limit + 10,
 	}
 	option := &Option{
 		Transformer: nil,
@@ -159,8 +156,6 @@ func TestNewPaginator(t *testing.T) {
 	assert.Equal(t, "http://firmeve.com/any/testing?limit=15&offset=30&any_param=1", link2["last"])
 	assert.Equal(t, "http://firmeve.com/any/testing?limit=15&offset=15&any_param=1", link2["prev"])
 	assert.Equal(t, "", link2["next"])
-
-
 
 	//req2 := testing2.NewMockRequest(http.MethodGet, "http://firmeve.com/any/testing?any_param=1&limit=15&offset=30", "").Request
 	//paginator2 := NewPaginator(store, option, req2, pageOption)
