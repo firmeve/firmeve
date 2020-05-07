@@ -5,13 +5,8 @@ import (
 	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/container"
 	"github.com/firmeve/firmeve/kernel/contract"
-	"github.com/firmeve/firmeve/support/path"
 	"github.com/spf13/cobra"
 	"os"
-)
-
-const (
-	defaultConfigPath2 = `../testdata/config/config.yaml`
 )
 
 type command struct {
@@ -55,8 +50,8 @@ func (c *command) boot(configPath string, devMode bool) {
 	}
 	c.firmeve.SetMode(mode)
 
-	c.firmeve.Bind("firmeve", c.firmeve)
-
+	c.firmeve.Bind(`firmeve`, c.firmeve)
+	c.firmeve.Bind(`application`, c.firmeve)
 	c.firmeve.Bind(`config`, config.New(configPath), container.WithShare(true))
 
 	c.firmeve.RegisterMultiple(c.providers, false)
@@ -84,18 +79,18 @@ func (c *command) Application() contract.Application {
 	return c.firmeve
 }
 
-func NewCommand(providers []contract.Provider, commands ...contract.Command) contract.BaseCommand {
+func NewCommand(configPath string, providers []contract.Provider, commands ...contract.Command) contract.BaseCommand {
 	app := New()
 	command := &command{
 		firmeve:   app,
 		providers: providers,
-		root:      rootCommand(app),
+		root:      rootCommand(app, configPath),
 	}
 	command.AddCommand(commands...)
 	return command
 }
 
-func rootCommand(app contract.Application) *cobra.Command {
+func rootCommand(app contract.Application, configPath string) *cobra.Command {
 	logo := `
  _____   _   _____        ___  ___   _____   _     _   _____
 |  ___| | | |  _  \      /   |/   | | ____| | |   / / | ____|
@@ -115,7 +110,7 @@ func rootCommand(app contract.Application) *cobra.Command {
 		Version: version,
 	}
 
-	cmd.PersistentFlags().StringP("config", "c", getConfigPath(path.RunRelative(defaultConfigPath2)), "config path")
+	cmd.PersistentFlags().StringP("config", "c", getConfigPath(configPath), "config path")
 	cmd.PersistentFlags().BoolP("dev", "", false, "open development mode (default production)")
 
 	cmd.SetVersionTemplate("{{with .Short}}{{printf \"%s \" .}}{{end}}{{printf \"Version %s\" .Version}}\n")

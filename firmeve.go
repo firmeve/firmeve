@@ -26,8 +26,9 @@ var (
 
 type (
 	option struct {
-		providers []contract.Provider
-		commands  []contract.Command
+		providers  []contract.Provider
+		commands   []contract.Command
+		configPath string
 	}
 )
 
@@ -43,12 +44,18 @@ func WithCommands(commands []contract.Command) support.Option {
 	}
 }
 
+func WithConfigPath(path string) support.Option {
+	return func(object support.Object) {
+		object.(*option).configPath = path
+	}
+}
+
 func RunDefault(options ...support.Option) (contract.Application, contract.BaseCommand) {
 	option := parseOption(options)
 	option.providers = append(defaultProviders, option.providers...)
 	option.commands = append(defaultCommands, option.commands...)
 
-	return Run(WithProviders(option.providers), WithCommands(option.commands))
+	return Run(WithConfigPath(option.configPath), WithProviders(option.providers), WithCommands(option.commands))
 }
 
 func Run(options ...support.Option) (contract.Application, contract.BaseCommand) {
@@ -57,7 +64,7 @@ func Run(options ...support.Option) (contract.Application, contract.BaseCommand)
 	// init providers
 	option.providers = append(initProviders, option.providers...)
 
-	command := kernel.NewCommand(option.providers, option.commands...)
+	command := kernel.NewCommand(option.configPath, option.providers, option.commands...)
 
 	command.Run()
 
