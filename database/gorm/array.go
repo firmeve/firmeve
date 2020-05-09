@@ -12,7 +12,7 @@ type (
 	}
 
 	IntArray struct {
-		Source []string
+		Source []int
 		Valid  bool
 	}
 )
@@ -54,7 +54,7 @@ func NewStringArray(source []string) *StringArray {
 	}
 }
 
-func NewIntArray(source []string) *IntArray {
+func NewIntArray(source []int) *IntArray {
 	return &IntArray{
 		Source: source,
 		Valid:  true,
