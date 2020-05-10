@@ -42,7 +42,9 @@ func (c *command) AddCommand(commands ...contract.Command) {
 			c.boot(configPath, devModeBool)
 
 			// mount
-			c.mount(c.Application())
+			if c.mount != nil {
+				c.mount(c.Application())
+			}
 
 			// panic handler
 			defer Recover(c.Resolve(`logger`).(contract.Loggable))
