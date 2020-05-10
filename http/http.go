@@ -176,20 +176,29 @@ func (h *Http) Route() contract.HttpRoute {
 }
 
 func (h *Http) Values() map[string][]string {
+	var params map[string][]string
 	if h.IsMethod(http.MethodGet) {
-		return h.request.URL.Query()
-	}
-
-	switch h.ContentType() {
-	case contract.HttpMimeForm:
-		return h.request.Form
-	case contract.HttpMimeMultipartForm:
-		err := h.request.ParseMultipartForm(defaultMaxSize)
-		if err != nil {
-			panic(err)
+		params = h.request.URL.Query()
+	} else {
+		switch h.ContentType() {
+		case contract.HttpMimeForm:
+			params = h.request.Form
+		case contract.HttpMimeMultipartForm:
+			err := h.request.ParseMultipartForm(defaultMaxSize)
+			if err != nil {
+				panic(err)
+			}
+			params = h.request.Form
 		}
-		return h.request.Form
 	}
 
-	return nil
+	// append route params
+	routerParams := h.Params()
+	if len(routerParams) > 0 {
+		for i := range routerParams {
+			params[routerParams[i].Key] = []string{routerParams[i].Value}
+		}
+	}
+
+	return params
 }
