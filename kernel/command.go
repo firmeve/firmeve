@@ -41,11 +41,6 @@ func (c *command) AddCommand(commands ...contract.Command) {
 			// bootstrap
 			c.boot(configPath, devModeBool)
 
-			// mount
-			if c.mount != nil {
-				c.mount(c.Application())
-			}
-
 			// panic handler
 			defer Recover(c.Resolve(`logger`).(contract.Loggable))
 
@@ -68,6 +63,11 @@ func (c *command) boot(configPath string, devMode bool) {
 	c.firmeve.Bind(`firmeve`, c.firmeve)
 	c.firmeve.Bind(`application`, c.firmeve)
 	c.firmeve.Bind(`config`, config.New(configPath), container.WithShare(true))
+
+	// mount
+	if c.mount != nil {
+		c.mount(c.Application())
+	}
 
 	c.firmeve.RegisterMultiple(c.providers, false)
 
