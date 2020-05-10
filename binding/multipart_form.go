@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	path2 "path"
+	filepath2 "path/filepath"
 	"reflect"
 	"time"
 )
@@ -98,13 +99,16 @@ func (m MultipartFiles) save(file *multipart.FileHeader, option *contract.Upload
 			return nil, err
 		}
 	}
-	fullpath = path2.Join(filepath, newName)
+	fullpath, err := filepath2.Abs(path2.Join(filepath, newName))
+	if err != nil {
+		return nil, err
+	}
 	newFile, err2 := os.Create(fullpath)
 	if err2 != nil {
 		return nil, err2
 	}
 	defer newFile.Close()
-	_, err := io.Copy(newFile, originalFile)
+	_, err = io.Copy(newFile, originalFile)
 
 	//mime判断
 	fileMime, err = FileMime(file)

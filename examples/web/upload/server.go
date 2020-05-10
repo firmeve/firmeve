@@ -32,6 +32,7 @@ func (a *App) Boot() {
 			c.Next()
 		})
 		web.POST("/uploads", func(c contract.Context) {
+			fmt.Println(c.Protocol().(contract.HttpProtocol).ContentType())
 			type FileStruct struct {
 				Text  string `form:"text"`
 				Files binding.MultipartFiles
@@ -55,7 +56,7 @@ func (a *App) Boot() {
 }
 
 func main() {
-	firmeve.RunDefault(firmeve.WithProviders(
+	firmeve.RunDefault(firmeve.WithConfigPath("./config.yaml"), firmeve.WithProviders(
 		[]contract.Provider{
 			new(App),
 		},
