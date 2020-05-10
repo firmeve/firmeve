@@ -9,11 +9,21 @@ import (
 	"os"
 )
 
-type command struct {
-	firmeve   contract.Application
-	providers []contract.Provider
-	root      *cobra.Command
-}
+type (
+	command struct {
+		firmeve   contract.Application
+		providers []contract.Provider
+		root      *cobra.Command
+		mount     func(app contract.Application)
+	}
+
+	CommandOption struct {
+		ConfigPath string
+		Providers  []contract.Provider
+		Commands   []contract.Command
+		Mount      func(app contract.Application)
+	}
+)
 
 func (c *command) AddCommand(commands ...contract.Command) {
 	for i := range commands {
@@ -30,6 +40,9 @@ func (c *command) AddCommand(commands ...contract.Command) {
 
 			// bootstrap
 			c.boot(configPath, devModeBool)
+
+			// mount
+			c.mount(c.Application())
 
 			// panic handler
 			defer Recover(c.Resolve(`logger`).(contract.Loggable))
@@ -79,14 +92,15 @@ func (c *command) Application() contract.Application {
 	return c.firmeve
 }
 
-func NewCommand(configPath string, providers []contract.Provider, commands ...contract.Command) contract.BaseCommand {
+func NewCommand(option *CommandOption) contract.BaseCommand {
 	app := New()
 	command := &command{
 		firmeve:   app,
-		providers: providers,
-		root:      rootCommand(app, configPath),
+		providers: option.Providers,
+		root:      rootCommand(app, option.ConfigPath),
+		mount:     option.Mount,
 	}
-	command.AddCommand(commands...)
+	command.AddCommand(option.Commands...)
 	return command
 }
 
