@@ -12,7 +12,7 @@ func main() {
 	firmeve.RunWithSupportFunc(func(application contract.Application) {
 		router := application.Resolve(`http.router`).(contract.HttpRouter)
 		router.GET("/", func(c contract.Context) {
-			fmt.Printf("%b", c.Firmeve() == firmeve.Application)
+			fmt.Printf("%t", c.Firmeve() == firmeve.Application)
 			c.RenderWith(200, render.JSON, map[string]string{
 				"ctx_application":    fmt.Sprintf("%p", c.Firmeve()),
 				"global_application": fmt.Sprintf("%p", firmeve.Application),
