@@ -26,7 +26,11 @@ func Transaction(db *gorm.DB, fn func(db *gorm.DB) (interface{}, error)) (result
 		}
 	}()
 
-	result, tError = fn(tx)
+	if result, tError = fn(tx); tError != nil {
+		if rollbackErr := tx.Rollback().Error; rollbackErr != nil {
+			tError = fmt.Errorf("transaction rollabck execute error %w", rollbackErr)
+		}
+	}
 
 	// 这里不能直接返回 defer的特性
 	// 函数的返回过程是这样  先给返回赋值->调用defer->返回到调用函数中
