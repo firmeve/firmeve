@@ -114,6 +114,14 @@ func (c *context) BindValidate(v interface{}) error {
 	return c.Resolve(`validator`).(contract.Validator).Validate(v)
 }
 
+func (c *context) BindWithValidate(b contract.Binding, v interface{}) error {
+	if err := b.Protocol(c.protocol, v); err != nil {
+		return err
+	}
+
+	return c.Resolve(`validator`).(contract.Validator).Validate(v)
+}
+
 func (c *context) BindWith(b contract.Binding, v interface{}) error {
 	return b.Protocol(c.protocol, v)
 }

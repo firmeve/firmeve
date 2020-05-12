@@ -37,6 +37,8 @@ type (
 
 		BindWith(b Binding, v interface{}) error
 
+		BindWithValidate(b Binding, v interface{}) error
+
 		Get(key string) interface{}
 
 		Render(status int, v interface{}) error
