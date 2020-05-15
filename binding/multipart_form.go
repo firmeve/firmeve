@@ -65,7 +65,7 @@ func (m MultipartFiles) File(key string) *multipart.FileHeader {
 }
 
 func (m MultipartFiles) Save(key string, option *contract.UploadOption) ([]*contract.FileInfo, error) {
-	filesInfo := make([]*contract.FileInfo, 0)
+	var filesInfo []*contract.FileInfo
 	files := m.Files(key)
 	for i := range files {
 		fileInfo, err := m.save(files[i], option)
@@ -124,6 +124,7 @@ func (m MultipartFiles) save(file *multipart.FileHeader, option *contract.Upload
 		Name:         newName,
 		Extension:    path2.Ext(newName)[1:],
 		Mime:         fileMime,
+		MD5:          FileHash(originalFile),
 	}, err
 }
 
@@ -141,8 +142,10 @@ func FileName(file *multipart.FileHeader, option *contract.UploadOption) string 
 	return file.Filename
 }
 
-func FileHash(file string) string {
-	return ``
+func FileHash(file multipart.File) string {
+	md5 := md52.New()
+	io.Copy(md5, file)
+	return hex.EncodeToString(md5.Sum(nil))
 }
 
 func Filepath(option *contract.UploadOption) string {
