@@ -144,6 +144,7 @@ func FileName(file *multipart.FileHeader, option *contract.UploadOption) string 
 
 func FileHash(file multipart.File) string {
 	md5 := md52.New()
+	file.Seek(0, 0)
 	io.Copy(md5, file)
 	return hex.EncodeToString(md5.Sum(nil))
 }
