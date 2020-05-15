@@ -26,7 +26,7 @@ func (f file) Render(protocol contract.Protocol, status int, v interface{}) erro
 	httpProtocol := protocol.(contract.HttpProtocol)
 	option := v.(FileOption)
 
-	file, err := os.Open(option.Filename)
+	file, err := os.Open(option.Path)
 	if err != nil {
 		httpProtocol.ResponseWriter().WriteHeader(404)
 		return err
