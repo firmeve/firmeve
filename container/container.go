@@ -103,7 +103,7 @@ func (c *baseContainer) Bind(name string, prototype interface{}, options ...supp
 }
 
 // Get a object from container
-func (c *baseContainer) Get(name string) interface{} {
+func (c *baseContainer) Get(name string, params ...interface{}) interface{} {
 	if !c.Has(name) {
 		panic(fmt.Errorf("object %s that does not exist", name))
 	}
@@ -114,7 +114,7 @@ func (c *baseContainer) Get(name string) interface{} {
 		return v
 	}
 
-	return c.resolvePrototype(binding)
+	return c.resolvePrototype(binding, params...)
 }
 
 // Determine whether the specified name object is included in the container
@@ -130,7 +130,6 @@ func (c *baseContainer) Has(name string) bool {
 func (c *baseContainer) resolve(abstract interface{}, params ...interface{}) interface{} {
 	reflectType := reflect.TypeOf(abstract)
 	reflectValue := reflect.ValueOf(abstract)
-
 	// 如果是单实例
 	if _type, ok := c.instances[reflectType]; ok {
 		return _type
@@ -138,7 +137,7 @@ func (c *baseContainer) resolve(abstract interface{}, params ...interface{}) int
 
 	kind := reflect2.KindElemType(reflectType)
 	if kind == reflect.String && c.Has(abstract.(string)) {
-		return c.Get(abstract.(string))
+		return c.Get(abstract.(string), params...)
 	} else if kind == reflect.Struct {
 		return c.resolveStruct2(reflectType, reflectValue)
 	} else if kind == reflect.Func {
@@ -171,8 +170,8 @@ func (c *baseContainer) Flush() {
 }
 
 // Flush container
-func (c *baseContainer) resolvePrototype(binding *binding) interface{} {
-	return binding.prototype(c)
+func (c *baseContainer) resolvePrototype(binding *binding, params ...interface{}) interface{} {
+	return binding.prototype(c, params...)
 }
 
 func (c *baseContainer) resolveFunc(reflectType reflect.Type, reflectValue reflect.Value, params ...interface{}) interface{} {

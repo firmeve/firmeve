@@ -205,6 +205,15 @@ func TestBaseContainer_Resolve_Func_StructFuncFunc(t *testing.T) {
 	assert.Equal(t, 35, value3.(int))
 }
 
+func TestBaseContainer_Make(t *testing.T) {
+	c := New()
+	c.Bind(`number`, func(s string, type2 uint8) uint8 {
+		return type2
+	})
+	v := c.resolve(`number`, "a", uint8(1))
+	assert.Equal(t, uint8(1), v.(uint8))
+}
+
 func TestBaseContainer_Resolve_Func_MultipleParamSample(t *testing.T) {
 	c := New()
 	fn := funcs.MultipleParamSample
