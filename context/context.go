@@ -96,6 +96,10 @@ func (c *context) Entity(key string) *contract.ContextEntity {
 func (c *context) Get(key string) interface{} {
 	values := c.protocol.Values()
 	if value, ok := values[key]; ok {
+		if len(value) == 1 {
+			return value[0]
+		}
+
 		return value
 	}
 
