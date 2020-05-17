@@ -1,7 +1,6 @@
 package binding
 
 import (
-	"fmt"
 	"github.com/firmeve/firmeve/kernel/contract"
 )
 
@@ -10,6 +9,7 @@ var (
 		contract.HttpMimeJson:          JSON,
 		contract.HttpMimeForm:          Form,
 		contract.HttpMimeMultipartForm: MultipartForm,
+		contract.HttpMimeStream:        Stream,
 	}
 )
 
@@ -21,7 +21,9 @@ func Bind(protocol contract.Protocol, v interface{}) error {
 			return b.Protocol(protocol, v)
 		}
 
-		return fmt.Errorf("non-existent type %s", contentType)
+		// Default Get query
+		return Form.Protocol(protocol, v)
+		//return fmt.Errorf("non-existent type %s", contentType)
 	}
 
 	return nil
