@@ -9,7 +9,7 @@ var (
 		contract.HttpMimeJson:          JSON,
 		contract.HttpMimeForm:          Form,
 		contract.HttpMimeMultipartForm: MultipartForm,
-		contract.HttpMimeStream:        Stream,
+		//contract.HttpMimeStream:        Stream,
 	}
 )
 
