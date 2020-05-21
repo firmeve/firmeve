@@ -46,7 +46,7 @@ func (g *gormQueryMagic) Query(db *gorm.DB) *gorm.DB {
 		if !fieldValue.IsZero() {
 			methodName := `By` + field.Name
 			if reflect.MethodExists(selfType, methodName) {
-				db = reflect.CallMethodValue(selfValue, methodName, db, fieldValue)[0].(*gorm.DB)
+				db = reflect.CallMethodValue(selfValue, methodName, db)[0].(*gorm.DB)
 			}
 		}
 
