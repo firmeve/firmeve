@@ -11,13 +11,19 @@ import (
 type (
 	gormQueryMagic struct {
 		magic interface{}
+		//Dto   interface{}
 	}
 )
 
 func NewGORMQueryMagic(magic interface{}) (contract.GORMQueryMagic, error) {
 	if reflect.KindElemType(reflect2.TypeOf(magic)) != reflect2.Struct {
-		return nil, errors.New("not support the type")
+		return nil, errors.New("magic not support the type")
 	}
+	//
+	//if reflect.KindElemType(dto) != reflect2.Struct {
+	//	panic(errors.New("dto not support the type"))
+	//}
+
 	return &gormQueryMagic{magic: magic}, nil
 }
 
@@ -29,16 +35,14 @@ func NewGORMQueryMagicMust(magic interface{}) contract.GORMQueryMagic {
 	return m
 }
 
-func (g *gormQueryMagic) Query(db *gorm.DB, dto interface{}) *gorm.DB {
-	dtoType := reflect2.TypeOf(dto)
-	if reflect.KindElemType(dtoType) != reflect2.Struct {
-		panic(errors.New("not support the type"))
-	}
-	dtoValue := reflect2.ValueOf(dto)
+func (g *gormQueryMagic) Query(db *gorm.DB) *gorm.DB {
+	//dtoType := reflect2.TypeOf(g.Dto)
+	//
+	//dtoValue := reflect2.ValueOf(dto)
 	selfType := reflect2.TypeOf(g.magic)
 	selfValue := reflect2.ValueOf(g.magic)
-	reflect.CallFieldType(dtoType, func(i int, field reflect2.StructField) interface{} {
-		fieldValue := reflect.CallOriginalFieldValue(dtoValue, field.Name)
+	reflect.CallFieldType(selfType, func(i int, field reflect2.StructField) interface{} {
+		fieldValue := reflect.CallOriginalFieldValue(selfValue, field.Name)
 		if !fieldValue.IsZero() {
 			methodName := `By` + field.Name
 			if reflect.MethodExists(selfType, methodName) {
