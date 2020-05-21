@@ -20,5 +20,7 @@ type (
 		Message() ([]byte, error)
 
 		Values() map[string][]string
+
+		Clone() Protocol
 	}
 )

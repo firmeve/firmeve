@@ -139,8 +139,18 @@ func (c *context) Render(status int, v interface{}) error {
 }
 
 func (c *context) Clone() contract.Context {
-	//@todo 暂时先返回自己，Context全部完善后再修改clone
-	return c
+	ctxNew := new(context)
+	*ctxNew = *c
+	ctxNew.protocol = c.protocol.Clone()
+	ctxNew.firmeve = c.firmeve
+	ctxNew.index = c.index
+	ctxNew.handlers = c.handlers
+
+	ctxNew.entries = make(map[string]*contract.ContextEntity, len(c.entries))
+	for k, v := range c.entries {
+		*ctxNew.entries[k] = *v
+	}
+	return ctxNew
 }
 
 func (c *context) Resolve(abstract interface{}, params ...interface{}) interface{} {

@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/julienschmidt/httprouter"
 	"io/ioutil"
@@ -201,4 +202,13 @@ func (h *Http) Values() map[string][]string {
 	}
 
 	return params
+}
+
+func (h *Http) Clone() contract.Protocol {
+	newHttp := new(Http)
+	*newHttp = *h
+	//@todo 待验证
+	newHttp.request = h.request.Clone(context.Background()) //context.WithCancel(h.request.Context())
+	newHttp.responseWriter = h.responseWriter
+	return newHttp
 }
