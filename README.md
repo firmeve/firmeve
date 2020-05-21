@@ -33,27 +33,39 @@ go get -u github.com/firmeve/firmeve@develop
 package main
 
 import (
+	"fmt"
 	"github.com/firmeve/firmeve"
 	"github.com/firmeve/firmeve/http"
-	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/render"
 )
 
-type App struct {
-	kernel.BaseProvider
+func main() {
+	firmeve.RunWithSupportFunc(
+		application,
+		firmeve.WithConfigPath("./config.yaml"),
+		firmeve.WithProviders([]contract.Provider{
+			new(http.Provider),
+		}),
+		firmeve.WithCommands([]contract.Command{
+			new(http.HttpCommand),
+		}),
+	)
 }
 
-func (a *App) Name() string {
-	return `app`
-}
+func application(application contract.Application) {
+	router := application.Resolve(`http.router`).(contract.HttpRouter)
+	router.GET("/", func(c contract.Context) {
+		fmt.Printf("%t", c.Firmeve() == firmeve.Application)
+		c.RenderWith(200, render.JSON, map[string]string{
+			"ctx_application":    fmt.Sprintf("%p", c.Firmeve()),
+			"global_application": fmt.Sprintf("%p", firmeve.Application),
+		})
 
-func (a *App) Register() {
-}
+        c.Next()
+	})
 
-func (a *App) Boot() {
-	router := a.Firmeve.Get(`http.router`).(contract.HttpRouter)
-	v1 := router.Group("/api/v1")
+    v1 := router.Group("/api/v1")
 	{
 		v1.GET(`/ping`, func(c contract.Context) {
 			c.RenderWith(200, render.JSON, map[string]string{
@@ -62,14 +74,6 @@ func (a *App) Boot() {
 			c.Next()
 		})
 	}
-}
-
-func main() {
-	firmeve.RunDefault(firmeve.WithProviders(
-		[]contract.Provider{
-			new(App),
-		},
-	))
 }
 
 ```
