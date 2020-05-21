@@ -140,6 +140,10 @@ func (h Http) Redirect(status int, location string) {
 	panic("implement me")
 }
 
+func (h Http) Clone() contract.Protocol {
+	return h
+}
+
 func TestBindJSON(t *testing.T) {
 	//	req := testing2.NewMockRequest("post", "/", `{
 	//name:abcdef
