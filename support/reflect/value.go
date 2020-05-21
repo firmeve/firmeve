@@ -58,7 +58,14 @@ func CallMethodValue(reflectValue reflect.Value, name string, params ...interfac
 // FieldByName returns the struct field with the given name.
 // It returns the zero Value if no field was found.
 // It panics if v's Kind is not struct.
+// If is zero value well convert base type zero , not nil
 func CallFieldValue(reflectValue reflect.Value, name string) interface{} {
 	fieldValue := reflect.Indirect(reflectValue).FieldByName(name)
 	return InterfaceValue(reflect.TypeOf(fieldValue), fieldValue)
+}
+
+// Call original Field value
+// .IsZero() method
+func CallOriginalFieldValue(reflectValue reflect.Value, name string) reflect.Value {
+	return reflect.Indirect(reflectValue).FieldByName(name)
 }
