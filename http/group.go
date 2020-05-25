@@ -7,10 +7,9 @@ import (
 )
 
 type Group struct {
-	prefix         string
-	beforeHandlers []contract.ContextHandler
-	afterHandlers  []contract.ContextHandler
-	router         contract.HttpRouter
+	prefix   string
+	handlers []contract.ContextHandler
+	router   contract.HttpRouter
 }
 
 func (g *Group) Prefix(prefix string) contract.HttpRouteGroup {
@@ -18,13 +17,8 @@ func (g *Group) Prefix(prefix string) contract.HttpRouteGroup {
 	return g
 }
 
-func (g *Group) After(handlers ...contract.ContextHandler) contract.HttpRouteGroup {
-	g.afterHandlers = append(g.afterHandlers, handlers...)
-	return g
-}
-
-func (g *Group) Before(handlers ...contract.ContextHandler) contract.HttpRouteGroup {
-	g.beforeHandlers = append(g.beforeHandlers, handlers...)
+func (g *Group) Use(handlers ...contract.ContextHandler) contract.HttpRouteGroup {
+	g.handlers = append(g.handlers, handlers...)
 	return g
 }
 
@@ -53,7 +47,7 @@ func (g *Group) OPTIONS(path string, handler contract.ContextHandler) contract.H
 }
 
 func (g *Group) Group(prefix string) contract.HttpRouteGroup {
-	return newGroup(g.router).Prefix(strings.Join([]string{g.prefix, prefix}, ``)).After(g.afterHandlers...).Before(g.beforeHandlers...)
+	return newGroup(g.router).Prefix(strings.Join([]string{g.prefix, prefix}, ``)).Use(g.handlers...)
 }
 
 func (g *Group) Handler(method, path string, handler http.HandlerFunc) {
@@ -65,13 +59,12 @@ func (g *Group) Handler(method, path string, handler http.HandlerFunc) {
 func (g *Group) createRoute(method string, path string, handler contract.ContextHandler) contract.HttpRoute {
 	path = strings.Join([]string{g.prefix, path}, ``)
 
-	return g.router.(*Router).createRoute(method, path, handler).Before(g.beforeHandlers...).After(g.afterHandlers...)
+	return g.router.(*Router).createRoute(method, path, handler).Use(g.handlers...)
 }
 
 func newGroup(router contract.HttpRouter) contract.HttpRouteGroup {
 	return &Group{
-		router:         router,
-		beforeHandlers: make([]contract.ContextHandler, 0),
-		afterHandlers:  make([]contract.ContextHandler, 0),
+		router:   router,
+		handlers: make([]contract.ContextHandler, 0),
 	}
 }

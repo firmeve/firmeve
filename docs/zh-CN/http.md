@@ -18,10 +18,10 @@ router.GET("/ping", func(ctx contract.Context) {
 router.GET("/ping", func(ctx contract.Context) {
     ctx.RenderWith(200,render2.Plain,"pong")
     ctx.Next()
-}).Before(func(ctx contract.Context) {
+}).Use(func(ctx contract.Context) {
     ctx.RenderWith(200,render2.Plain,"Before")
   ctx.Next()
-}).After(func(ctx contract.Context) {
+}).Use(func(ctx contract.Context) {
     ctx.RenderWith(200,render2.Plain,"After")
    ctx.Next()
 })
@@ -29,13 +29,13 @@ router.GET("/ping", func(ctx contract.Context) {
 
 ### 路由分组
 ```go
-v1 := router.Group("/api/v1").Before(func(ctx *http.Context) {
+v1 := router.Group("/api/v1").Use(func(ctx *http.Context) {
                                 ctx.RenderWith(200,render2.Plain,"Before")
                                ctx.Next()
-                             }).After(func(ctx *http.Context) {
-                                ctx.RenderWith(200,render2.Plain,"After")
-                                ctx.Next()
-                              })
+                             },func(ctx *http.Context) {
+                               ctx.RenderWith(200,render2.Plain,"After")
+                               ctx.Next()
+                             })
 {
 	v1.Get("/ping", func(ctx *http.Context) {
        ctx.RenderWith(200,render.JSON,map[string]string{

@@ -65,7 +65,7 @@ func application(application contract.Application) {
         c.Next()
 	})
 
-    v1 := router.Group("/api/v1")
+	v1 := router.Group("/api/v1")
 	{
 		v1.GET(`/ping`, func(c contract.Context) {
 			c.RenderWith(200, render.JSON, map[string]string{

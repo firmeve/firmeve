@@ -12,6 +12,7 @@ const (
 	HttpMimePlain         = "text/plain"
 	HttpMimeForm          = "application/x-www-form-urlencoded"
 	HttpMimeMultipartForm = "multipart/form-data"
+	HttpMimeStream        = "application/octet-stream"
 )
 
 type (
@@ -64,9 +65,7 @@ type (
 	HttpRoute interface {
 		Name(name string) HttpRoute
 
-		Before(handlers ...ContextHandler) HttpRoute
-
-		After(handlers ...ContextHandler) HttpRoute
+		Use(handlers ...ContextHandler) HttpRoute
 
 		Handlers() []ContextHandler
 	}
@@ -74,9 +73,7 @@ type (
 	HttpRouteGroup interface {
 		Prefix(prefix string) HttpRouteGroup
 
-		After(handlers ...ContextHandler) HttpRouteGroup
-
-		Before(handlers ...ContextHandler) HttpRouteGroup
+		Use(handlers ...ContextHandler) HttpRouteGroup
 
 		GET(path string, handler ContextHandler) HttpRoute
 
