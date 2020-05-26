@@ -2,6 +2,7 @@ package binding
 
 import (
 	"github.com/firmeve/firmeve/kernel/contract"
+	"net/http"
 )
 
 var (
@@ -15,8 +16,12 @@ var (
 
 func Bind(protocol contract.Protocol, v interface{}) error {
 	if p, ok := protocol.(contract.HttpProtocol); ok {
-		contentType := p.ContentType()
+		// get return form
+		if p.IsMethod(http.MethodGet) {
+			return Form.Protocol(protocol, v)
+		}
 
+		contentType := p.ContentType()
 		if b, ok := httpBindingType[contentType]; ok {
 			return b.Protocol(protocol, v)
 		}
