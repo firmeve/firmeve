@@ -40,10 +40,12 @@ func (c *command) AddCommand(commands ...contract.Command) {
 
 			// bootstrap
 			c.boot(configPath, devModeBool)
+			c.debugLog(cmd.Use + ` command register and booted`)
 
 			// mount
 			if c.mount != nil {
 				c.mount(c.Application())
+				c.debugLog(`Application func mounted`)
 			}
 
 			// panic handler
@@ -72,6 +74,10 @@ func (c *command) boot(configPath string, devMode bool) {
 	c.firmeve.RegisterMultiple(c.providers, false)
 
 	c.firmeve.Boot()
+}
+
+func (c *command) debugLog(message string, context ...interface{}) {
+	c.firmeve.Resolve(`logger`).(contract.Loggable).Debug(message, context...)
 }
 
 func (c *command) Run() error {

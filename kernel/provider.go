@@ -7,7 +7,8 @@ import (
 
 type (
 	BaseProvider struct {
-		Firmeve contract.Application `inject:"firmeve"`
+		Firmeve     contract.Application `inject:"application"`
+		Application contract.Application `inject:"application"`
 	}
 )
 
