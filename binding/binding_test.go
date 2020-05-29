@@ -111,7 +111,7 @@ func (h Http) IsAccept(key string) bool {
 }
 
 func (h Http) IsMethod(key string) bool {
-	panic("implement me")
+	return true
 }
 
 func (h Http) ContentType() string {
