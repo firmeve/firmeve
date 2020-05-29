@@ -111,6 +111,9 @@ func (h Http) IsAccept(key string) bool {
 }
 
 func (h Http) IsMethod(key string) bool {
+	if key == net_http.MethodGet {
+		return false
+	}
 	return true
 }
 
