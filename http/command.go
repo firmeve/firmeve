@@ -41,6 +41,7 @@ func (c *HttpCommand) Run(root contract.BaseCommand, cmd *cobra.Command, args []
 	srv := &net_http.Server{
 		Addr:    host,
 		Handler: root.Resolve(`http.router`).(*Router),
+		//ErrorLog: log.New(new(serverLog), ``, log.LstdFlags),
 	}
 
 	c.debugLog(`Goroutine http server`)
@@ -76,12 +77,12 @@ func (c *HttpCommand) Run(root contract.BaseCommand, cmd *cobra.Command, args []
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 	<-quit
 
-	c.debugLog("Shutdown Server ...")
+	c.debugLog("Shutdown server")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		c.logger.Fatal("Server Shutdown: ", err)
+		c.logger.Fatal("Server shutdown: ", err)
 	}
 
 	c.debugLog("Server exiting")
@@ -90,3 +91,10 @@ func (c *HttpCommand) Run(root contract.BaseCommand, cmd *cobra.Command, args []
 func (c *HttpCommand) debugLog(message string, context ...interface{}) {
 	c.logger.Debug(message, context...)
 }
+
+//type serverLog struct {
+//}
+//
+//func (s serverLog) Write(p []byte) (n int, err error) {
+//	return fmt.Print(time.Now().Format("2006-01-02 15:04:05") + " [DEBUG] " + string(p))
+//}
