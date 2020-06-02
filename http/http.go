@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"github.com/firmeve/firmeve/kernel/contract"
+	http2 "github.com/firmeve/firmeve/support/http"
 	"github.com/julienschmidt/httprouter"
 	"io/ioutil"
 	"net/http"
@@ -14,11 +15,16 @@ type (
 	Http struct {
 		application    contract.Application
 		request        *http.Request
-		responseWriter http.ResponseWriter
+		responseWriter contract.HttpWrapResponseWriter
 		message        []byte
 		params         []httprouter.Param
 		route          contract.HttpRoute
 		session        contract.Session
+	}
+
+	wrapResponseWriter struct {
+		responseWriter http.ResponseWriter
+		statusCode     int
 	}
 )
 
@@ -26,7 +32,24 @@ var (
 	defaultMaxSize int64 = 32 << 20
 )
 
-func NewHttp(application contract.Application, request *http.Request, responseWriter http.ResponseWriter) contract.HttpProtocol {
+func (w *wrapResponseWriter) StatusCode() int {
+	return w.statusCode
+}
+
+func (w *wrapResponseWriter) Header() http.Header {
+	return w.responseWriter.Header()
+}
+
+func (w *wrapResponseWriter) Write(bytes []byte) (int, error) {
+	return w.responseWriter.Write(bytes)
+}
+
+func (w *wrapResponseWriter) WriteHeader(statusCode int) {
+	w.statusCode = statusCode
+	w.responseWriter.WriteHeader(statusCode)
+}
+
+func NewHttp(application contract.Application, request *http.Request, responseWriter contract.HttpWrapResponseWriter) contract.HttpProtocol {
 	return &Http{
 		application:    application,
 		request:        request,
@@ -80,7 +103,7 @@ func (h *Http) SessionValue(key string) interface{} {
 	return h.session.Get(key)
 }
 
-func (h *Http) ResponseWriter() http.ResponseWriter {
+func (h *Http) ResponseWriter() contract.HttpWrapResponseWriter {
 	return h.responseWriter
 }
 
@@ -202,6 +225,10 @@ func (h *Http) Values() map[string][]string {
 	}
 
 	return params
+}
+
+func (h *Http) ClientIP() string {
+	return http2.ClientIP(h.request)
 }
 
 func (h *Http) Clone() contract.Protocol {

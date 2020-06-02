@@ -1,26 +1,33 @@
 package http
 
 import (
+	context2 "context"
 	"github.com/firmeve/firmeve/context"
 	"github.com/firmeve/firmeve/kernel/contract"
+	http2 "github.com/firmeve/firmeve/support/http"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"strings"
+	time2 "time"
 )
 
 type Router struct {
-	Firmeve   contract.Application
-	router    *httprouter.Router
-	routes    map[string]contract.HttpRoute
-	routeKeys []string
+	Application contract.Application
+	router      *httprouter.Router
+	routes      map[string]contract.HttpRoute
+	routeKeys   []string
+	event       contract.Event
+	logger      contract.Loggable
 }
 
-func New(firmeve contract.Application) contract.HttpRouter {
+func New(app contract.Application) contract.HttpRouter {
 	return &Router{
-		Firmeve:   firmeve,
-		router:    httprouter.New(),
-		routes:    make(map[string]contract.HttpRoute, 0),
-		routeKeys: make([]string, 0),
+		Application: app,
+		router:      httprouter.New(),
+		routes:      make(map[string]contract.HttpRoute, 0),
+		routeKeys:   make([]string, 0),
+		event:       app.Resolve(`event`).(contract.Event),
+		logger:      app.Resolve(`logger`).(contract.Loggable),
 	}
 }
 
@@ -56,7 +63,7 @@ func (r *Router) Static(path string, root string) contract.HttpRouter {
 
 func (r *Router) NotFound(handler contract.ContextHandler) contract.HttpRouter {
 	r.router.NotFound = http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
-		context.NewContext(r.Firmeve, NewHttp(r.Firmeve, req, w), handler).Next()
+		context.NewContext(r.Application, NewHttp(r.Application, req, w.(contract.HttpWrapResponseWriter)), handler).Next()
 	})
 
 	return r
@@ -83,13 +90,16 @@ func (r *Router) createRoute(method string, path string, handler contract.Contex
 	r.routes[key] = newRoute(path, handler)
 
 	r.router.Handle(method, path, func(w http.ResponseWriter, req *http.Request, params httprouter.Params) {
-		currentHttp := NewHttp(r.Firmeve, req, w)
+		// base http
+		currentHttp := NewHttp(r.Application, req, w.(contract.HttpWrapResponseWriter))
 		currentHttp.SetParams(params)
 		currentHttp.SetRoute(r.routes[key])
 
-		ctx := context.NewContext(r.Firmeve, currentHttp, r.routes[key].Handlers()...)
+		// context create
+		ctx := context.NewContext(r.Application, currentHttp, r.routes[key].Handlers()...)
 
-		r.Firmeve.Get(`event`).(contract.Event).Dispatch(`router.match`, map[string]interface{}{
+		// router match dispatch
+		r.event.Dispatch(`router.match`, map[string]interface{}{
 			`context`: ctx,
 			`route`:   r.routes[key],
 		})
@@ -105,5 +115,27 @@ func (r *Router) routeKey(method, path string) string {
 }
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
-	r.router.ServeHTTP(w, req)
+	// wrap record statusCode
+	wrap := &wrapResponseWriter{responseWriter: w}
+
+	// dispatch router
+	r.event.Dispatch(`http.request`, map[string]interface{}{
+		`request`:  req.Clone(context2.Background()),
+		`response`: wrap,
+	})
+
+	// record start time
+	startTime := time2.Now()
+
+	r.router.ServeHTTP(wrap, req)
+
+	// request log
+	r.logger.Debug(``,
+		`Method`, req.Method,
+		`StatusCode`, wrap.StatusCode(),
+		`URI`, req.RequestURI,
+		`IPAddress`, http2.ClientIP(req),
+		`Agent`, req.Header.Get(`user-agent`),
+		`ExecuteTime`, time2.Now().Sub(startTime),
+	)
 }

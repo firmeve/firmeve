@@ -21,7 +21,7 @@ type (
 
 		Request() *http.Request
 
-		ResponseWriter() http.ResponseWriter
+		ResponseWriter() HttpWrapResponseWriter
 
 		SetHeader(key, value string)
 
@@ -60,6 +60,8 @@ type (
 		Cookie(name string) (string, error)
 
 		Redirect(status int, location string)
+
+		ClientIP() string
 	}
 
 	HttpRoute interface {
@@ -115,6 +117,12 @@ type (
 		Group(prefix string) HttpRouteGroup
 
 		ServeHTTP(w http.ResponseWriter, req *http.Request)
+	}
+
+	HttpWrapResponseWriter interface {
+		http.ResponseWriter
+
+		StatusCode() int
 	}
 
 	Session interface {
