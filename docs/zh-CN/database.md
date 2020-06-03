@@ -52,7 +52,7 @@ database:
     path: "../../../testdata/migrations"
 ```
 
-> 其它如pgsql,sqlite，请参考gorm
+> 其它如`pgsql`,`sqlite`，请参考`gorm`
 
 
 
