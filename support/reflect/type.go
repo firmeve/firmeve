@@ -23,10 +23,12 @@ type CallInParameterFunc func(i int, param reflect.Type) interface{}
 // Call in func params
 // It panics if the type's Kind is not Func.
 func CallInParameterType(reflectType reflect.Type, paramFunc CallInParameterFunc) []interface{} {
-	results := make([]interface{}, 0)
+	// make size = reflectType.NumIn()
+	results := make([]interface{}, reflectType.NumIn())
 	for i := 0; i < reflectType.NumIn(); i++ {
 		values := paramFunc(i, reflectType.In(i))
-		results = append(results, values)
+		results[i] = values
+		//results = append(results, values)
 	}
 
 	return results
