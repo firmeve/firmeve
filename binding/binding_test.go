@@ -70,10 +70,6 @@ func (h Http) Request() *net_http.Request {
 	panic("implement me")
 }
 
-func (h Http) ResponseWriter() net_http.ResponseWriter {
-	panic("implement me")
-}
-
 func (h Http) SetHeader(key, value string) {
 	panic("implement me")
 }
@@ -114,7 +110,7 @@ func (h Http) IsMethod(key string) bool {
 	if key == net_http.MethodGet {
 		return false
 	}
-	return true
+	return false
 }
 
 func (h Http) ContentType() string {
@@ -147,6 +143,14 @@ func (h Http) Clone() contract.Protocol {
 	return h
 }
 
+func (h Http) ResponseWriter() contract.HttpWrapResponseWriter {
+	return nil
+}
+
+func (h Http) ClientIP() string {
+	return `0.0.0.0`
+}
+
 func TestBindJSON(t *testing.T) {
 	//	req := testing2.NewMockRequest("post", "/", `{
 	//name:abcdef
@@ -154,11 +158,12 @@ func TestBindJSON(t *testing.T) {
 	//}`)
 	//	req.Request.Header.Set("Content-Type", "application/json")
 	//	protocol := http.NewHttp(req.Request, &testing2.MockResponseWriter{})
-
+	assert.Implements(t, new(contract.HttpProtocol), &Http{})
 	user := new(User)
 	err := Bind(&Http{}, user)
+	fmt.Printf("%v", user)
 	assert.Equal(t, user.Name, "abc")
 	assert.Equal(t, user.Password, "123456")
 	assert.Nil(t, err)
-	fmt.Printf("%v", user)
+	//fmt.Printf("%v", user)
 }
