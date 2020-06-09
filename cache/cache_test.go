@@ -14,7 +14,7 @@ import (
 )
 
 func TestCache_Implement(t *testing.T) {
-	assert.Implements(t, (*contract.Cache)(nil), Default())
+	assert.Implements(t, new(contract.Cache), Default())
 }
 
 //Create a cache manager

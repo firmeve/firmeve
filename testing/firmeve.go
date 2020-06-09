@@ -23,6 +23,7 @@ func ApplicationDefault(providers ...contract.Provider) contract.Application {
 func bootstrap(app contract.Application, configPath string, providers ...contract.Provider) {
 	app.SetMode(contract.ModeTesting)
 	app.Bind(`firmeve`, app)
+	app.Bind(`application`, app)
 	app.Bind(`config`, config.New(configPath), container.WithShare(true))
 	app.RegisterMultiple(providers, false)
 	app.Boot()

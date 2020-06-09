@@ -8,7 +8,7 @@ import (
 type MockResponseWriter struct {
 	//mock.Mock
 	Bytes      []byte
-	StatusCode int
+	statusCode int
 	Headers    http.Header
 }
 
@@ -22,7 +22,11 @@ func (m *MockResponseWriter) Write(p []byte) (int, error) {
 }
 
 func (m *MockResponseWriter) WriteHeader(statusCode int) {
-	m.StatusCode = statusCode
+	m.statusCode = statusCode
+}
+
+func (m *MockResponseWriter) StatusCode() int {
+	return m.statusCode
 }
 
 func NewMockResponseWriter() http.ResponseWriter {
