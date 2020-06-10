@@ -144,7 +144,7 @@ func (c *baseContainer) resolve(abstract interface{}, params ...interface{}) int
 		return c.resolveFunc(reflectType, reflectValue, params...)
 	}
 
-	panic(fmt.Errorf("unsupported type %T", abstract))
+	panic(fmt.Errorf("unsupported type %T, value is %v", abstract, abstract))
 }
 
 func (c *baseContainer) Make(abstract interface{}, params ...interface{}) interface{} {
