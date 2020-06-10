@@ -1,18 +1,33 @@
 package logging
 
 import (
+	config2 "github.com/firmeve/firmeve/config"
+	"github.com/firmeve/firmeve/container"
+	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
-	testing2 "github.com/firmeve/firmeve/testing"
+	"github.com/firmeve/firmeve/support/path"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
+
+const testingConfigPath = "../testdata/config/config.testing.yaml"
 
 var (
 	app contract.Application
 )
 
+func init() {
+	app = kernel.New()
+	app.Bind(`application`, app)
+	app.Bind(`firmeve`, app)
+	app.Bind(`config`, config2.New(path.RunRelative(testingConfigPath)), container.WithShare(true))
+	//providers = append([]contract.Provider{new(logging.Provider), new(event.Provider)}, providers...)
+	app.Register(new(Provider), false)
+	app.Boot()
+}
+
 func TestMain(m *testing.M) {
-	app = testing2.ApplicationDefault(new(Provider))
+	//app = testing2.ApplicationDefault()
 	m.Run()
 }
 
