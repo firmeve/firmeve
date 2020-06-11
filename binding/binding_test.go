@@ -1,10 +1,9 @@
 package binding
 
 import (
-	"fmt"
 	"github.com/firmeve/firmeve/kernel/contract"
+	testing2 "github.com/firmeve/firmeve/testing"
 	"github.com/julienschmidt/httprouter"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	net_http "net/http"
 	"testing"
@@ -17,10 +16,63 @@ const jsonData = `{
 	"sms":"11111"
 }`
 
-type User struct {
-	Name     string
-	Password string
+var (
+	app contract.Application
+)
+
+/*
+<input type="text" name="name" value="joeybloggs"/>
+  <input type="text" name="age" value="3"/>
+  <input type="text" name="gender" value="Male"/>
+  <input type="text" name="address[0].name" value="26 Here Blvd."/>
+  <input type="text" name="address[0].phone" value="9(999)999-9999"/>
+  <input type="text" name="address[1].name" value="26 There Blvd."/>
+  <input type="text" name="address[1].phone" value="1(111)111-1111"/>
+  <input type="text" name="active" value="true"/>
+  <input type="text" name="map_example[key]" value="value"/>
+  <input type="text" name="nested_map[key][key]" value="value"/>
+  <input type="text" name="nested_array[0][0]" value="value"/>
+  <input type="submit"/>
+*/
+
+// Address contains address information
+type Address struct {
+	Name  string `form:"name"`
+	Phone string `form:"phone"`
 }
+
+// User contains user information
+type User struct {
+	Name        string                       `form:"name"`
+	Age         uint8                        `form:"age"`
+	Gender      string                       `form:"gender"`
+	Active      bool                         `form:"active"`
+	Address     []Address                    `form:"address"`
+	MapExample  map[string]string            `form:"map_example"`
+	NestedMap   map[string]map[string]string `form:"nested_map"`
+	NestedArray [][]string                   `form:"nested_array"`
+}
+
+//func TestBindForm(t *testing.T) {
+//	buf := bytes.NewBuffer(nil)
+//	buf.WriteString("age=3")
+//	//buf.WriteString("&name=simon")
+//	buf.WriteString("&active=true")
+//	buf.WriteString("&gender=1")
+//	buf.WriteString("&map_example[key1]=v1")
+//	buf.WriteString("&map_example[key2]=v2")
+//	req, _ := net_http.NewRequest(net_http.MethodPost, "/?name=simon&age=10", buf)
+//	req.Header.Set(`Content-Type`, `application/x-www-form-urlencoded`)
+//	//mu := multipart.NewWriter(buf)
+//	http := http.NewHttp(app, req, http.NewWrapResponseWriter(&testing2.MockResponseWriter{
+//		Bytes:   nil,
+//		Headers: nil,
+//	}))
+//
+//	user := new(User)
+//	assert.Nil(t, Bind(http, user))
+//	fmt.Printf("%v", user)
+//}
 
 type Http struct {
 	mock.Mock
@@ -151,19 +203,17 @@ func (h Http) ClientIP() string {
 	return `0.0.0.0`
 }
 
-func TestBindJSON(t *testing.T) {
-	//	req := testing2.NewMockRequest("post", "/", `{
-	//name:abcdef
-	//password:123445
-	//}`)
-	//	req.Request.Header.Set("Content-Type", "application/json")
-	//	protocol := http.NewHttp(req.Request, &testing2.MockResponseWriter{})
-	assert.Implements(t, new(contract.HttpProtocol), &Http{})
-	user := new(User)
-	err := Bind(&Http{}, user)
-	fmt.Printf("%v", user)
-	assert.Equal(t, user.Name, "abc")
-	assert.Equal(t, user.Password, "123456")
-	assert.Nil(t, err)
-	//fmt.Printf("%v", user)
+func TestMain(t *testing.M) {
+	app = testing2.ApplicationDefault()
+	t.Run()
 }
+
+//func TestBindJSON(t *testing.T) {
+//	assert.Implements(t, new(contract.HttpProtocol), &Http{})
+//	user := new(User)
+//	err := Bind(&Http{}, user)
+//	fmt.Printf("%v", user)
+//	assert.Equal(t, user.Name, "abc")
+//	assert.Equal(t, user.Password, "123456")
+//	assert.Nil(t, err)
+//}
