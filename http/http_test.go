@@ -9,7 +9,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"mime/multipart"
 	http2 "net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
+	"time"
 )
 
 var (
@@ -111,6 +114,57 @@ func TestHttp_Request_Post_Sample(t *testing.T) {
 	assert.Equal(t, contract.HttpMimeMultipartForm, http.ContentType())
 }
 
-//func TestHttp_Values(t *testing.T) {
-//
-//}
+func TestHttpPostForm(t *testing.T) {
+	body := bytes.NewBuffer(nil)
+	body.WriteString(`{"name":"simon","phone":"18715155678","password":"123456","sms":"11111"}`)
+	req := httptest.NewRequest(http2.MethodPost, "/post", body)
+	req.Header.Set(`Content-Type`, `application/json`)
+	req.Header.Set(`X-Custom`, `value`)
+	req.Header.Set(`Accept`, `application/json`)
+	req.AddCookie(&http2.Cookie{
+		Name:    "foo",
+		Value:   "foo_value",
+		Path:    "/",
+		Expires: time.Now().Add(time.Hour),
+	})
+	h := NewHttp(app, req, NewWrapResponseWriter(httptest.NewRecorder()))
+	assert.Equal(t, h.Header(`x-custom`), `value`)
+	assert.Equal(t, h.Header(`X-Custom`), `value`)
+
+	assert.Equal(t, app, h.Application())
+	assert.Equal(t, `192.0.2.1`, h.ClientIP())
+	assert.Equal(t, req, h.Request())
+	assert.Equal(t, true, h.IsMethod(http2.MethodPost))
+	assert.Equal(t, `http`, h.Name())
+	assert.Equal(t, 0, len(h.Params()))
+	h.SetParams([]httprouter.Param{
+		{Key: "key", Value: "value"},
+	})
+	assert.Equal(t, ``, h.Param("a").Value)
+	assert.Equal(t, `value`, h.Param("key").Value)
+	assert.Equal(t, true, h.IsContentType(contract.HttpMimeJson))
+	assert.Equal(t, true, h.IsAccept(contract.HttpMimeJson))
+	cookieValue, _ := h.Cookie(`foo`)
+	assert.Equal(t, "foo_value", cookieValue)
+	message, _ := h.Message()
+	assert.Equal(t, true, len(message) > 0)
+	//raw := make([]byte, 0)
+	//n, _ := h.Read(raw)
+	//assert.Equal(t, true, n > 0)
+	assert.Equal(t, true, len(h.Metadata()) > 0)
+
+	// response
+	h.SetCookie(&http2.Cookie{
+		Name:    "foo",
+		Value:   "foo_value",
+		Path:    "/",
+		Expires: time.Now().Add(time.Hour),
+	})
+	h.SetStatus(200)
+	h.Write([]byte("string"))
+	response := h.ResponseWriter()
+	assert.Equal(t, 200, response.StatusCode())
+	assert.Equal(t, true, strings.Contains(response.Header().Get(`Set-Cookie`), `foo=foo_value`))
+	//assert.Equal(t,true,h.)
+	//h.
+}
