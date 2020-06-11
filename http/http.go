@@ -49,6 +49,13 @@ func (w *wrapResponseWriter) WriteHeader(statusCode int) {
 	w.responseWriter.WriteHeader(statusCode)
 }
 
+func NewWrapResponseWriter(responseWriter http.ResponseWriter) contract.HttpWrapResponseWriter {
+	return &wrapResponseWriter{
+		responseWriter: responseWriter,
+		statusCode:     0,
+	}
+}
+
 func NewHttp(application contract.Application, request *http.Request, responseWriter contract.HttpWrapResponseWriter) contract.HttpProtocol {
 	return &Http{
 		application:    application,

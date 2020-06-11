@@ -116,7 +116,7 @@ func (r *Router) routeKey(method, path string) string {
 
 func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	// wrap record statusCode
-	wrap := &wrapResponseWriter{responseWriter: w}
+	wrap := NewWrapResponseWriter(w)
 
 	// dispatch router
 	r.event.Dispatch(`http.request`, map[string]interface{}{
