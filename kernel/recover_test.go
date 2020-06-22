@@ -1,6 +1,7 @@
 package kernel
 
 import (
+	"github.com/stretchr/testify/assert"
 	"log"
 	"testing"
 )
@@ -33,7 +34,9 @@ func (l Logger) Panic(message string, context ...interface{}) {
 }
 
 func TestRecover(t *testing.T) {
-	panicFunc()
+	assert.Panics(t, func() {
+		panicFunc()
+	}, `error`)
 }
 
 func panicFunc() {
