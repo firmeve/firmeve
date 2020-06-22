@@ -73,6 +73,7 @@ func (r *Router) Handler(method, path string, handler http.HandlerFunc) {
 	r.createRoute(method, path, func(c contract.Context) {
 		protocol := c.Protocol().(contract.HttpProtocol)
 		handler(protocol.ResponseWriter(), protocol.Request())
+		c.Next()
 	})
 }
 

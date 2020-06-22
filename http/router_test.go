@@ -1,11 +1,14 @@
 package http
 
 import (
+	"errors"
 	"github.com/firmeve/firmeve/kernel/contract"
 	render2 "github.com/firmeve/firmeve/render"
 	testing2 "github.com/firmeve/firmeve/testing"
 	"github.com/julienschmidt/httprouter"
+	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/mock"
@@ -15,6 +18,7 @@ import (
 
 var configPath = "../testdata/config/config.yaml"
 
+//
 type MockResponseWriter struct {
 	mock.Mock
 	Bytes      []byte
@@ -126,6 +130,15 @@ func TestRouter_HttpRouter(t *testing.T) {
 	assert.IsType(t, &httprouter.Router{}, router.HttpRouter())
 }
 
+func TestRoute(t *testing.T) {
+	route := newRoute("/route", func(c contract.Context) {
+
+	}).Use(func(c contract.Context) {
+		c.Next()
+	})
+	assert.Equal(t, 2, len(route.Handlers()))
+}
+
 func TestRouter_Group(t *testing.T) {
 	router := New(testing2.ApplicationDefault())
 	v1 := router.Group("/v1").Use(func(ctx contract.Context) {
@@ -163,6 +176,9 @@ func TestRouter_Group(t *testing.T) {
 		v1.OPTIONS("/options", func(ctx contract.Context) {
 		})
 		assertBaseRoute(t, router.(*Router), http.MethodOptions, "/v1/options", "", 3)
+
+		v1.Handler(http.MethodGet, "/handler", func(writer http.ResponseWriter, request *http.Request) {
+		})
 	}
 
 	v1Dep := v1.Group("/dep").Use(func(ctx contract.Context) {
@@ -175,4 +191,40 @@ func TestRouter_Group(t *testing.T) {
 		})
 	}
 	assertBaseRoute(t, router.(*Router), http.MethodGet, "/v1/dep/gets/1", "", 4)
+}
+
+func TestRouter_createRouter(t *testing.T) {
+	r := New(testing2.ApplicationDefault())
+	r.GET("/router-handler", func(c contract.Context) {
+		c.RenderWith(200, render2.Plain, "hello")
+		c.Next()
+	})
+	r.Handler(http.MethodGet, "/handler", func(writer http.ResponseWriter, request *http.Request) {
+		writer.Write([]byte("hello"))
+	})
+	r.Static("/", "../testdata/")
+	r.(*Router).NotFound(func(c contract.Context) {
+		c.Error(404, errors.New("not found"))
+	})
+	s := httptest.NewServer(r)
+
+	res, err := s.Client().Get(s.URL + "/router-handler")
+	assert.Nil(t, err)
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	assert.Nil(t, err)
+	assert.Equal(t, "hello", string(body))
+
+	res1, err := s.Client().Get(s.URL + "/handler")
+	assert.Nil(t, err)
+	defer res1.Body.Close()
+	body1, err := ioutil.ReadAll(res1.Body)
+	assert.Nil(t, err)
+	assert.Equal(t, "hello", string(body1))
+
+	res2, err := s.Client().Get(s.URL + "/404")
+	assert.Nil(t, err)
+	defer res2.Body.Close()
+
+	assert.Equal(t, 404, res2.StatusCode)
 }
