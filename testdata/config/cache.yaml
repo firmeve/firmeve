@@ -1,7 +1,0 @@
-prefix: firmeve_cache
-default: redis
-repositories:
-  redis:
-    host: 127.0.0.1
-    port: 6379
-    db: 0
