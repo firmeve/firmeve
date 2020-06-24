@@ -56,8 +56,13 @@ func TestRepository_Pull_Default(t *testing.T) {
 	value1, err := cache.Pull(key)
 	assert.Equal(t, "def", value1.(string))
 
+	_, err = cache.Pull(key)
+	assert.NotNil(t, err)
+
 	value2, err := cache.PullDefault(key, "abc")
 	assert.Equal(t, "abc", value2.(string))
+	_, err = cache.PullDefault(key, "abc")
+	assert.Nil(t, err)
 
 	value3, err := cache.PullDefault(t.Name()+randString(20), "abcd")
 	assert.Equal(t, "abcd", value3.(string))
@@ -99,10 +104,10 @@ func TestRepository_AddEncode(t *testing.T) {
 	cache := Default()
 	key := randString(30)
 	err := cache.AddEncode(key, test, time.Now().Add(time.Hour))
-	if err != nil {
-		fmt.Errorf("%s\n", err.Error())
-		t.Fail()
-	}
+	assert.Nil(t, err)
+
+	err1 := cache.AddEncode(``, nil, time.Now().Add(time.Hour))
+	assert.NotNil(t, err1)
 }
 
 func TestRepository_PutEncode(t *testing.T) {
@@ -110,10 +115,10 @@ func TestRepository_PutEncode(t *testing.T) {
 	cache := Default()
 	key := randString(30)
 	err := cache.PutEncode(key, test, time.Now().Add(time.Hour))
-	if err != nil {
-		fmt.Errorf("%s\n", err.Error())
-		t.Fail()
-	}
+	assert.Nil(t, err)
+
+	err1 := cache.PutEncode(``, nil, time.Now().Add(time.Hour))
+	assert.NotNil(t, err1)
 }
 
 func TestRepository_ForeverEncode(t *testing.T) {
@@ -121,10 +126,10 @@ func TestRepository_ForeverEncode(t *testing.T) {
 	cache := Default()
 	key := randString(30)
 	err := cache.ForeverEncode(key, test)
-	if err != nil {
-		fmt.Errorf("%s\n", err.Error())
-		t.Fail()
-	}
+	assert.Nil(t, err)
+
+	err1 := cache.ForeverEncode(``, nil)
+	assert.NotNil(t, err1)
 }
 
 func TestRepository_GetDecode(t *testing.T) {
@@ -133,18 +138,16 @@ func TestRepository_GetDecode(t *testing.T) {
 	cache := Default()
 	key := randString(30)
 	err := cache.AddEncode(key, test, time.Now().Add(time.Hour))
-	if err != nil {
-		fmt.Errorf("%s\n", err.Error())
-		t.Fail()
-	}
+	assert.Nil(t, err)
 
 	value, err := cache.GetDecode(key, &EncodeTest{})
-	if err != nil {
-		t.Fail()
-	}
+	assert.Nil(t, err)
 
 	assert.Equal(t, "James", value.(*EncodeTest).Name)
 	assert.Equal(t, 10, value.(*EncodeTest).Age)
+
+	_, err = cache.GetDecode(``, &EncodeTest{})
+	assert.NotNil(t, err)
 }
 
 func TestRepository_Increment(t *testing.T) {
