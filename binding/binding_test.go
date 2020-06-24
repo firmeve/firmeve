@@ -1,20 +1,15 @@
 package binding
 
 import (
+	json2 "encoding/json"
+	"errors"
 	"github.com/firmeve/firmeve/kernel/contract"
-	testing2 "github.com/firmeve/firmeve/testing"
-	"github.com/julienschmidt/httprouter"
-	"github.com/stretchr/testify/mock"
-	net_http "net/http"
+	mock2 "github.com/firmeve/firmeve/testing/mock"
+	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/assert"
+	"net/url"
 	"testing"
 )
-
-const jsonData = `{
-	"name":"abc",
-	"mobile":"18715155678",
-	"password":"123456",
-	"sms":"11111"
-}`
 
 var (
 	app contract.Application
@@ -37,183 +32,133 @@ var (
 
 // Address contains address information
 type Address struct {
+	Name  string
+	Phone string
+}
+
+type AddressForm struct {
 	Name  string `form:"name"`
 	Phone string `form:"phone"`
 }
 
 // User contains user information
 type User struct {
-	Name        string                       `form:"name"`
-	Age         uint8                        `form:"age"`
-	Gender      string                       `form:"gender"`
-	Active      bool                         `form:"active"`
-	Address     []Address                    `form:"address"`
-	MapExample  map[string]string            `form:"map_example"`
-	NestedMap   map[string]map[string]string `form:"nested_map"`
-	NestedArray [][]string                   `form:"nested_array"`
+	Name        string
+	Age         uint8
+	Gender      string
+	Active      bool
+	Address     []Address
+	MapExample  map[string]string
+	NestedMap   map[string]map[string]string
+	NestedArray [][]string
 }
 
-//func TestBindForm(t *testing.T) {
-//	buf := bytes.NewBuffer(nil)
-//	buf.WriteString("age=3")
-//	//buf.WriteString("&name=simon")
-//	buf.WriteString("&active=true")
-//	buf.WriteString("&gender=1")
-//	buf.WriteString("&map_example[key1]=v1")
-//	buf.WriteString("&map_example[key2]=v2")
-//	req, _ := net_http.NewRequest(net_http.MethodPost, "/?name=simon&age=10", buf)
-//	req.Header.Set(`Content-Type`, `application/x-www-form-urlencoded`)
-//	//mu := multipart.NewWriter(buf)
-//	http := http.NewHttp(app, req, http.NewWrapResponseWriter(&testing2.MockResponseWriter{
-//		Bytes:   nil,
-//		Headers: nil,
-//	}))
-//
-//	user := new(User)
-//	assert.Nil(t, Bind(http, user))
-//	fmt.Printf("%v", user)
-//}
+func TestBindJSON(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 
-type Http struct {
-	mock.Mock
-}
-
-func (h Http) Application() contract.Application {
-	panic("implement me")
-}
-
-func (h Http) SetSession(session contract.Session) {
-	panic("implement me")
-}
-
-func (h Http) Session() contract.Session {
-	panic("implement me")
-}
-
-func (h Http) SessionValue(key string) interface{} {
-	panic("implement me")
-}
-
-func (h Http) Read(p []byte) (n int, err error) {
-	return 0, nil
-}
-
-func (h Http) Write(p []byte) (n int, err error) {
-	return 0, nil
-}
-
-func (h Http) Name() string {
-	return `http`
-}
-
-func (h Http) Metadata() map[string][]string {
-	panic("implement me")
-}
-
-func (h Http) Message() ([]byte, error) {
-	return []byte(jsonData), nil
-}
-
-func (h Http) Values() map[string][]string {
-	panic("implement me")
-}
-
-func (h Http) Request() *net_http.Request {
-	panic("implement me")
-}
-
-func (h Http) SetHeader(key, value string) {
-	panic("implement me")
-}
-
-func (h Http) SetParams(params []httprouter.Param) {
-	panic("implement me")
-}
-
-func (h Http) Params() []httprouter.Param {
-	panic("implement me")
-}
-
-func (h Http) Param(key string) httprouter.Param {
-	panic("implement me")
-}
-
-func (h Http) SetRoute(route contract.HttpRoute) {
-	panic("implement me")
-}
-
-func (h Http) Route() contract.HttpRoute {
-	panic("implement me")
-}
-
-func (h Http) Header(key string) string {
-	panic("implement me")
-}
-
-func (h Http) IsContentType(key string) bool {
-	panic("implement me")
-}
-
-func (h Http) IsAccept(key string) bool {
-	panic("implement me")
-}
-
-func (h Http) IsMethod(key string) bool {
-	if key == net_http.MethodGet {
-		return false
+	http := mock2.NewMockHttpProtocol(mockCtrl)
+	http.EXPECT().IsMethod(`GET`).Return(false)
+	http.EXPECT().ContentType().Return(`application/json`)
+	user := &User{
+		Name:   "hello",
+		Age:    123,
+		Gender: "gender",
+		Active: false,
+		Address: []Address{{
+			Name:  "address",
+			Phone: "18712345234",
+		}},
+		MapExample: map[string]string{"key": "value"},
+		NestedMap:  map[string]map[string]string{"nested": {"n_key": "n_value"}},
+		NestedArray: [][]string{
+			{"a", "b"},
+			{"d", "e"},
+		},
 	}
-	return false
+	v, err := json2.Marshal(user)
+	assert.Nil(t, err)
+	http.EXPECT().Message().Return(v, nil)
+
+	user2 := new(User)
+	err = Bind(http, user2)
+	assert.Nil(t, err)
+	//fmt.Printf("%#v", user2)
+	assert.Equal(t, *user, *user2)
 }
 
-func (h Http) ContentType() string {
-	return `application/json`
+func TestBindQuery(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	http := mock2.NewMockHttpProtocol(mockCtrl)
+	http.EXPECT().IsMethod(`GET`).Return(true)
+	http.EXPECT().Values().Return(map[string][]string{
+		"name":  {"simon"},
+		"phone": {"123"},
+	})
+	address := new(AddressForm)
+	err := Bind(http, address)
+	assert.Nil(t, err)
+	assert.Equal(t, "simon", address.Name)
+	assert.Equal(t, "123", address.Phone)
 }
 
-func (h Http) Accept() []string {
-	return []string{
-		`application/json`,
+func TestBindForm(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
+
+	http := mock2.NewMockHttpProtocol(mockCtrl)
+	http.EXPECT().IsMethod(`GET`).Return(false)
+	http.EXPECT().ContentType().Return(contract.HttpMimeForm)
+	form := url.Values{
+		"Name":                     []string{"hello"},
+		"Age":                      []string{"123"},
+		"Gender":                   []string{"gender"},
+		"Address[0].Name":          []string{"address"},
+		"Address[0].Phone":         []string{"18712345234"},
+		"active":                   []string{"false"},
+		"MapExample[key]":          []string{"value"},
+		"NestedMap[nested][n_key]": []string{"n_value"},
+		"NestedArray[0][0]":        []string{"a"},
+		"NestedArray[0][1]":        []string{"b"},
+		"NestedArray[1][0]":        []string{"d"},
+		"NestedArray[1][1]":        []string{"e"},
 	}
+	gomock.InOrder(
+		//http.EXPECT().Values().Return(form),
+		http.EXPECT().Values().Return(form),
+	)
+	//http.EXPECT().Values().Return(form)
+
+	user := &User{
+		Name:   "hello",
+		Age:    123,
+		Gender: "gender",
+		Active: false,
+		Address: []Address{{
+			Name:  "address",
+			Phone: "18712345234",
+		}},
+		MapExample: map[string]string{"key": "value"},
+		NestedMap:  map[string]map[string]string{"nested": {"n_key": "n_value"}},
+		NestedArray: [][]string{
+			{"a", "b"},
+			{"d", "e"},
+		},
+	}
+
+	user2 := new(User)
+	err := Bind(http, user2)
+	assert.Nil(t, err)
+	assert.Equal(t, *user, *user2)
 }
 
-func (h Http) SetStatus(status int) {
-	panic("implement me")
-}
+func TestFormError(t *testing.T) {
+	mockCtrl := gomock.NewController(t)
+	defer mockCtrl.Finish()
 
-func (h Http) SetCookie(cookie *net_http.Cookie) {
-	panic("implement me")
+	protocol := mock2.NewMockProtocol(mockCtrl)
+	err := Form.Protocol(protocol, nil)
+	assert.Equal(t, true, errors.Is(ProtocolTypeError, err))
 }
-
-func (h Http) Cookie(name string) (string, error) {
-	panic("implement me")
-}
-
-func (h Http) Redirect(status int, location string) {
-	panic("implement me")
-}
-
-func (h Http) Clone() contract.Protocol {
-	return h
-}
-
-func (h Http) ResponseWriter() contract.HttpWrapResponseWriter {
-	return nil
-}
-
-func (h Http) ClientIP() string {
-	return `0.0.0.0`
-}
-
-func TestMain(t *testing.M) {
-	app = testing2.ApplicationDefault()
-	t.Run()
-}
-
-//func TestBindJSON(t *testing.T) {
-//	assert.Implements(t, new(contract.HttpProtocol), &Http{})
-//	user := new(User)
-//	err := Bind(&Http{}, user)
-//	fmt.Printf("%v", user)
-//	assert.Equal(t, user.Name, "abc")
-//	assert.Equal(t, user.Password, "123456")
-//	assert.Nil(t, err)
-//}

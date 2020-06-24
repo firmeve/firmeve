@@ -1,3 +1,4 @@
+//go:generate mockgen -package mock -destination ../../testing/mock/mock_application.go github.com/firmeve/firmeve/kernel/contract Application
 package contract
 
 const (

@@ -1,3 +1,4 @@
+//go:generate mockgen -package mock -destination ../../testing/mock/mock_http.go github.com/firmeve/firmeve/kernel/contract Protocol,HttpProtocol,HttpRoute,HttpRouteGroup,HttpRouter
 package contract
 
 import (

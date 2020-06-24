@@ -15,26 +15,30 @@ const (
 
 type (
 	context struct {
-		firmeve  contract.Application
-		protocol contract.Protocol
-		handlers []contract.ContextHandler
-		entries  map[string]*contract.ContextEntity
-		index    int
+		application contract.Application
+		protocol    contract.Protocol
+		handlers    []contract.ContextHandler
+		entries     map[string]*contract.ContextEntity
+		index       int
 	}
 )
 
 func NewContext(firmeve contract.Application, protocol contract.Protocol, handlers ...contract.ContextHandler) contract.Context {
 	return &context{
-		firmeve:  firmeve,
-		protocol: protocol,
-		handlers: handlers,
-		entries:  make(map[string]*contract.ContextEntity, 0),
-		index:    0,
+		application: firmeve,
+		protocol:    protocol,
+		handlers:    handlers,
+		entries:     make(map[string]*contract.ContextEntity, 0),
+		index:       0,
 	}
 }
 
 func (c *context) Firmeve() contract.Application {
-	return c.firmeve
+	return c.application
+}
+
+func (c *context) Application() contract.Application {
+	return c.application
 }
 
 func (c *context) Protocol() contract.Protocol {
@@ -61,6 +65,10 @@ func (c *context) Error(status int, err error) {
 
 func (c *context) Abort() {
 	c.index = abortIndex
+}
+
+func (c *context) Current() int {
+	return c.index
 }
 
 func (c *context) Next() {
@@ -111,7 +119,7 @@ func (c *context) Bind(v interface{}) error {
 }
 
 func (c *context) BindValidate(v interface{}) error {
-	if err := binding.Bind(c.protocol, v); err != nil {
+	if err := c.Bind(v); err != nil {
 		return err
 	}
 
@@ -119,7 +127,7 @@ func (c *context) BindValidate(v interface{}) error {
 }
 
 func (c *context) BindWithValidate(b contract.Binding, v interface{}) error {
-	if err := b.Protocol(c.protocol, v); err != nil {
+	if err := c.BindWith(b, v); err != nil {
 		return err
 	}
 
@@ -142,7 +150,7 @@ func (c *context) Clone() contract.Context {
 	ctxNew := new(context)
 	*ctxNew = *c
 	ctxNew.protocol = c.protocol.Clone()
-	ctxNew.firmeve = c.firmeve
+	ctxNew.application = c.application
 	ctxNew.index = c.index
 	ctxNew.handlers = c.handlers
 
@@ -154,7 +162,7 @@ func (c *context) Clone() contract.Context {
 }
 
 func (c *context) Resolve(abstract interface{}, params ...interface{}) interface{} {
-	return c.firmeve.Make(abstract, params...)
+	return c.application.Make(abstract, params...)
 }
 
 // --------------------------- context.Context -> Base context ------------------------

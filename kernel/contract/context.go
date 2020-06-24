@@ -1,3 +1,4 @@
+//go:generate mockgen -package mock -destination ../../testing/mock/mock_context.go github.com/firmeve/firmeve/kernel/contract Context
 package contract
 
 import (
@@ -17,6 +18,8 @@ type (
 
 		Firmeve() Application
 
+		Application() Application
+
 		Protocol() Protocol
 
 		Next()
@@ -28,6 +31,8 @@ type (
 		Entity(key string) *ContextEntity
 
 		Abort()
+
+		Current() int
 
 		Error(status int, err error)
 
