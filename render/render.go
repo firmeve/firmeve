@@ -21,7 +21,7 @@ func Render(protocol contract.Protocol, status int, v interface{}) error {
 			}
 		}
 
-		return Plain.Render(protocol, status, v)
+		return Text.Render(protocol, status, v)
 		//return fmt.Errorf("non-existent type %v", accept)
 	}
 
