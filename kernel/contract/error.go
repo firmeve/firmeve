@@ -1,3 +1,4 @@
+//go:generate mockgen -package mock -destination ../../testing/mock/mock_error.go github.com/firmeve/firmeve/kernel/contract Error,ErrorStack,ErrorRender
 package contract
 
 type Error interface {

@@ -92,3 +92,18 @@ func TestRenderData(t *testing.T) {
 	})
 	assert.Nil(t, err1)
 }
+
+func TestRenderError(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	response := mock.NewMockHttpWrapResponseWriter(ctrl)
+	response.EXPECT().WriteHeader(401)
+	protocol := mock.NewMockHttpProtocol(ctrl)
+	protocol.EXPECT().SetHeader(`Content-Type`, `application/json`)
+	protocol.EXPECT().Accept().Return([]string{`application/json`})
+	protocol.EXPECT().ResponseWriter().Return(response)
+	protocol.EXPECT().Write([]byte(`{"message":"未认证"}`))
+
+	err1 := Error.Render(protocol, 401, "未认证")
+	assert.Nil(t, err1)
+}

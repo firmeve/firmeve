@@ -34,7 +34,7 @@ type (
 
 		Current() int
 
-		Error(status int, err error)
+		Error(status int, err interface{})
 
 		Bind(v interface{}) error
 

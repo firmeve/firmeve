@@ -1,9 +1,7 @@
 package context
 
 import (
-	"fmt"
 	"github.com/firmeve/firmeve/binding"
-	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/render"
 	"time"
@@ -45,19 +43,20 @@ func (c *context) Protocol() contract.Protocol {
 	return c.protocol
 }
 
-func (c *context) Error(status int, err error) {
+func (c *context) Error(status int, err interface{}) {
 	// record logger
-	go c.Resolve(`logger`).(contract.Loggable).Error(fmt.Sprintf("http error: %s", err.Error()), "error", err)
+	go c.Resolve(`logger`).(contract.Loggable).Error(
+		`http error`, "error", err)
 
-	var newErr contract.ErrorRender
+	// custom error
 	if v, ok := err.(contract.ErrorRender); ok {
-		newErr = v
+		if err2 := v.Render(status, c); err2 != nil {
+			panic(err2)
+		}
 	} else {
-		newErr = kernel.ErrorWarp(err)
-	}
-
-	if err2 := newErr.Render(status, c); err2 != nil {
-		panic(err2)
+		if err2 := render.Error.Render(c.protocol, status, err); err2 != nil {
+			panic(err2)
+		}
 	}
 
 	c.Abort()

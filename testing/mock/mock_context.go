@@ -214,7 +214,7 @@ func (mr *MockContextMockRecorder) Err() *gomock.Call {
 }
 
 // Error mocks base method
-func (m *MockContext) Error(arg0 int, arg1 error) {
+func (m *MockContext) Error(arg0 int, arg1 interface{}) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "Error", arg0, arg1)
 }

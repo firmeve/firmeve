@@ -45,23 +45,23 @@ func (b *basicError) String() string {
 	return b.Error()
 }
 
-func (b *basicError) Render(status int, ctx contract.Context) error {
-	v := map[string]interface{}{
-		`status`:  status,
-		`message`: b.Error(),
-	}
-
-	if ctx.Firmeve().IsDevelopment() {
-		v[`meta`] = b.meta
-		v[`stack`] = b.StackString()
-	}
-	//
-	//if protocol, ok := ctx.Protocol().(contract.HttpProtocol); ok {
-	//	if protocol.IsContentType(contract.HttpMimeJson)
-	//}
-
-	return ctx.Render(status, v)
-}
+//func (b *basicError) Render(status int, ctx contract.Context) error {
+//	v := map[string]interface{}{
+//		`status`:  status,
+//		`message`: b.Error(),
+//	}
+//
+//	if ctx.Firmeve().IsDevelopment() {
+//		v[`meta`] = b.meta
+//		v[`stack`] = b.StackString()
+//	}
+//	//
+//	//if protocol, ok := ctx.Protocol().(contract.HttpProtocol); ok {
+//	//	if protocol.IsContentType(contract.HttpMimeJson)
+//	//}
+//
+//	return ctx.Render(status, v)
+//}
 
 func (b *basicError) Stack() []uintptr {
 	return b.stack
@@ -107,10 +107,7 @@ func Error(message string) *basicError {
 }
 
 func Errorf(format string, args ...interface{}) *basicError {
-	return &basicError{
-		message: fmt.Sprintf(format, args...),
-		stack:   callers(),
-	}
+	return Error(fmt.Sprintf(format, args...))
 }
 
 func ErrorWarp(err error) *basicError {
