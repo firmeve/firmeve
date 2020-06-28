@@ -82,7 +82,7 @@ func (c *HttpCommand) Run(root contract.BaseCommand, cmd *cobra.Command, args []
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 	if err := srv.Shutdown(ctx); err != nil {
-		c.logger.Fatal("Server shutdown: ", err)
+		c.logger.Fatal("Server shutdown error", "error", err)
 	}
 
 	c.debugLog("Server exiting")
