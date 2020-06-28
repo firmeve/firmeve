@@ -103,6 +103,7 @@ func Error(message string) *basicError {
 	return &basicError{
 		message: message,
 		stack:   callers(),
+		meta:    make(map[string]interface{}, 0),
 	}
 }
 
@@ -120,5 +121,6 @@ func ErrorWarp(err error) *basicError {
 	return &basicError{
 		stack: stacks,
 		err:   err,
+		meta:  make(map[string]interface{}, 0),
 	}
 }
