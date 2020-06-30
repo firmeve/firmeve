@@ -22,7 +22,7 @@ func (t TestCommand) Run(root contract.BaseCommand, cmd *cobra.Command, args []s
 }
 
 func main() {
-	firmeve.RunDefault(firmeve.WithCommands(
+	firmeve.RunDefault(firmeve.WithConfigPath(`../config.yaml`), firmeve.WithCommands(
 		[]contract.Command{
 			new(TestCommand),
 		},
