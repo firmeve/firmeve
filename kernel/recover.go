@@ -21,7 +21,7 @@ func RecoverCallback(logger contract.Loggable, callback func(err interface{}, pa
 		} else if v, ok := err.(string); ok {
 			message = v
 		} else {
-			message = `mixed type`
+			message = `unknown`
 		}
 
 		// merge all record params

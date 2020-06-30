@@ -1,75 +1,98 @@
 package http
 
 import (
-	"context"
-	"fmt"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/spf13/cobra"
-	"golang.org/x/net/http2"
-	net_http "net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 )
 
-type HttpCommand struct {
-	command *cobra.Command
-	logger  contract.Loggable
-}
-
-func (c *HttpCommand) CobraCmd() *cobra.Command {
-	c.command = new(cobra.Command)
-	c.command.Use = "http:serve"
-	c.command.Short = "Http server"
-	c.command.Flags().StringP("host", "H", ":80", "Http serve address")
-	c.command.Flags().BoolP("http2", "", false, "Open http2 protocol")
-	c.command.Flags().StringP("cert-file", "", "", "Http2 cert file path")
-	c.command.Flags().StringP("key-file", "", "", "Http2 key file path")
-
-	return c.command
-}
-
-func (c *HttpCommand) Run(root contract.BaseCommand, cmd *cobra.Command, args []string) {
-	c.logger = root.Resolve(`logger`).(contract.Loggable)
-	var (
-		host      = cmd.Flag("host").Value.String()
-		certFile  = cmd.Flag(`cert-file`).Value.String()
-		keyFile   = cmd.Flag(`key-file`).Value.String()
-		openHttp2 = cmd.Flag(`http2`).Value.String()
-	)
-	srv := &net_http.Server{
-		Addr:    host,
-		Handler: root.Resolve(`http.router`).(*Router),
-		//ErrorLog: log.New(new(serverLog), ``, log.LstdFlags),
+type (
+	Command struct {
 	}
+)
 
-	c.debugLog(`Goroutine http server`)
+var (
+	host                              string
+	readTimeout                       time.Duration
+	writeTimeout                      time.Duration
+	readHeaderTimeout                 time.Duration
+	idleTimeout                       time.Duration
+	maxHeaderBytes                    int
+	certFile                          string
+	keyFile                           string
+	http2Var                          bool
+	http2MaxHandlers                  int
+	http2MaxConcurrentStreams         uint32
+	http2MaxReadFrameSize             uint32
+	http2PermitProhibitedCipherSuites bool
+	http2IdleTimeout                  time.Duration
+	http2MaxUploadBufferPerConnection int32
+	http2MaxUploadBufferPerStream     int32
+)
 
-	go func() {
-		var err error
+var (
+	logger contract.Loggable
+)
 
-		// ssl
-		if certFile != `` && keyFile != `` {
-			c.debugLog(`Start https server[` + host + `] key[` + keyFile + `] cert[` + certFile + `]`)
-			err = srv.ListenAndServeTLS(certFile, keyFile)
-			// http2
-			if openHttp2 == `true` {
-				c.debugLog(`Open http2`)
-				//@todo conf is empty
-				err = http2.ConfigureServer(srv, &http2.Server{})
-			}
-		} else {
-			c.debugLog(`Start http server[` + host + `]`)
-			err = srv.ListenAndServe()
-		}
+func (c *Command) CobraCmd() *cobra.Command {
+	command := new(cobra.Command)
+	command.Use = "http:serve"
+	command.Short = "Http server"
+	command.Flags().StringVarP(&host, "host", "H", ":80", "http serve address")
+	command.Flags().DurationVar(&readTimeout, "read-timeout", time.Minute, "read timeout default a minute")
+	command.Flags().DurationVar(&writeTimeout, "write-timeout", time.Minute, "write timeout default a minute")
+	command.Flags().DurationVar(&readHeaderTimeout, "read-header-timeout", time.Second*50, "read header timeout default fifty seconds")
+	command.Flags().DurationVar(&idleTimeout, "idle-timeout", time.Minute*3, "idle timeout default three minute")
+	command.Flags().IntVar(&maxHeaderBytes, "max-header-bytes", 1024*1024*10, "max header bytes default 10mb") // 10m
+	command.Flags().StringVar(&keyFile, "key-file", "", "ssl key file path")
+	command.Flags().StringVar(&certFile, "cert-file", "", "ssl cert file path")
+	command.Flags().BoolVar(&http2Var, "http2", false, "enable http2 default false")
+	command.Flags().IntVar(&http2MaxHandlers, "http2-max-handlers", 0, "http2 max handlers default 0")
+	command.Flags().Uint32Var(&http2MaxConcurrentStreams, "http2-max-concurrent-streams", 0, "http2 max concurrent streams default 0")
+	command.Flags().Uint32Var(&http2MaxReadFrameSize, "http2-max-read-frame-size", 0, "http2 max read frame size default 0")
+	command.Flags().BoolVar(&http2PermitProhibitedCipherSuites, "http2-permit-prohibited-cipher-suites", false, "http2 permit prohibited cipher suites default false")
+	command.Flags().DurationVar(&http2IdleTimeout, "http2-idle-timeout", time.Minute*3, "http2 idle timeout default three minutes")
+	command.Flags().Int32Var(&http2MaxUploadBufferPerConnection, "http2-max-upload-buffer-per-connection", 65535, "http2 max upload buffer connection default 65535")
+	command.Flags().Int32Var(&http2MaxUploadBufferPerStream, "http2-max-upload-buffer-per-stream", 0, "http2 max upload buffer stream default 0")
 
-		if err != nil && err != net_http.ErrServerClosed {
-			c.logger.Fatal(fmt.Sprintf("listen: %s\n", err))
-		}
-	}()
+	return command
+}
 
-	c.logger.Debug(`Signal listen SIGTERM(kill),SIGINT(kill -2),SIGKILL(kill -9)`)
+func (c *Command) Run(root contract.BaseCommand, cmd *cobra.Command, args []string) {
+	logger = root.Resolve(`logger`).(contract.Loggable)
+
+	debugLog(`Goroutine http server`)
+
+	server := NewServer(
+		root.Resolve(`http.router`).(*Router),
+		map[string]interface{}{
+			`host`:                                   host,
+			`read-timeout`:                           readTimeout,
+			`write-timeout`:                          writeTimeout,
+			`read-header-timeout`:                    readHeaderTimeout,
+			`idle-timeout`:                           idleTimeout,
+			`max-header-bytes`:                       maxHeaderBytes, // 10m
+			`cert-file`:                              certFile,
+			`key-file`:                               keyFile,
+			`http2`:                                  http2Var,
+			`http2-max-handlers`:                     http2MaxHandlers,
+			`http2-max-concurrent-streams`:           http2MaxConcurrentStreams,
+			`http2-max-read-frame-size`:              http2MaxReadFrameSize,
+			`http2-permit-prohibited-cipher-suites`:  http2PermitProhibitedCipherSuites,
+			`http2-idle-timeout`:                     http2IdleTimeout,
+			`http2-max-upload-buffer-per-connection`: http2MaxUploadBufferPerConnection,
+			`http2-max-upload-buffer-per-stream`:     http2MaxUploadBufferPerStream,
+		},
+	)
+
+	go server.Start()
+	//		c.debugLog(`Start https server[` + host + `] key[` + keyFile + `] cert[` + certFile + `]`)
+	//		c.debugLog(`Start http server[` + host + `]`)
+
+	debugLog(`Signal listen SIGTERM(kill),SIGINT(kill -2),SIGKILL(kill -9)`)
 	quit := make(chan os.Signal, 1)
 	// kill (no param) default send syscall.SIGTERM
 	// kill -2 is syscall.SIGINT
@@ -77,19 +100,17 @@ func (c *HttpCommand) Run(root contract.BaseCommand, cmd *cobra.Command, args []
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 	<-quit
 
-	c.debugLog("Shutdown server")
+	debugLog("Shutdown server")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
-	defer cancel()
-	if err := srv.Shutdown(ctx); err != nil {
-		c.logger.Fatal("Server shutdown error", "error", err)
+	if err := server.Stop(); err != nil {
+		logger.Fatal("Server shutdown error", "error", err)
 	}
 
-	c.debugLog("Server exiting")
+	debugLog("Server exiting")
 }
 
-func (c *HttpCommand) debugLog(message string, context ...interface{}) {
-	c.logger.Debug(message, context...)
+func debugLog(message string, context ...interface{}) {
+	logger.Debug(message, context...)
 }
 
 //type serverLog struct {

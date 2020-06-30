@@ -21,7 +21,7 @@ var (
 	}
 
 	defaultCommands = []contract.Command{
-		new(http.HttpCommand),
+		new(http.Command),
 	}
 
 	Application contract.Application

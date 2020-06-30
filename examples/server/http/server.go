@@ -47,7 +47,7 @@ func (a *App) Boot() {
 }
 
 func main() {
-	firmeve.RunDefault(firmeve.WithProviders(
+	firmeve.RunDefault(firmeve.WithConfigPath("./config.yaml"), firmeve.WithProviders(
 		[]contract.Provider{
 			new(App),
 		},
