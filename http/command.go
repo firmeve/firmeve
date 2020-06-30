@@ -1,6 +1,7 @@
 package http
 
 import (
+	"context"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/spf13/cobra"
 	"os"
@@ -88,7 +89,7 @@ func (c *Command) Run(root contract.BaseCommand, cmd *cobra.Command, args []stri
 		},
 	)
 
-	go server.Start()
+	go server.Start(nil)
 	//		c.debugLog(`Start https server[` + host + `] key[` + keyFile + `] cert[` + certFile + `]`)
 	//		c.debugLog(`Start http server[` + host + `]`)
 
@@ -102,7 +103,7 @@ func (c *Command) Run(root contract.BaseCommand, cmd *cobra.Command, args []stri
 
 	debugLog("Shutdown server")
 
-	if err := server.Stop(); err != nil {
+	if err := server.Stop(context.Background()); err != nil {
 		logger.Fatal("Server shutdown error", "error", err)
 	}
 

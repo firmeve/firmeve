@@ -36,7 +36,7 @@ var DefaultConfig = map[string]interface{}{
 	`http2-max-upload-buffer-per-stream`:     0,
 }
 
-func NewServer(handler net_http.Handler, srvConfig map[string]interface{}) *Server {
+func NewServer(handler net_http.Handler, srvConfig map[string]interface{}) contract.Server {
 	srvConfig = maps.MergeInterface(DefaultConfig, srvConfig)
 	return &Server{
 		srvConfig: maps.MergeInterface(DefaultConfig, srvConfig),
@@ -53,7 +53,7 @@ func NewServer(handler net_http.Handler, srvConfig map[string]interface{}) *Serv
 	}
 }
 
-func (s *Server) Start() error {
+func (s *Server) Start(ctx context.Context) error {
 	var (
 		err error
 	)
@@ -78,13 +78,13 @@ func (s *Server) Start() error {
 	return err
 }
 
-func (s *Server) Stop() error {
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+func (s *Server) Stop(ctx context.Context) error {
+	ctx, cancel := context.WithTimeout(ctx, 15*time.Second)
 	defer cancel()
 	return s.srv.Shutdown(ctx)
 }
 
-func (s *Server) Restart() error {
-	s.Stop()
-	return s.Start()
+func (s *Server) Restart(ctx context.Context) error {
+	s.Stop(ctx)
+	return s.Start(ctx)
 }
