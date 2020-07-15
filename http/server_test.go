@@ -67,10 +67,17 @@ func TestNewServerHttp2(t *testing.T) {
 	ctx := context.Background()
 	router := mock.NewMockHttpRouter(mockCtrl)
 	server1 := NewServer(router, map[string]interface{}{
-		`host`:      `0.0.0.0:11223`,
-		`cert-file`: `../testdata/ssl/server.crt`,
-		`key-file`:  `../testdata/ssl/server.key`,
-		`http2`:     true,
+		`host`:                                   `0.0.0.0:11223`,
+		`cert-file`:                              `../testdata/ssl/server.crt`,
+		`key-file`:                               `../testdata/ssl/server.key`,
+		`http2`:                                  true,
+		`http2-max-handlers`:                     10,
+		`http2-max-concurrent-streams`:           uint32(11),
+		`http2-max-read-frame-size`:              uint32(11),
+		`http2-permit-prohibited-cipher-suites`:  true,
+		`http2-idle-timeout`:                     time.Second * 7,
+		`http2-max-upload-buffer-per-connection`: int32(86400),
+		`http2-max-upload-buffer-per-stream`:     int32(10080),
 	})
 
 	go func(t2 *testing.T) {

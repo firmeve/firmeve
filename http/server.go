@@ -62,16 +62,17 @@ func (s *Server) Start(ctx context.Context) error {
 
 	if keyFile != `` && certFile != `` {
 		err = s.srv.ListenAndServeTLS(certFile, keyFile)
-	} else if s.srvConfig[`http2`].(bool) {
-		err = http2.ConfigureServer(s.srv, &http2.Server{
-			MaxHandlers:                  s.srvConfig[`http2-max-handlers`].(int),
-			MaxConcurrentStreams:         s.srvConfig[`http2-max-concurrent-streams`].(uint32),
-			MaxReadFrameSize:             s.srvConfig[`http2-max-read-frame-size`].(uint32),
-			PermitProhibitedCipherSuites: s.srvConfig[`http2-permit-prohibited-cipher-suites`].(bool),
-			IdleTimeout:                  s.srvConfig[`http2-idle-timeout`].(time.Duration),
-			MaxUploadBufferPerConnection: s.srvConfig[`http2-max-upload-buffer-per-connection`].(int32),
-			MaxUploadBufferPerStream:     s.srvConfig[`http2-max-upload-buffer-per-stream`].(int32),
-		})
+		if err != nil && s.srvConfig[`http2`].(bool) {
+			err = http2.ConfigureServer(s.srv, &http2.Server{
+				MaxHandlers:                  s.srvConfig[`http2-max-handlers`].(int),
+				MaxConcurrentStreams:         s.srvConfig[`http2-max-concurrent-streams`].(uint32),
+				MaxReadFrameSize:             s.srvConfig[`http2-max-read-frame-size`].(uint32),
+				PermitProhibitedCipherSuites: s.srvConfig[`http2-permit-prohibited-cipher-suites`].(bool),
+				IdleTimeout:                  s.srvConfig[`http2-idle-timeout`].(time.Duration),
+				MaxUploadBufferPerConnection: s.srvConfig[`http2-max-upload-buffer-per-connection`].(int32),
+				MaxUploadBufferPerStream:     s.srvConfig[`http2-max-upload-buffer-per-stream`].(int32),
+			})
+		}
 	} else {
 		err = s.srv.ListenAndServe()
 	}
