@@ -62,7 +62,7 @@ func (s *Server) Start(ctx context.Context) error {
 
 	if keyFile != `` && certFile != `` {
 		err = s.srv.ListenAndServeTLS(certFile, keyFile)
-		if err != nil && s.srvConfig[`http2`].(bool) {
+		if err == nil && s.srvConfig[`http2`].(bool) {
 			err = http2.ConfigureServer(s.srv, &http2.Server{
 				MaxHandlers:                  s.srvConfig[`http2-max-handlers`].(int),
 				MaxConcurrentStreams:         s.srvConfig[`http2-max-concurrent-streams`].(uint32),
