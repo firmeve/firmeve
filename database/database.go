@@ -44,10 +44,14 @@ func (d *DB) Connection(driver string) *gorm.DB {
 		panic(err)
 	}
 
-	// 连接池设置
+	// connection poll
 	db.DB().SetMaxIdleConns(d.config.GetInt(`pool.max_idle`))
 	db.DB().SetMaxOpenConns(d.config.GetInt(`pool.max_connection`))
 	db.DB().SetConnMaxLifetime(time.Duration(d.config.GetInt(`pool.max_lifetime`)) * time.Minute)
+
+	// debug logger
+	// db.SetLogger()
+	db.LogMode(d.config.GetBool(`debug`))
 
 	d.connections[driver] = db
 
