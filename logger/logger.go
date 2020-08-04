@@ -1,7 +1,6 @@
 package logging
 
 import (
-	"fmt"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
@@ -14,23 +13,17 @@ import (
 
 type (
 	logger struct {
-		channels       channels
-		config         contract.Configuration
-		current        string
-		currentChannel internalLogger
+		writers writers
+		logger  *zap.SugaredLogger
 	}
 
-	Level string
-
-	internalLogger = *zap.SugaredLogger
-
-	channels map[string]internalLogger
+	level string
 
 	writers map[string]io.Writer
 )
 
 const (
-	Debug Level = `debug`
+	Debug level = `debug`
 	Info        = `info`
 	Warn        = `warn`
 	Error       = `error`
@@ -39,7 +32,7 @@ const (
 )
 
 var (
-	levelMap = map[Level]zapcore.Level{
+	levelMap = map[level]zapcore.Level{
 		Debug: zapcore.DebugLevel,
 		Info:  zapcore.InfoLevel,
 		Warn:  zapcore.WarnLevel,
@@ -51,22 +44,7 @@ var (
 		`file`:    newFileChannel,
 		`console`: newConsoleChannel,
 	}
-	consoleZapEncoder = zapcore.NewConsoleEncoder(zapcore.EncoderConfig{
-		TimeKey:       "time",
-		LevelKey:      "level",
-		NameKey:       "logger",
-		CallerKey:     "caller",
-		MessageKey:    "message",
-		StacktraceKey: "stacktrace",
-		LineEnding:    zapcore.DefaultLineEnding,
-		EncodeLevel:   zapcore.CapitalColorLevelEncoder,
-		EncodeTime: func(time time.Time, encoder zapcore.PrimitiveArrayEncoder) {
-			encoder.AppendString(time.Format("2006-01-02 15:04:05"))
-		},
-		EncodeDuration: zapcore.StringDurationEncoder,
-		EncodeCaller:   zapcore.FullCallerEncoder,
-	})
-	fileZapEncoder = zapcore.NewJSONEncoder(zapcore.EncoderConfig{
+	zapEncoderConfig = zapcore.EncoderConfig{
 		TimeKey:       "time",
 		LevelKey:      "level",
 		NameKey:       "logger",
@@ -80,101 +58,81 @@ var (
 		},
 		EncodeDuration: zapcore.StringDurationEncoder,
 		EncodeCaller:   zapcore.FullCallerEncoder,
-	})
+	}
+
+	zapEncoders = map[string]zapcore.Encoder{
+		`console`: zapcore.NewConsoleEncoder(zapEncoderConfig),
+		`json`:    zapcore.NewJSONEncoder(zapEncoderConfig),
+	}
 )
 
 func New(config contract.Configuration) contract.Loggable {
-	var (
-		channels = allChannels(config)
-		current  = config.GetString(`default`)
-	)
+	zapLogger, writers := zapLogger(config)
+
 	return &logger{
-		config:         config,
-		current:        current,
-		channels:       channels,
-		currentChannel: channels[current],
+		logger:  zapLogger,
+		writers: writers,
 	}
 }
 
+func (l *logger) Writer(channel string) io.Writer {
+	return l.writers[channel]
+}
+
+func (l *logger) Logger() *zap.SugaredLogger {
+	return l.logger
+}
+
 func (l *logger) Debug(message string, context ...interface{}) {
-	l.currentChannel.Debugw(message, context...)
+	l.logger.Debugw(message, context...)
 }
 
 func (l *logger) Info(message string, context ...interface{}) {
-	l.currentChannel.Infow(message, context...)
+	l.logger.Infow(message, context...)
 }
 
 func (l *logger) Warn(message string, context ...interface{}) {
-	l.currentChannel.Warnw(message, context...)
+	l.logger.Warnw(message, context...)
 }
 
 func (l *logger) Error(message string, context ...interface{}) {
-	l.currentChannel.Errorw(message, context...)
+	l.logger.Errorw(message, context...)
 }
 
 func (l *logger) Fatal(message string, context ...interface{}) {
-	l.currentChannel.Fatalw(message, context...)
+	l.logger.Fatalw(message, context...)
 }
 
 func (l *logger) Panic(message string, context ...interface{}) {
-	l.currentChannel.Panicw(message, context...)
+	l.logger.Panicw(message, context...)
+}
+
+func (l *logger) With(context ...interface{}) contract.Loggable {
+	l.logger = l.logger.With(context...)
+	return l
 }
 
 // ---------------------------------------------- func --------------------------------------------------
 
 // Default internal logger
-func zapLogger(config contract.Configuration, writers writers) internalLogger {
-	cores := make([]zapcore.Core, 0)
-	var zapEncoder zapcore.Encoder
-	for stack, write := range writers {
-		if stack == `console` {
-			zapEncoder = consoleZapEncoder
-		} else {
-			zapEncoder = fileZapEncoder
-		}
-
-		core := zapcore.NewCore(
-			zapEncoder,
-			zapcore.Lock(zapcore.AddSync(write)), //writer(option)
+func zapLogger(config contract.Configuration) (*zap.SugaredLogger, writers) {
+	encoder := zapEncoders[config.GetString(`formatter`)]
+	current := config.GetStringSlice(`default`)
+	writers := make(writers, len(current))
+	cores := make([]zapcore.Core, len(current))
+	for i := range current {
+		writers[current[i]] = channelMap[current[i]](config)
+		cores[i] = zapcore.NewCore(
+			encoder,
+			zapcore.AddSync(writers[current[i]]),
 			zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-				return lvl >= levelMap[Level(config.GetStringMap(strings.Join([]string{`channels`, stack}, `.`))[`level`].(string))]
-			}),
-		)
-
-		cores = append(cores, core)
+				return lvl >= levelMap[level(config.GetStringMap(strings.Join([]string{`channels`, current[i]}, `.`))[`level`].(string))]
+			}))
 	}
 
 	return zap.New(
-		zapcore.NewTee(cores...), zap.AddCallerSkip(3), zap.AddStacktrace(levelMap[Level(config.GetString(`stack_level`))]),
-	).Sugar()
-}
-
-// Channel factory
-func factory(stack string, config contract.Configuration) internalLogger {
-	var channels writers
-	switch stack {
-	case `file`:
-		channels = writers{stack: newFileChannel(config)}
-	case `console`:
-		channels = writers{stack: newConsoleChannel(config)}
-	case `stack`:
-		channels = newStackChannel(config)
-	default:
-		panic(fmt.Errorf("the logger stack %s not exists", stack))
-	}
-
-	return zapLogger(config, channels)
-}
-
-func allChannels(config contract.Configuration) channels {
-	stacks := config.Get(`channels`).(map[string]interface{})
-	channels := make(channels, 3)
-
-	for key := range stacks {
-		channels[key] = factory(key, config)
-	}
-
-	return channels
+		zapcore.NewTee(cores...), zap.AddCallerSkip(3), zap.AddStacktrace(levelMap[level(config.GetString(`stack_level`))]),
+	).Sugar(), writers
 }
 
 // New file channel
@@ -190,15 +148,4 @@ func newFileChannel(config contract.Configuration) io.Writer {
 // New console channel
 func newConsoleChannel(config contract.Configuration) io.Writer {
 	return os.Stdout
-}
-
-// New stack channel
-func newStackChannel(config contract.Configuration) writers {
-	stacks := config.GetStringSlice(`channels.stack`)
-	existsStackMap := make(writers, 0)
-	for _, stack := range stacks {
-		existsStackMap[stack] = channelMap[stack](config)
-	}
-
-	return existsStackMap
 }

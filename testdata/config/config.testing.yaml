@@ -22,11 +22,10 @@ cache:
       connection: cache
 
 logging:
-  default: stack
+  default:
+    - file
+    - console
   channels:
-    stack:
-      - file
-      - console
     file:
       path: "../../../testdata/logs"
       # megabytes
@@ -39,6 +38,8 @@ logging:
       level: debug
 
   stack_level: error
+  formatter: json
+
 
 redis:
   clusters:
