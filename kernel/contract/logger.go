@@ -1,3 +1,4 @@
+//go:generate mockgen -package mock -destination ../../testing/mock/mock_logger.go github.com/firmeve/firmeve/kernel/contract Loggable
 package contract
 
 import "io"

@@ -1,7 +1,9 @@
 package kernel
 
 import (
+	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/stretchr/testify/assert"
+	"io"
 	"log"
 	"testing"
 )
@@ -30,6 +32,14 @@ func (l Logger) Fatal(message string, context ...interface{}) {
 }
 
 func (l Logger) Panic(message string, context ...interface{}) {
+	panic("implement me")
+}
+
+func (l Logger) Writer(channel string) io.Writer {
+	panic("implement me")
+}
+
+func (l Logger) With(context ...interface{}) contract.Loggable {
 	panic("implement me")
 }
 
