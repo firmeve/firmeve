@@ -27,7 +27,7 @@ func bootstrap(app contract.Application, configPath string, providers ...contrac
 	app.Bind(`application`, app)
 	app.Bind(`firmeve`, app)
 	app.Bind(`config`, config.New(configPath), container.WithShare(true))
-	providers = append([]contract.Provider{new(logging.Provider), new(event.Provider)}, providers...)
+	providers = append([]contract.Provider{new(event.Provider), new(logging.Provider)}, providers...)
 	app.RegisterMultiple(providers, false)
 	app.Boot()
 }
