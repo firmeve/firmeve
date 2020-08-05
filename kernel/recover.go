@@ -25,12 +25,12 @@ func RecoverCallback(logger contract.Loggable, callback func(err interface{}, pa
 		}
 
 		// merge all record params
-		newParams := []interface{}{"error", err}
+		newParams := []interface{}{message, "error", err}
 		// get params reflect name
 		for i := range params {
 			newParams = append(newParams, reflect2.IndirectType(reflect.TypeOf(params[i])).Name(), fmt.Sprintf("%v", params[i]))
 		}
-		logger.Error(message, newParams...)
+		logger.Error(newParams...)
 
 		if callback != nil {
 			callback(err, params...)

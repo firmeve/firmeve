@@ -76,8 +76,8 @@ func (c *command) boot(configPath string, devMode bool) {
 	c.firmeve.Boot()
 }
 
-func (c *command) debugLog(message string, context ...interface{}) {
-	c.firmeve.Resolve(`logger`).(contract.Loggable).Debug(message, context...)
+func (c *command) debugLog(context ...interface{}) {
+	c.firmeve.Resolve(`logger`).(contract.Loggable).Debug(context...)
 }
 
 func (c *command) Run() error {
