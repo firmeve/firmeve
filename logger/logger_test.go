@@ -3,6 +3,7 @@ package logging
 import (
 	config2 "github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/container"
+	event2 "github.com/firmeve/firmeve/event"
 	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/support/path"
@@ -22,7 +23,7 @@ func init() {
 	app.Bind(`firmeve`, app)
 	app.Bind(`config`, config2.New(path.RunRelative(testingConfigPath)), container.WithShare(true))
 	//providers = append([]contract.Provider{new(logging.Provider), new(event.Provider)}, providers...)
-	app.Register(new(Provider), false)
+	app.RegisterMultiple([]contract.Provider{new(event2.Provider), new(Provider)}, false)
 	app.Boot()
 }
 
