@@ -9,7 +9,6 @@ import (
 
 type Provider struct {
 	kernel.BaseProvider
-	Config *config2.Config
 }
 
 func (p *Provider) Name() string {
@@ -17,12 +16,12 @@ func (p *Provider) Name() string {
 }
 
 func (p *Provider) Register() {
-	frameworkConfig := p.Config.Item("framework")
+	frameworkConfig := p.Resolve(`config`).(*config2.Config).Item("framework")
 
-	p.Firmeve.Bind(`http.router`, New(p.Firmeve), container.WithShare(true))
+	p.Application.Bind(`http.router`, New(p.Application), container.WithShare(true))
 
 	// session
-	p.Firmeve.Bind(`http.session.store`, sessions.NewCookieStore(
+	p.Application.Bind(`http.session.store`, sessions.NewCookieStore(
 		[]byte(frameworkConfig.GetString("key")),
 	))
 }

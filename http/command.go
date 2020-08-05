@@ -65,10 +65,10 @@ func (c *Command) CobraCmd() *cobra.Command {
 func (c *Command) Run(root contract.BaseCommand, cmd *cobra.Command, args []string) {
 	logger = root.Resolve(`logger`).(contract.Loggable)
 
-	debugLog(`Goroutine http server`)
+	logger.Debug(`Goroutine http server`)
 
 	server := NewServer(
-		root.Resolve(`http.router`).(*Router),
+		root.Application(),
 		map[string]interface{}{
 			`host`:                                   host,
 			`read-timeout`:                           readTimeout,
@@ -93,7 +93,7 @@ func (c *Command) Run(root contract.BaseCommand, cmd *cobra.Command, args []stri
 	//		c.debugLog(`Start https server[` + host + `] key[` + keyFile + `] cert[` + certFile + `]`)
 	//		c.debugLog(`Start http server[` + host + `]`)
 
-	debugLog(`Signal listen SIGTERM(kill),SIGINT(kill -2),SIGKILL(kill -9)`)
+	logger.Debug(`Signal listen SIGTERM(kill),SIGINT(kill -2),SIGKILL(kill -9)`)
 	quit := make(chan os.Signal, 1)
 	// kill (no param) default send syscall.SIGTERM
 	// kill -2 is syscall.SIGINT
@@ -101,18 +101,18 @@ func (c *Command) Run(root contract.BaseCommand, cmd *cobra.Command, args []stri
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 	<-quit
 
-	debugLog("Shutdown server")
+	logger.Debug("Shutdown server")
 
 	if err := server.Stop(context.Background()); err != nil {
 		logger.Fatal("Server shutdown error", "error", err)
 	}
 
-	debugLog("Server exiting")
+	logger.Debug("Server exiting")
 }
 
-func debugLog(message string, context ...interface{}) {
-	logger.Debug(message, context...)
-}
+//func debugLog(context ...interface{}) {
+//	logger.Debug(context...)
+//}
 
 //type serverLog struct {
 //}

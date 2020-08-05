@@ -241,8 +241,13 @@ func (h *Http) ClientIP() string {
 func (h *Http) Clone() contract.Protocol {
 	newHttp := new(Http)
 	*newHttp = *h
-	//@todo 待验证
-	newHttp.request = h.request.Clone(context.Background()) //context.WithCancel(h.request.Context())
+	newHttp.request = h.request.Clone(context.Background())
 	newHttp.responseWriter = h.responseWriter
+	newHttp.params = make([]httprouter.Param, len(h.params))
+	copy(newHttp.message, h.message)
+	copy(newHttp.params, h.params)
+	//for i := range h.params {
+	//	newHttp.params[i] = h.params[i]
+	//}
 	return newHttp
 }

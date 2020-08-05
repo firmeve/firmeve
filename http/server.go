@@ -5,6 +5,7 @@ import (
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/support/maps"
 	"golang.org/x/net/http2"
+	"log"
 	net_http "net/http"
 	"time"
 )
@@ -36,19 +37,19 @@ var DefaultConfig = map[string]interface{}{
 	`http2-max-upload-buffer-per-stream`:     0,
 }
 
-func NewServer(handler net_http.Handler, srvConfig map[string]interface{}) contract.Server {
+func NewServer(app contract.Application, srvConfig map[string]interface{}) contract.Server {
 	srvConfig = maps.MergeInterface(DefaultConfig, srvConfig)
 	return &Server{
 		srvConfig: maps.MergeInterface(DefaultConfig, srvConfig),
 		srv: &net_http.Server{
 			Addr:              srvConfig[`host`].(string),
-			Handler:           handler,
+			Handler:           app.Resolve(`http.router`).(contract.HttpRouter),
 			ReadTimeout:       srvConfig[`read-timeout`].(time.Duration),
 			ReadHeaderTimeout: srvConfig[`read-header-timeout`].(time.Duration),
 			WriteTimeout:      srvConfig[`write-timeout`].(time.Duration),
 			IdleTimeout:       srvConfig[`idle-timeout`].(time.Duration),
 			MaxHeaderBytes:    srvConfig[`max-header-bytes`].(int),
-			ErrorLog:          nil,
+			ErrorLog:          log.New(app.Resolve(`logger`).(contract.Loggable).Writer(`console`), ``, log.LstdFlags),
 		},
 	}
 }

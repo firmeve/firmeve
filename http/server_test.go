@@ -2,6 +2,10 @@ package http
 
 import (
 	"context"
+	"github.com/firmeve/firmeve/container"
+
+	//"github.com/firmeve/firmeve/kernel/contract"
+	//testing2 "github.com/firmeve/firmeve/testing"
 	"github.com/stretchr/testify/assert"
 	"sync"
 	"time"
@@ -12,9 +16,13 @@ import (
 	"testing"
 )
 
-func init() {
-	//runtime.GOMAXPROCS(1)
-}
+//var (
+//	app contract.Application
+//)
+//func init() {
+//	//runtime.GOMAXPROCS(1)
+//	app = testing2.ApplicationDefault(new(Provider))
+//}
 
 var lock sync.Mutex
 
@@ -25,7 +33,8 @@ func TestNewServer(t *testing.T) {
 	defer mockCtrl.Finish()
 
 	router := mock.NewMockHttpRouter(mockCtrl)
-	server1 := NewServer(router, map[string]interface{}{
+	app.Bind(`http.router`, router, container.WithCover(true))
+	server1 := NewServer(app, map[string]interface{}{
 		`host`: `0.0.0.0:11211`,
 	})
 	ctx := context.Background()
@@ -44,7 +53,8 @@ func TestNewServerHttps(t *testing.T) {
 	defer mockCtrl.Finish()
 	ctx := context.Background()
 	router := mock.NewMockHttpRouter(mockCtrl)
-	server1 := NewServer(router, map[string]interface{}{
+	app.Bind(`http.router`, router, container.WithCover(true))
+	server1 := NewServer(app, map[string]interface{}{
 		`host`:      `0.0.0.0:11222`,
 		`cert-file`: `../testdata/ssl/server.crt`,
 		`key-file`:  `../testdata/ssl/server.key`,
@@ -66,7 +76,8 @@ func TestNewServerHttp2(t *testing.T) {
 	defer mockCtrl.Finish()
 	ctx := context.Background()
 	router := mock.NewMockHttpRouter(mockCtrl)
-	server1 := NewServer(router, map[string]interface{}{
+	app.Bind(`http.router`, router, container.WithCover(true))
+	server1 := NewServer(app, map[string]interface{}{
 		`host`:                                   `0.0.0.0:11223`,
 		`cert-file`:                              `../testdata/ssl/server.crt`,
 		`key-file`:                               `../testdata/ssl/server.key`,

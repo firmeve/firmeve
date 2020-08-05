@@ -1,14 +1,11 @@
 package http
 
 import (
-	context2 "context"
 	"github.com/firmeve/firmeve/context"
 	"github.com/firmeve/firmeve/kernel/contract"
-	http2 "github.com/firmeve/firmeve/support/http"
 	"github.com/julienschmidt/httprouter"
 	"net/http"
 	"strings"
-	time2 "time"
 )
 
 type Router struct {
@@ -100,10 +97,7 @@ func (r *Router) createRoute(method string, path string, handler contract.Contex
 		ctx := context.NewContext(r.Application, currentHttp, r.routes[key].Handlers()...)
 
 		// router match dispatch
-		r.event.Dispatch(`router.match`, map[string]interface{}{
-			`context`: ctx,
-			`route`:   r.routes[key],
-		})
+		r.event.Dispatch(`http.route.matched`, ctx, r.routes[key])
 
 		ctx.Next()
 	})
@@ -121,22 +115,21 @@ func (r *Router) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 
 	// dispatch router
 	r.event.Dispatch(`http.request`, map[string]interface{}{
-		`request`:  req.Clone(context2.Background()),
+		`request`:  req,
 		`response`: wrap,
 	})
 
-	// record start time
-	startTime := time2.Now()
-
 	r.router.ServeHTTP(wrap, req)
 
-	// request log
-	r.logger.Debug(``,
-		`Method`, req.Method,
-		`StatusCode`, wrap.StatusCode(),
-		`URI`, req.RequestURI,
-		`IPAddress`, http2.ClientIP(req),
-		`Agent`, req.Header.Get(`user-agent`),
-		`ExecuteTime`, time2.Now().Sub(startTime),
-	)
+	//// record start time
+	//startTime := time2.Now()
+	//// request log
+	//r.logger.Debug(``,
+	//	`Method`, req.Method,
+	//	`StatusCode`, wrap.StatusCode(),
+	//	`URI`, req.RequestURI,
+	//	`IPAddress`, http2.ClientIP(req),
+	//	`Agent`, req.Header.Get(`user-agent`),
+	//	`ExecuteTime`, time2.Now().Sub(startTime),
+	//)
 }
