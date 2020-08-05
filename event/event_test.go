@@ -2,7 +2,6 @@ package event
 
 import (
 	"errors"
-	"github.com/firmeve/firmeve/kernel/contract"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -23,10 +22,10 @@ func (m *mockHandler) Handle(params ...interface{}) (interface{}, error) {
 
 func TestBaseDispatcher(t *testing.T) {
 	dispatch := New()
-	dispatch.ListenMany("a", []contract.EventHandler{
+	dispatch.Listen("a",
 		&mockHandler{},
 		&mockHandler{},
-	})
+	)
 	results := dispatch.Dispatch("a", 1, 2)
 	assert.Equal(t, 2, len(results))
 	assert.Equal(t, 3, results[0].(int))

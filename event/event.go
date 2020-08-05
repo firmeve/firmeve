@@ -21,20 +21,14 @@ func New() contract.Event {
 	}
 }
 
-func (e *event) Listen(name string, handler contract.EventHandler) {
+func (e *event) Listen(name string, handlers ...contract.EventHandler) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	if _, ok := e.listeners[name]; !ok {
 		e.listeners[name] = make([]contract.EventHandler, 0)
 	}
 
-	e.listeners[name] = append(e.listeners[name], handler)
-}
-
-func (e *event) ListenMany(name string, handlerMany []contract.EventHandler) {
-	for _, handler := range handlerMany {
-		e.Listen(name, handler)
-	}
+	e.listeners[name] = append(e.listeners[name], handlers...)
 }
 
 func (e *event) Dispatch(name string, params ...interface{}) []interface{} {
