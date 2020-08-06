@@ -121,27 +121,28 @@ func (l *logger) With(values ...interface{}) contract.Loggable {
 	return l
 }
 
-func (l *logger) fireLogEvent(level2 level, values []interface{}) {
+func (l *logger) fireLogEvent(level2 level, message string, values []interface{}) {
 	if l.event != nil {
-		l.event.Dispatch(`logger.before`, l, level2, values)
+		l.event.Dispatch(`logger.before`, l, level2, message, values)
 	}
 }
 
 func (l *logger) Write(level2 level, values ...interface{}) {
-	l.fireLogEvent(level2, values)
+	message, values := separatedMessages(values...)
+	l.fireLogEvent(level2, message, values)
 	switch level2 {
 	case Debug:
-		l.logger.Debug(values...)
+		l.logger.Debugw(message, values...)
 	case Info:
-		l.logger.Info(values...)
+		l.logger.Infow(message, values...)
 	case Warn:
-		l.logger.Warn(values...)
+		l.logger.Warnw(message, values...)
 	case Error:
-		l.logger.Error(values...)
+		l.logger.Errorw(message, values...)
 	case Fatal:
-		l.logger.Fatal(values...)
+		l.logger.Fatalw(message, values...)
 	case Panic:
-		l.logger.Panic(values...)
+		l.logger.Panicw(message, values...)
 	}
 }
 
@@ -149,7 +150,7 @@ func (l *logger) Write(level2 level, values ...interface{}) {
 // The first is message
 // Other is key => value
 func separatedMessages(values ...interface{}) (string, []interface{}) {
-	if len(values)/2 == 0 {
+	if len(values)%2 == 0 {
 		return ``, values
 	}
 
