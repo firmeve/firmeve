@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"fmt"
 	config2 "github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/container"
 	event2 "github.com/firmeve/firmeve/event"
@@ -34,7 +35,7 @@ func TestMain(m *testing.M) {
 
 func TestDefault(t *testing.T) {
 	logger := Default()
-	logger.Debug("Debug")
+	logger.Debug("Debug", "append", fmt.Sprintf("%v", logger))
 	logger.Info("Info")
 	logger.Error("Error")
 	logger.Warn("Warn")
