@@ -11,27 +11,27 @@ import (
 type Logger struct {
 }
 
-func (l Logger) Debug(message string, context ...interface{}) {
-	log.Print(message)
+func (l Logger) Debug(context ...interface{}) {
+	log.Print(context)
 }
 
-func (l Logger) Info(message string, context ...interface{}) {
-	log.Print(message)
+func (l Logger) Info(context ...interface{}) {
+	log.Print(context)
 }
 
-func (l Logger) Warn(message string, context ...interface{}) {
+func (l Logger) Warn(context ...interface{}) {
 	panic("implement me")
 }
 
-func (l Logger) Error(message string, context ...interface{}) {
-	log.Print(message)
+func (l Logger) Error(context ...interface{}) {
+	log.Print(context)
 }
 
-func (l Logger) Fatal(message string, context ...interface{}) {
+func (l Logger) Fatal(context ...interface{}) {
 	panic("implement me")
 }
 
-func (l Logger) Panic(message string, context ...interface{}) {
+func (l Logger) Panic(context ...interface{}) {
 	panic("implement me")
 }
 
