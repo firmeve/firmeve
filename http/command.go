@@ -95,17 +95,20 @@ func (c *Command) Run(root contract.BaseCommand, cmd *cobra.Command, args []stri
 	// start server
 	go server.Start(nil)
 
-	done := make(chan struct{})
+	done := make(chan struct{}, 1)
 
 	// starting notify
 	if watch != nil && len(watch) > 0 {
 		go c.watchServer(done, watch, server)
 	}
 
-	c.signalNotify(done, server)
+	c.signalNotify(server)
+
+	// close watch notify
+	done <- struct{}{}
 }
 
-func (c *Command) signalNotify(done chan struct{}, server contract.Server) {
+func (c *Command) signalNotify(server contract.Server) {
 	//		c.debugLog(`Start https server[` + host + `] key[` + keyFile + `] cert[` + certFile + `]`)
 	//		c.debugLog(`Start http server[` + host + `]`)
 	logger.Debug(`Signal listen SIGTERM(kill),SIGINT(kill -2),SIGKILL(kill -9)`)
@@ -115,8 +118,6 @@ func (c *Command) signalNotify(done chan struct{}, server contract.Server) {
 	// kill -9 is syscall.SIGKILL but can't be catch, so don't need add it
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 	<-quit
-
-	done <- struct{}{}
 
 	logger.Debug("Shutdown server")
 
