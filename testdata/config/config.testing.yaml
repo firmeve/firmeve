@@ -36,7 +36,6 @@ logging:
       level: debug
     console:
       level: debug
-
   stack_level: error
   formatter: json
 

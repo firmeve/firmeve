@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
+	"fmt"
 	"github.com/firmeve/firmeve"
 	"github.com/firmeve/firmeve/http"
 	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/render"
 	"net/http/pprof"
+	"time"
 )
 
 type App struct {
@@ -31,19 +34,46 @@ func (a *App) Boot() {
 			})
 			c.Next()
 		})
+		v1.GET(`/for-run`, func(c contract.Context) {
+			ctx2, _ := context.WithTimeout(c, time.Second*15)
+			go func(ctx context.Context) {
+			Next:
+				for {
+					select {
+					case <-ctx.Done():
+						fmt.Println(ctx.Err())
+						break Next
+					default:
+						Add("firmeve")
+					}
+				}
+				fmt.Println("execute over")
+			}(ctx2)
+			c.RenderWith(200, render.Text, "success")
+		})
 		v1.GET(`/panic`, func(c contract.Context) {
 			panic(kernel.Error("something"))
 			c.Next()
 		})
 	}
-	debug := router.Group("/debug")
+	debug := router.Group("/debug/pprof")
 	{
-		debug.Handler("GET", "/pprof", pprof.Index)
+		debug.Handler("GET", "/", pprof.Index)
 		debug.Handler("GET", "/cmdline", pprof.Cmdline)
 		debug.Handler("GET", "/profile", pprof.Profile)
 		debug.Handler("GET", "/symbol", pprof.Symbol)
 		debug.Handler("GET", "/trace", pprof.Trace)
 	}
+}
+
+var datas = make([]string, 5500)
+
+func Add(str string) string {
+	data := []byte(str)
+	sData := string(data)
+	datas = append(datas, sData)
+
+	return sData
 }
 
 func main() {

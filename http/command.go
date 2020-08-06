@@ -3,6 +3,7 @@ package http
 import (
 	"context"
 	"github.com/firmeve/firmeve/kernel/contract"
+	"github.com/fsnotify/fsnotify"
 	"github.com/spf13/cobra"
 	"os"
 	"os/signal"
@@ -32,6 +33,7 @@ var (
 	http2IdleTimeout                  time.Duration
 	http2MaxUploadBufferPerConnection int32
 	http2MaxUploadBufferPerStream     int32
+	watch                             []string
 )
 
 var (
@@ -58,6 +60,7 @@ func (c *Command) CobraCmd() *cobra.Command {
 	command.Flags().DurationVar(&http2IdleTimeout, "http2-idle-timeout", time.Minute*3, "http2 idle timeout default three minutes")
 	command.Flags().Int32Var(&http2MaxUploadBufferPerConnection, "http2-max-upload-buffer-per-connection", 65535, "http2 max upload buffer connection default 65535")
 	command.Flags().Int32Var(&http2MaxUploadBufferPerStream, "http2-max-upload-buffer-per-stream", 0, "http2 max upload buffer stream default 0")
+	command.Flags().StringSliceVarP(&watch, "watch", "w", nil, "watch http")
 
 	return command
 }
@@ -89,10 +92,22 @@ func (c *Command) Run(root contract.BaseCommand, cmd *cobra.Command, args []stri
 		},
 	)
 
+	// start server
 	go server.Start(nil)
+
+	done := make(chan struct{})
+
+	// starting notify
+	if watch != nil && len(watch) > 0 {
+		go c.watchServer(done, watch, server)
+	}
+
+	c.signalNotify(done, server)
+}
+
+func (c *Command) signalNotify(done chan struct{}, server contract.Server) {
 	//		c.debugLog(`Start https server[` + host + `] key[` + keyFile + `] cert[` + certFile + `]`)
 	//		c.debugLog(`Start http server[` + host + `]`)
-
 	logger.Debug(`Signal listen SIGTERM(kill),SIGINT(kill -2),SIGKILL(kill -9)`)
 	quit := make(chan os.Signal, 1)
 	// kill (no param) default send syscall.SIGTERM
@@ -101,6 +116,8 @@ func (c *Command) Run(root contract.BaseCommand, cmd *cobra.Command, args []stri
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
 	<-quit
 
+	done <- struct{}{}
+
 	logger.Debug("Shutdown server")
 
 	if err := server.Stop(context.Background()); err != nil {
@@ -108,6 +125,53 @@ func (c *Command) Run(root contract.BaseCommand, cmd *cobra.Command, args []stri
 	}
 
 	logger.Debug("Server exiting")
+}
+
+func (c *Command) watchServer(done <-chan struct{}, watch []string, server contract.Server) {
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		logger.Fatal(err.Error())
+	}
+	defer watcher.Close()
+
+	notify := make(chan struct{})
+	go func() {
+		for {
+			select {
+			case event, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+				logger.Debug(`current notify event`, `name`, event.Name, `op`, event.Op)
+
+				server.Restart(context.Background())
+
+				logger.Debug(`server is restart`)
+			case err, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+				logger.Warn(`current notify event error`, `error`, err)
+			case <-done:
+				notify <- struct{}{}
+				logger.Debug(`stop notify event, ready skip`)
+				goto Loop
+			}
+		}
+	Loop:
+		logger.Debug("skip notify watch")
+	}()
+
+	for i := range watch {
+		err = watcher.Add(watch[i])
+		if err != nil {
+			logger.Error(err)
+		}
+	}
+
+	logger.Debug(`starting files or directories notify`, `files`, watch)
+
+	<-notify
 }
 
 //func debugLog(context ...interface{}) {
