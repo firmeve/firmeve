@@ -10,6 +10,7 @@ database:
       max_idle: 100
       max_connection: 50
       max_lifetime: 60
+  debug: false
   migration:
     path: "../../../testdata/migrations"
 
