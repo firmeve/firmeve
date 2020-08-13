@@ -12,11 +12,11 @@ type Logger struct {
 }
 
 func (l Logger) Debug(context ...interface{}) {
-	log.Print(context)
+	log.Print(context...)
 }
 
 func (l Logger) Info(context ...interface{}) {
-	log.Print(context)
+	log.Print(context...)
 }
 
 func (l Logger) Warn(context ...interface{}) {
@@ -24,7 +24,7 @@ func (l Logger) Warn(context ...interface{}) {
 }
 
 func (l Logger) Error(context ...interface{}) {
-	log.Print(context)
+	log.Print(context...)
 }
 
 func (l Logger) Fatal(context ...interface{}) {
