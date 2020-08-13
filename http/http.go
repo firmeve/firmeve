@@ -25,6 +25,7 @@ type (
 	wrapResponseWriter struct {
 		responseWriter http.ResponseWriter
 		statusCode     int
+		already        bool
 	}
 )
 
@@ -45,6 +46,10 @@ func (w *wrapResponseWriter) Write(bytes []byte) (int, error) {
 }
 
 func (w *wrapResponseWriter) WriteHeader(statusCode int) {
+	if w.already {
+		return
+	}
+	w.already = true
 	w.statusCode = statusCode
 	w.responseWriter.WriteHeader(statusCode)
 }
@@ -53,6 +58,7 @@ func NewWrapResponseWriter(responseWriter http.ResponseWriter) contract.HttpWrap
 	return &wrapResponseWriter{
 		responseWriter: responseWriter,
 		statusCode:     0,
+		already:        false,
 	}
 }
 
