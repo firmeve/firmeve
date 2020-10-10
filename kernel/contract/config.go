@@ -4,6 +4,7 @@ import "time"
 
 type (
 	Configuration interface {
+		Bind(key string, val interface{}) error
 		Get(key string) interface{}
 		GetBool(key string) bool
 		GetFloat(key string) float64
@@ -18,5 +19,6 @@ type (
 		Exists(key string) bool
 		Set(key string, value interface{})
 		SetDefault(key string, value interface{})
+		Clone() Configuration
 	}
 )

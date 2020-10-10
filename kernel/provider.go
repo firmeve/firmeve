@@ -7,15 +7,19 @@ import (
 
 type (
 	BaseProvider struct {
-		Firmeve     contract.Application `inject:"application"`
-		Application contract.Application `inject:"application"`
+		Config      contract.Configuration `inject:"config"`
+		Application contract.Application   `inject:"application"`
 	}
 )
 
 func (p *BaseProvider) Bind(name string, prototype interface{}, options ...support.Option) {
-	p.Firmeve.Bind(name, prototype, options...)
+	p.Application.Bind(name, prototype, options...)
 }
 
 func (p *BaseProvider) Resolve(abstract interface{}, params ...interface{}) interface{} {
-	return p.Firmeve.Make(abstract, params...)
+	return p.Application.Make(abstract, params...)
+}
+
+func (p *BaseProvider) BindConfig(key string, object interface{}) {
+	p.Application.Make(`config`).(*Config).Bind(key, object)
 }

@@ -21,75 +21,75 @@ func New(client *redis.Client, prefix string) contract.CacheStore {
 }
 
 // Get a warehouse value
-func (this *repository) Get(key string) (interface{}, error) {
-	return this.redis.Get(this.getPrefix(key)).Result()
+func (r *repository) Get(key string) (interface{}, error) {
+	return r.redis.Get(r.getPrefix(key)).Result()
 }
 
 // Add a new value to the repository
 // If the key already exists, the addition will be invalid and will not overwrite the original value.
-func (this *repository) Add(key string, value interface{}, expire time.Time) error {
-	_, err := this.redis.SetNX(this.getPrefix(key), value, expire.Sub(time.Now())).Result()
+func (r *repository) Add(key string, value interface{}, expire time.Time) error {
+	_, err := r.redis.SetNX(r.getPrefix(key), value, expire.Sub(time.Now())).Result()
 
 	return err
 }
 
 // Update a value to the repository
 // If the key already exists, it will automatically overwrite
-func (this *repository) Put(key string, value interface{}, expire time.Time) error {
-	_, err := this.redis.Set(this.getPrefix(key), value, expire.Sub(time.Now())).Result()
+func (r *repository) Put(key string, value interface{}, expire time.Time) error {
+	_, err := r.redis.Set(r.getPrefix(key), value, expire.Sub(time.Now())).Result()
 
 	return err
 }
 
 // Delete an existing key
-func (this *repository) Forget(key string) error {
-	_, err := this.redis.Del(this.getPrefix(key)).Result()
+func (r *repository) Forget(key string) error {
+	_, err := r.redis.Del(r.getPrefix(key)).Result()
 
 	return err
 }
 
 // Automatically increments a key by the specified step size
-func (this *repository) Increment(key string, steps ...int64) error {
-	_, err := this.redis.IncrBy(this.getPrefix(key), this.getStep(steps)).Result()
+func (r *repository) Increment(key string, steps ...int64) error {
+	_, err := r.redis.IncrBy(r.getPrefix(key), r.getStep(steps)).Result()
 
 	return err
 }
 
 // Automatically decrements a key by the specified step size
-func (this *repository) Decrement(key string, steps ...int64) error {
-	_, err := this.redis.DecrBy(this.getPrefix(key), this.getStep(steps)).Result()
+func (r *repository) Decrement(key string, steps ...int64) error {
+	_, err := r.redis.DecrBy(r.getPrefix(key), r.getStep(steps)).Result()
 
 	return err
 }
 
 // Store a permanent valid key
-func (this *repository) Forever(key string, value interface{}) error {
-	_, err := this.redis.Set(this.getPrefix(key), value, 0).Result()
+func (r *repository) Forever(key string, value interface{}) error {
+	_, err := r.redis.Set(r.getPrefix(key), value, 0).Result()
 
 	return err
 }
 
 // Determine if a key exists
-func (this *repository) Has(key string) bool {
-	return this.redis.Exists(this.getPrefix(key)).Val() > 0
+func (r *repository) Has(key string) bool {
+	return r.redis.Exists(r.getPrefix(key)).Val() > 0
 }
 
 // Clear the current entire database
-func (this *repository) Flush() error {
-	_, err := this.redis.FlushDB().Result()
+func (r *repository) Flush() error {
+	_, err := r.redis.FlushDB().Result()
 	return err
 }
 
 // Get a specified step size
-func (this *repository) getStep(steps []int64) int64 {
+func (r *repository) getStep(steps []int64) int64 {
 	if len(steps) == 0 {
 		return 1
 	} else {
-		return int64(steps[0])
+		return steps[0]
 	}
 }
 
 // Get prefix
-func (this *repository) getPrefix(key string) string {
-	return strings.Join([]string{this.prefix, key}, `:`)
+func (r *repository) getPrefix(key string) string {
+	return strings.Join([]string{r.prefix, key}, `:`)
 }

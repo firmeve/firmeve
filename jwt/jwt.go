@@ -11,13 +11,18 @@ import (
 
 type (
 	Jwt struct {
-		config contract.Configuration
+		config *Configuration
 		store  contract.JwtStore
-		secret string
 	}
 
 	audience struct {
 		audience string
+	}
+
+	Configuration struct {
+		Secret   string `json:"secret" yaml:"secret"`
+		Issuer   string `json:"issuer" yaml:"issuer"`
+		Lifetime int    `json:"lifetime" yaml:"lifetime"`
 	}
 )
 
@@ -25,8 +30,8 @@ var (
 	ErrorExpired = errors.New("token expired")
 )
 
-func New(secret string, config contract.Configuration, store contract.JwtStore) contract.Jwt {
-	return &Jwt{config: config, store: store, secret: secret}
+func New(config *Configuration, store contract.JwtStore) contract.Jwt {
+	return &Jwt{config: config, store: store}
 }
 
 func newAudience(aud string) contract.JwtAudience {
@@ -34,21 +39,21 @@ func newAudience(aud string) contract.JwtAudience {
 }
 
 func (j *Jwt) Create(aud contract.JwtAudience) (*contract.Token, error) {
-	expireAt := time.Now().Unix() + int64(j.config.GetInt(`lifetime`))
+	expireAt := time.Now().Unix() + int64(j.config.Lifetime)
 
 	id := strings2.Join(`-`, aud.Audience(), strconv.FormatInt(time.Now().UnixNano(), 10))
 
 	// Create the Claims
 	claim := &jwt.StandardClaims{
 		ExpiresAt: expireAt,
-		Issuer:    j.config.GetString(`issuer`),
+		Issuer:    j.config.Issuer,
 		Audience:  aud.Audience(),
 		Id:        id,
 		IssuedAt:  time.Now().Unix(),
 		//Subject:  `subject`
 	}
 
-	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claim).SignedString([]byte(j.secret))
+	token, err := jwt.NewWithClaims(jwt.SigningMethodHS256, claim).SignedString([]byte(j.config.Secret))
 	if err != nil {
 		return nil, err
 	}
@@ -68,7 +73,7 @@ func (j *Jwt) Create(aud contract.JwtAudience) (*contract.Token, error) {
 func (j *Jwt) Parse(token string) (*jwt.StandardClaims, error) {
 	claims := new(jwt.StandardClaims)
 	token2, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
-		return []byte(j.secret), nil
+		return []byte(j.config.Secret), nil
 	})
 
 	return token2.Claims.(*jwt.StandardClaims), err

@@ -16,8 +16,6 @@ type (
 	Context interface {
 		context.Context
 
-		Firmeve() Application
-
 		Application() Application
 
 		Protocol() Protocol

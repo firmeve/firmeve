@@ -7,7 +7,8 @@ import (
 
 type (
 	event struct {
-		listeners map[string][]contract.EventHandler
+		application contract.Application
+		listeners   map[string][]contract.EventHandler
 	}
 )
 
@@ -15,9 +16,10 @@ var (
 	mutex sync.Mutex
 )
 
-func New() contract.Event {
+func New(application contract.Application) contract.Event {
 	return &event{
-		listeners: make(map[string][]contract.EventHandler, 0),
+		application: application,
+		listeners:   make(map[string][]contract.EventHandler, 0),
 	}
 }
 
@@ -38,7 +40,7 @@ func (e *event) Dispatch(name string, params ...interface{}) []interface{} {
 
 	results := make([]interface{}, 0)
 	for _, listener := range e.listeners[name] {
-		result, err := listener.Handle(params...)
+		result, err := listener.Handle(e.application, params...)
 		if err != nil {
 			break
 		}

@@ -2,8 +2,8 @@ package render
 
 import (
 	"fmt"
-	config2 "github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/kernel/contract"
+	"github.com/spf13/viper"
 	template2 "html/template"
 	path2 "path"
 	"strings"
@@ -35,7 +35,7 @@ func (html) Render(protocol contract.Protocol, status int, v interface{}) error 
 		if tmpl, ok := v.(Template); ok {
 			// Get base views config
 			if basePath == "" || suffix == "" {
-				config := p.Application().Make(`config`).(*config2.Config).Item("view")
+				config := p.Application().Resolve(`config`).(contract.Configuration).Get("view").(*viper.Viper)
 				basePath = config.GetString("path")
 				suffix = config.GetString("suffix")
 			}

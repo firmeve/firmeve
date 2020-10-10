@@ -1,13 +1,11 @@
 package jwt
 
 import (
-	config2 "github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/kernel"
 )
 
 type Provider struct {
 	kernel.BaseProvider
-	Config *config2.Config `inject:"config"`
 }
 
 func (p Provider) Name() string {
@@ -15,12 +13,12 @@ func (p Provider) Name() string {
 }
 
 func (p *Provider) Register() {
-	frameworkConfig := p.Config.Item("framework")
-
+	config := new(Configuration)
+	p.Config.Bind(`jwt`, config)
+	config.Secret = p.Config.GetString(`framework.key`)
 	// binding jwt
 	p.Bind(`jwt`, New(
-		frameworkConfig.GetString("key"),
-		p.Config.Item("jwt"),
+		config,
 		NewMemoryStore(),
 	))
 }

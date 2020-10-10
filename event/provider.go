@@ -14,7 +14,7 @@ func (p *Provider) Name() string {
 }
 
 func (p *Provider) Register() {
-	p.Firmeve.Bind(`event`, New(), container.WithShare(true))
+	p.Application.Bind(`event`, New(p.Application), container.WithShare(true))
 }
 
 func (p *Provider) Boot() {

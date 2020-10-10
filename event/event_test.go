@@ -2,6 +2,8 @@ package event
 
 import (
 	"errors"
+	"github.com/firmeve/firmeve/kernel"
+	"github.com/firmeve/firmeve/kernel/contract"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,7 +14,7 @@ type mockHandler struct {
 	err    error
 }
 
-func (m *mockHandler) Handle(params ...interface{}) (interface{}, error) {
+func (m *mockHandler) Handle(app contract.Application, params ...interface{}) (interface{}, error) {
 	if m.err != nil {
 		return nil, m.err
 	}
@@ -21,7 +23,7 @@ func (m *mockHandler) Handle(params ...interface{}) (interface{}, error) {
 }
 
 func TestBaseDispatcher(t *testing.T) {
-	dispatch := New()
+	dispatch := New(kernel.New())
 	dispatch.Listen("a",
 		&mockHandler{},
 		&mockHandler{},
@@ -36,7 +38,8 @@ func TestBaseDispatcher(t *testing.T) {
 }
 
 func TestErrorDispatcher(t *testing.T) {
-	dispatch := New()
+	application := kernel.New()
+	dispatch := New(application)
 	dispatch.Listen("b", &mockHandler{
 		result: true,
 	})

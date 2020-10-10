@@ -111,13 +111,14 @@ func (c *Command) Run(root contract.BaseCommand, cmd *cobra.Command, args []stri
 func (c *Command) signalNotify(server contract.Server) {
 	//		c.debugLog(`Start https server[` + host + `] key[` + keyFile + `] cert[` + certFile + `]`)
 	//		c.debugLog(`Start http server[` + host + `]`)
-	logger.Debug(`Signal listen SIGTERM(kill),SIGINT(kill -2),SIGKILL(kill -9)`)
+	logger.Debug(`Signal listen SIGTERM(kill),SIGINT(kill -2)`)
 	quit := make(chan os.Signal, 1)
 	// kill (no param) default send syscall.SIGTERM
 	// kill -2 is syscall.SIGINT
 	// kill -9 is syscall.SIGKILL but can't be catch, so don't need add it
-	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
+	//signal.Stop(quit)
 
 	logger.Debug("Shutdown server")
 
@@ -145,7 +146,9 @@ func (c *Command) watchServer(done <-chan struct{}, watch []string, server contr
 				}
 				logger.Debug(`current notify event`, `name`, event.Name, `op`, event.Op)
 
-				server.Restart(context.Background())
+				if err := server.Restart(context.Background()); err != nil {
+					logger.Error(`server restart error`, `error`, err)
+				}
 
 				logger.Debug(`server is restart`)
 			case err, ok := <-watcher.Errors:

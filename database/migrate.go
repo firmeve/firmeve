@@ -2,8 +2,8 @@ package database
 
 import (
 	"errors"
+	"fmt"
 	"github.com/fatih/color"
-	config2 "github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/support/path"
 	"github.com/firmeve/firmeve/support/slices"
@@ -21,6 +21,7 @@ import (
 
 type (
 	MigrateCommand struct {
+		config *Configuration
 	}
 )
 
@@ -29,6 +30,12 @@ var (
 		`create`, `up`, `down`, `step`, `rollback`, `force`, `version`, //`drop`,
 	}
 )
+
+func NewMigration(config *Configuration) *MigrateCommand {
+	return &MigrateCommand{
+		config: config,
+	}
+}
 
 func (m *MigrateCommand) CobraCmd() *cobra.Command {
 	command := new(cobra.Command)
@@ -65,7 +72,7 @@ Commands:
 
 func (m *MigrateCommand) Run(root contract.BaseCommand, cmd *cobra.Command, args []string) {
 	var (
-		config = root.Resolve(`config`).(*config2.Config)
+		config = m.config
 		logger = root.Resolve(`logger`).(contract.Loggable)
 		path2  string
 		driver string
@@ -74,7 +81,7 @@ func (m *MigrateCommand) Run(root contract.BaseCommand, cmd *cobra.Command, args
 	driver = cmd.Flag(`driver`).Value.String()
 	path2, err := m.targetDir(
 		cmd.Flag(`path`).Value.String(),
-		config.Item(`database`).GetString(`migration.path`),
+		config.Migration.Path,
 	)
 
 	if err != nil {
@@ -106,8 +113,7 @@ func (m *MigrateCommand) Run(root contract.BaseCommand, cmd *cobra.Command, args
 		}
 		defer f2.Close()
 	} else {
-		dbConfig := root.Resolve(`config`).(*config2.Config).Item(`database`)
-		connection := dbConfig.GetString(`connections.` + driver + `.addr`)
+		connection := fmt.Sprintf(`%s:%s@(%s)/%s?charset=%s&parseTime=True&loc=Local`, config.Connections[driver].Username, config.Connections[driver].Password, config.Connections[driver].Host, config.Connections[driver].Database, config.Connections[driver].Charset)
 		m2, err := migrate.New(
 			`file://`+path2,
 			driver+"://"+connection,

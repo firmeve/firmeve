@@ -92,7 +92,7 @@ func (a *Application) Register(provider contract.Provider, force bool) {
 
 func (a *Application) RegisterMultiple(providers []contract.Provider, force bool) {
 	for i := range providers {
-		a.Register(a.Make(providers[i]).(contract.Provider), force)
+		a.Register(providers[i], force)
 	}
 }
 

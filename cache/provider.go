@@ -2,7 +2,6 @@ package cache
 
 import (
 	"github.com/firmeve/firmeve/cache/redis"
-	config2 "github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/container"
 	"github.com/firmeve/firmeve/kernel"
 	redis2 "github.com/firmeve/firmeve/redis"
@@ -18,18 +17,17 @@ func (p *Provider) Name() string {
 
 func (p *Provider) Register() {
 	// register redis
-	p.Firmeve.Register(new(redis2.Provider), false)
+	p.Application.Register(new(redis2.Provider), false)
 
-	config := p.Firmeve.Get(`config`).(*config2.Config).Item(`cache`)
-	currentDriver := config.GetString(`default`)
-	cache := New(currentDriver)
-	//base driver
-	cache.Register(`redis`, redis.New(
-		p.Resolve(`redis.client`).(*redis2.Redis).Connection(config.GetString(`repositories.`+currentDriver+`.connection`)),
-		config.GetString(`prefix`),
-	))
+	config := new(Configuration)
+	p.BindConfig(`cache`, config)
 
-	p.Firmeve.Bind(`cache`, cache, container.WithShare(true))
+	cache := New(config)
+	redisClient := p.Resolve(`redis`).(*redis.Redis).Client(config.Repositories[`redis`].Connection)
+	//config.Default = redis
+	cache.Register(config.Default, redis.New(redisClient, config.Prefix))
+
+	p.Application.Bind(`cache`, cache, container.WithShare(true))
 
 }
 

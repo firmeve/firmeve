@@ -1,14 +1,12 @@
 package logging
 
 import (
-	config2 "github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"gopkg.in/natefinch/lumberjack.v2"
 	"io"
 	"os"
-	"strings"
 	"time"
 )
 
@@ -23,6 +21,13 @@ type (
 	level string
 
 	writers map[string]io.Writer
+
+	Configuration struct {
+		Default    []string               `json:"default" yaml:"default"`
+		Channels   map[string]interface{} `json:"channels" yaml:"channels"`
+		StackLevel string                 `json:"stack_level" yaml:"stack_level" mapstructure:"stack_level"`
+		Formatter  string                 `json:"formatter" yaml:"formatter"`
+	}
 )
 
 const (
@@ -43,7 +48,7 @@ var (
 		Fatal: zapcore.FatalLevel,
 		Panic: zapcore.PanicLevel,
 	}
-	channelMap = map[string]func(config contract.Configuration) io.Writer{
+	channelMap = map[string]func(config *Configuration) io.Writer{
 		`file`:    newFileChannel,
 		`console`: newConsoleChannel,
 	}
@@ -71,16 +76,14 @@ var (
 	event contract.Event
 )
 
-func New(app contract.Application) contract.Loggable {
-	zapLogger, writers := zapLogger(
-		app.Get(`config`).(*config2.Config).Item(`logging`),
-	)
+func New(config *Configuration, event contract.Event) contract.Loggable {
+	zapLogger, writers := zapLogger(config)
 
 	return &logger{
-		app:     app,
+		//app:     app,
 		logger:  zapLogger,
 		writers: writers,
-		event:   app.Resolve(`event`).(contract.Event),
+		event:   event,
 	}
 }
 
@@ -160,9 +163,9 @@ func separatedMessages(values ...interface{}) (string, []interface{}) {
 // ---------------------------------------------- func --------------------------------------------------
 
 // Default internal logger
-func zapLogger(config contract.Configuration) (*zap.SugaredLogger, writers) {
-	encoder := zapEncoders[config.GetString(`formatter`)]
-	current := config.GetStringSlice(`default`)
+func zapLogger(config *Configuration) (*zap.SugaredLogger, writers) {
+	encoder := zapEncoders[config.Formatter]
+	current := config.Default
 	writers := make(writers, len(current))
 	cores := make([]zapcore.Core, len(current))
 	for i := range current {
@@ -171,26 +174,27 @@ func zapLogger(config contract.Configuration) (*zap.SugaredLogger, writers) {
 			encoder,
 			zapcore.AddSync(writers[current[i]]),
 			zap.LevelEnablerFunc(func(lvl zapcore.Level) bool {
-				return lvl >= levelMap[level(config.GetStringMap(strings.Join([]string{`channels`, current[i]}, `.`))[`level`].(string))]
+				return lvl >= levelMap[level(config.Channels[current[i]].(map[string]interface{})[`level`].(string))]
 			}))
 	}
 
 	return zap.New(
-		zapcore.NewTee(cores...), zap.AddCallerSkip(3), zap.AddStacktrace(levelMap[level(config.GetString(`stack_level`))]),
+		zapcore.NewTee(cores...), zap.AddCallerSkip(3), zap.AddStacktrace(levelMap[level(config.StackLevel)]),
 	).Sugar(), writers
 }
 
 // New file channel
-func newFileChannel(config contract.Configuration) io.Writer {
+func newFileChannel(config *Configuration) io.Writer {
+	fileConfig := config.Channels[`file`].(map[string]interface{})
 	return &lumberjack.Logger{
-		Filename:   config.GetStringMap(`channels.file`)[`path`].(string) + "/log.log",
-		MaxSize:    config.GetStringMap(`channels.file`)[`size`].(int),
-		MaxBackups: config.GetStringMap(`channels.file`)[`backup`].(int),
-		MaxAge:     config.GetStringMap(`channels.file`)[`age`].(int),
+		Filename:   fileConfig[`path`].(string) + "/log.log",
+		MaxSize:    fileConfig[`size`].(int),
+		MaxBackups: fileConfig[`backup`].(int),
+		MaxAge:     fileConfig[`age`].(int),
 	}
 }
 
 // New console channel
-func newConsoleChannel(config contract.Configuration) io.Writer {
+func newConsoleChannel(config *Configuration) io.Writer {
 	return os.Stdout
 }

@@ -1,7 +1,6 @@
 package redis
 
 import (
-	config2 "github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/kernel"
 )
 
@@ -14,10 +13,10 @@ func (Provider) Name() string {
 }
 
 func (p *Provider) Register() {
-	client := New(p.Firmeve.Resolve(`config`).(*config2.Config).Item(`redis`))
-	p.Firmeve.Bind(`redis.client`, client)
-	p.Firmeve.Bind(`redis.client.connection`, client.Connection(`default`))
-	p.Firmeve.Bind(`redis.client.cluster`, client.Cluster(`default`))
+	redisConfig := new(Configuration)
+	p.Config.Bind(`redis`, redisConfig)
+	redis := New(redisConfig)
+	p.Bind(`redis`, redis)
 }
 
 func (Provider) Boot() {

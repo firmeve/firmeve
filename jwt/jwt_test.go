@@ -2,7 +2,6 @@ package jwt
 
 import (
 	"fmt"
-	config2 "github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/testing"
 	"github.com/stretchr/testify/assert"
@@ -12,9 +11,10 @@ import (
 
 func newJwt() contract.Jwt {
 	app := testing.ApplicationDefault()
-	frameConfig := app.Resolve(`config`).(*config2.Config).Item("framework")
-	jwtConfig := app.Resolve(`config`).(*config2.Config).Item("jwt")
-	return New(frameConfig.GetString("key"), jwtConfig, NewMemoryStore())
+	config := new(Configuration)
+	app.Resolve(`config`).(contract.Configuration).Bind(`jwt`, config)
+	config.Secret = app.Resolve(`config`).(contract.Configuration).GetString(`framework.key`)
+	return New(config, NewMemoryStore())
 }
 
 func TestJwt_Create(t *testing2.T) {
@@ -52,10 +52,11 @@ func TestJwt_Parse_Error(t *testing2.T) {
 
 func TestJwt_Parse_Valid_Expired(t *testing2.T) {
 	app := testing.ApplicationDefault()
-	frameConfig := app.Resolve(`config`).(*config2.Config).Item("framework")
-	jwtConfig := app.Resolve(`config`).(*config2.Config).Item("jwt")
-	jwtConfig.Set("lifetime", 1)
-	jwt := New(frameConfig.GetString("key"), jwtConfig, NewMemoryStore())
+	config := new(Configuration)
+	app.Resolve(`config`).(contract.Configuration).Bind(`jwt`, config)
+	config.Secret = app.Resolve(`config`).(contract.Configuration).GetString(`framework.key`)
+	config.Lifetime = 1
+	jwt := New(config, NewMemoryStore())
 
 	v, _ := jwt.Create(newAudience("2"))
 
@@ -63,4 +64,21 @@ func TestJwt_Parse_Valid_Expired(t *testing2.T) {
 	b, err := jwt.Valid(v.Token)
 	assert.Equal(t, false, b)
 	assert.Equal(t, ErrorExpired, err)
+}
+
+func TestJwt_Parse(t *testing2.T) {
+	app := testing.ApplicationDefault()
+	config := new(Configuration)
+	config.Lifetime = 1
+	app.Resolve(`config`).(contract.Configuration).Bind(`jwt`, config)
+	config.Secret = `i6KIOXmYKMfKKgQ3Cr3bF2AhGv5hcY5i`
+
+	jwt := New(config, NewMemoryStore())
+	v, err := jwt.Parse(`eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOi8veWltZWkudGVzdC9hcGkvdjIvYXV0aC9sb2dpbiIsImlhdCI6MTU5NzMwNzM1NiwiZXhwIjoxNTk4NjAzMzU2LCJuYmYiOjE1OTczMDczNTYsImp0aSI6IlQzb3lKcUtmN0xKM1JQUFAiLCJzdWIiOiIyODEiLCJwcnYiOiI0OGU0NTM4MzFjZWJhNWU1N2E0NzVlNjg2NDljZmRlZTZlOTdkOGQyIn0.JYpKbA7pb06jAJE9B92J-U2INNHgcHTLnOWeU9OH_Z4`)
+	if err != nil {
+		fmt.Println(err)
+		t.Error(err)
+	}
+
+	fmt.Printf("%v", v)
 }

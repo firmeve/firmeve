@@ -1,7 +1,6 @@
 package testing
 
 import (
-	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/container"
 	"github.com/firmeve/firmeve/event"
 	"github.com/firmeve/firmeve/kernel"
@@ -25,8 +24,7 @@ func ApplicationDefault(providers ...contract.Provider) contract.Application {
 func bootstrap(app contract.Application, configPath string, providers ...contract.Provider) {
 	app.SetMode(contract.ModeTesting)
 	app.Bind(`application`, app)
-	app.Bind(`firmeve`, app)
-	app.Bind(`config`, config.New(configPath), container.WithShare(true))
+	app.Bind(`config`, kernel.NewConfig(configPath), container.WithShare(true))
 	providers = append([]contract.Provider{new(event.Provider), new(logging.Provider)}, providers...)
 	app.RegisterMultiple(providers, false)
 	app.Boot()

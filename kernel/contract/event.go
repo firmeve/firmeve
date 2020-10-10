@@ -2,7 +2,7 @@ package contract
 
 type (
 	EventHandler interface {
-		Handle(params ...interface{}) (interface{}, error)
+		Handle(application Application, params ...interface{}) (interface{}, error)
 	}
 
 	Event interface {

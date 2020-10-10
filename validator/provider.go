@@ -1,7 +1,6 @@
 package validator
 
 import (
-	config2 "github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/kernel"
 	"github.com/go-playground/locales"
 	"github.com/go-playground/locales/en"
@@ -23,10 +22,8 @@ func (p Provider) Name() string {
 }
 
 func (p Provider) Register() {
-	config := p.Resolve(`config`).(*config2.Config).Item(`framework`)
-
 	validate := newValidator()
-	trans := newTranslator(validate, config.GetString(`lang`))
+	trans := newTranslator(validate, p.Config.GetString(`framework.lang`))
 	newValidator := New(validate, trans)
 
 	p.Bind(`validator.trans`, trans)

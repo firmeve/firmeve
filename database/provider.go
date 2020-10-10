@@ -1,7 +1,6 @@
 package database
 
 import (
-	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/kernel"
 )
 
@@ -10,13 +9,16 @@ type Provider struct {
 }
 
 func (p *Provider) Name() string {
-	return `db`
+	return `database`
 }
 
 func (p *Provider) Register() {
-	DB := New(p.Firmeve.Get(`config`).(*config.Config).Item(`database`))
-	p.Firmeve.Bind(`db`, DB)
-	p.Firmeve.Bind(`db.connection`, DB.ConnectionDefault())
+	var config = new(Configuration)
+	p.BindConfig(`database`, config)
+	var database = New(config)
+	p.Bind(`db`, database)
+	// 默认连接
+	p.Bind(`db.connection`, database.ConnectionDB(config.Default))
 }
 
 func (p *Provider) Boot() {

@@ -24,9 +24,9 @@ func render(err interface{}, ctx contract.Context) {
 	if v, ok := err.(error); ok {
 		ctx.Error(http.StatusInternalServerError, v)
 	} else if v, ok := err.(string); ok {
-		ctx.Error(http.StatusInternalServerError, kernel.Errorf(v))
+		ctx.Error(http.StatusInternalServerError, kernel.Error(v))
 	} else {
-		ctx.Error(http.StatusInternalServerError, kernel.Errorf(message))
+		ctx.Error(http.StatusInternalServerError, kernel.Error(message))
 	}
 }
 

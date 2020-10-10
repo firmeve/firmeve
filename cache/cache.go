@@ -7,10 +7,21 @@ import (
 	"time"
 )
 
-type Cache struct {
-	current      string
-	repositories map[string]contract.CacheSerializable
-}
+type (
+	Cache struct {
+		current      string
+		config       *Configuration
+		repositories map[string]contract.CacheSerializable
+	}
+
+	Configuration struct {
+		Prefix       string
+		Default      string `json:"default" yaml:"default"`
+		Repositories map[string]struct {
+			Connection string `json:"connection" yaml:"connection"`
+		} `json:"repositories" yaml:"repositories"`
+	}
+)
 
 var (
 	mutex             sync.Mutex
@@ -18,10 +29,11 @@ var (
 )
 
 // Create a cache manager
-func New(current string) contract.Cache {
+func New(config *Configuration) contract.Cache {
 	return &Cache{
 		repositories: make(map[string]contract.CacheSerializable, 0),
-		current:      current,
+		config:       config,
+		current:      config.Default,
 	}
 }
 

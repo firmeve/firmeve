@@ -5,7 +5,6 @@ import (
 	testing2 "github.com/firmeve/firmeve/testing"
 	"testing"
 
-	"github.com/firmeve/firmeve/config"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -34,18 +33,9 @@ func TestMain(m *testing.M) {
 
 func TestNew_Connection_Error(t *testing.T) {
 	//config := config.New(path.RunRelative(configPath)).Item(`database`)
-	app.Resolve(`config`).(*config.Config).Item(`database`).Set("error_connection.addr", "nothing")
+	app.Resolve(`config`).(contract.Configuration).Set("database.error_connection.addr", "nothing")
 	assert.Panics(t, func() {
 		app.Resolve(`db`).(*DB).Connection(`error_connection`)
-	})
-}
-
-func TestNew_Close_Error(t *testing.T) {
-	db := app.Resolve(`db`).(*DB)
-	assert.NotPanics(t, func() {
-		db.ConnectionDefault()
-		db.CloseDefault()
-		db.CloseDefault()
 	})
 }
 
@@ -58,5 +48,5 @@ func TestDB_Provider(t *testing.T) {
 	assert.Equal(t, true, firmeve.Has(`db.connection`))
 
 	provider := firmeve.Make(new(Provider)).(*Provider)
-	assert.Equal(t, firmeve, provider.Firmeve)
+	assert.Equal(t, firmeve, provider.Application)
 }

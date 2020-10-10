@@ -40,7 +40,8 @@ var DefaultConfig = map[string]interface{}{
 func NewServer(app contract.Application, srvConfig map[string]interface{}) contract.Server {
 	srvConfig = maps.MergeInterface(DefaultConfig, srvConfig)
 	return &Server{
-		srvConfig: maps.MergeInterface(DefaultConfig, srvConfig),
+		app:       app,
+		srvConfig: srvConfig,
 		srv: &net_http.Server{
 			Addr:              srvConfig[`host`].(string),
 			Handler:           app.Resolve(`http.router`).(contract.HttpRouter),
@@ -87,6 +88,12 @@ func (s *Server) Stop(ctx context.Context) error {
 }
 
 func (s *Server) Restart(ctx context.Context) error {
-	s.Stop(ctx)
-	return s.Start(ctx)
+	if err := s.Stop(ctx); err != nil {
+		return err
+	}
+	// Must start a NewServer
+	return NewServer(s.app, s.srvConfig).Start(ctx)
+}
+func (s *Server) New() contract.Server {
+	return NewServer(s.app, s.srvConfig)
 }

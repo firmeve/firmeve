@@ -24,13 +24,19 @@ func (a *App) Register() {
 }
 
 func (a *App) Boot() {
-	router := a.Firmeve.Get(`http.router`).(contract.HttpRouter)
+	router := a.Application.Get(`http.router`).(contract.HttpRouter)
 	v1 := router.Group("/api/v1")
 	{
 		v1.Use(http.Recovery)
 		v1.GET(`/ping`, func(c contract.Context) {
 			c.RenderWith(200, render.JSON, map[string]string{
 				"message": "pong",
+			})
+			c.Next()
+		})
+		v1.GET(`/ping1`, func(c contract.Context) {
+			c.RenderWith(200, render.JSON, map[string]string{
+				"message": "pong1",
 			})
 			c.Next()
 		})

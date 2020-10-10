@@ -2,7 +2,6 @@ package kernel
 
 import (
 	"github.com/fatih/color"
-	"github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/container"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/spf13/cobra"
@@ -11,10 +10,10 @@ import (
 
 type (
 	command struct {
-		firmeve   contract.Application
-		providers []contract.Provider
-		root      *cobra.Command
-		mount     func(app contract.Application)
+		application contract.Application
+		providers   []contract.Provider
+		root        *cobra.Command
+		mount       func(app contract.Application)
 	}
 
 	CommandOption struct {
@@ -65,19 +64,18 @@ func (c *command) boot(configPath string, devMode bool) {
 	} else {
 		mode = contract.ModeProduction
 	}
-	c.firmeve.SetMode(mode)
+	c.application.SetMode(mode)
 
-	c.firmeve.Bind(`firmeve`, c.firmeve)
-	c.firmeve.Bind(`application`, c.firmeve)
-	c.firmeve.Bind(`config`, config.New(configPath), container.WithShare(true))
+	c.application.Bind(`application`, c.application)
+	c.application.Bind(`config`, NewConfig(configPath), container.WithShare(true))
 
-	c.firmeve.RegisterMultiple(c.providers, false)
+	c.application.RegisterMultiple(c.providers, false)
 
-	c.firmeve.Boot()
+	c.application.Boot()
 }
 
 func (c *command) debugLog(context ...interface{}) {
-	c.firmeve.Resolve(`logger`).(contract.Loggable).Debug(context...)
+	c.application.Resolve(`logger`).(contract.Loggable).Debug(context...)
 }
 
 func (c *command) Run() error {
@@ -97,16 +95,16 @@ func (c *command) Resolve(abstract interface{}, params ...interface{}) interface
 }
 
 func (c *command) Application() contract.Application {
-	return c.firmeve
+	return c.application
 }
 
 func NewCommand(option *CommandOption) contract.BaseCommand {
 	app := New()
 	command := &command{
-		firmeve:   app,
-		providers: option.Providers,
-		root:      rootCommand(app, option.ConfigPath),
-		mount:     option.Mount,
+		application: app,
+		providers:   option.Providers,
+		root:        rootCommand(app, option.ConfigPath),
+		mount:       option.Mount,
 	}
 	command.AddCommand(option.Commands...)
 	return command

@@ -1,73 +1,98 @@
 package database
 
 import (
-	"github.com/firmeve/firmeve/kernel/contract"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/mssql"
-	_ "github.com/jinzhu/gorm/dialects/mysql"
-	_ "github.com/jinzhu/gorm/dialects/postgres"
-	_ "github.com/jinzhu/gorm/dialects/sqlite"
-	"strings"
+	"database/sql"
+	"fmt"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 	"time"
 )
 
 type (
 	DB struct {
-		config      contract.Configuration
-		db          *gorm.DB
-		connections dbConnection
+		config      *Configuration
+		connections map[string]*connection
 	}
 
-	dbConnection map[string]*gorm.DB
+	connection struct {
+		DB    *gorm.DB
+		SqlDB *sql.DB
+	}
+
+	Configuration struct {
+		Default     string `json:"default" yaml:"default"`
+		Connections map[string]struct {
+			Host     string `json:"host" yaml:"host"`
+			Database string `json:"database" yaml:"database"`
+			Username string `json:"username" yaml:"username"`
+			Password string `json:"password" yaml:"password"`
+			Charset  string `json:"charset" yaml:"charset"`
+		} `json:"connections" yaml:"connections"`
+		Pool struct {
+			MaxIdle       int `json:"max_idle" yaml:"max_idle"`
+			MaxConnection int `json:"max_connection" yaml:"max_connection"`
+			MaxLifetime   int `json:"max_lifetime" yaml:"max_lifetime"`
+		}
+		Debug     bool `json:"debug" yaml:"debug"`
+		Migration struct {
+			Path string `json:"path" yaml:"path"`
+		} `json:"migration" yaml:"migration"`
+	}
 )
 
-func New(config contract.Configuration) *DB {
+func New(config *Configuration) *DB {
 	return &DB{
 		config:      config,
-		connections: make(dbConnection, 0),
+		connections: make(map[string]*connection, 0),
 	}
 }
 
-func (d *DB) ConnectionDefault() *gorm.DB {
-	return d.Connection(d.config.GetString(`default`))
+func (db *DB) ConnectionDB(conn string) *gorm.DB {
+	return db.Connection(conn).DB
 }
 
-func (d *DB) Connection(driver string) *gorm.DB {
-	if connection, ok := d.connections[driver]; ok {
-		return connection
+// 数据库连接
+func (db *DB) Connection(conn string) *connection {
+	if v, ok := db.connections[conn]; ok {
+		return v
 	}
 
-	config := d.config.GetString(strings.Join([]string{`connections`, driver, `addr`}, `.`))
-	db, err := gorm.Open(driver, config)
+	var (
+		connectionConfig = db.config.Connections[conn]
+		dsn              = fmt.Sprintf(`%s:%s@(%s)/%s?charset=%s&parseTime=True&loc=Local`, connectionConfig.Username, connectionConfig.Password, connectionConfig.Host, connectionConfig.Database, connectionConfig.Charset)
+	)
+
+	db2, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		SkipDefaultTransaction: true,
+		//Logger: logger.New(infrastructure.Logger, logger.Config{
+		//	SlowThreshold: 100 * time.Millisecond,
+		//	Colorful:      true,
+		//	LogLevel:      logger.Info,
+		//}),
+	})
 
 	if err != nil {
 		panic(err)
 	}
 
 	// connection poll
-	db.DB().SetMaxIdleConns(d.config.GetInt(`pool.max_idle`))
-	db.DB().SetMaxOpenConns(d.config.GetInt(`pool.max_connection`))
-	db.DB().SetConnMaxLifetime(time.Duration(d.config.GetInt(`pool.max_lifetime`)) * time.Minute)
-
-	// debug logger
-	// db.SetLogger()
-	db.LogMode(d.config.GetBool(`debug`))
-
-	d.connections[driver] = db
-
-	return db
-}
-
-func (d *DB) CloseDefault() {
-	d.Close(d.config.GetString(`default`))
-}
-
-func (d *DB) Close(driver string) {
-	if connection, ok := d.connections[driver]; ok {
-		err := connection.Close()
-		if err != nil {
-			panic(err)
-		}
-		delete(d.connections, driver)
+	sqlDB, err := db2.DB()
+	if err != nil {
+		panic(err)
 	}
+
+	sqlDB.SetMaxIdleConns(db.config.Pool.MaxIdle)
+	sqlDB.SetMaxOpenConns(db.config.Pool.MaxConnection)
+	sqlDB.SetConnMaxLifetime(time.Duration(db.config.Pool.MaxLifetime))
+
+	currentConnection := &connection{
+		DB:    db2,
+		SqlDB: sqlDB,
+	}
+	db.connections[conn] = currentConnection
+	return currentConnection
+}
+
+func (db *DB) Close(connection string) {
+	db.connections[connection].SqlDB.Close()
 }

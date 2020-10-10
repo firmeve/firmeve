@@ -1,7 +1,6 @@
 package firmeve
 
 import (
-	config2 "github.com/firmeve/firmeve/config"
 	"github.com/firmeve/firmeve/event"
 	"github.com/firmeve/firmeve/http"
 	"github.com/firmeve/firmeve/kernel"
@@ -26,7 +25,7 @@ var (
 
 	Application contract.Application
 	Logger      contract.Loggable
-	Config      *config2.Config
+	Config      contract.Configuration
 	Event       contract.Event
 )
 
@@ -96,7 +95,7 @@ func RunWithSupportFunc(f func(application contract.Application), options ...sup
 func bindingBaseService(app contract.Application) {
 	Application = app
 	Logger = app.Resolve(`logger`).(contract.Loggable)
-	Config = app.Resolve(`config`).(*config2.Config)
+	Config = app.Resolve(`config`).(contract.Configuration)
 	Event = app.Resolve(`event`).(contract.Event)
 }
 

@@ -3,6 +3,7 @@ package logging
 import (
 	"github.com/firmeve/firmeve/container"
 	"github.com/firmeve/firmeve/kernel"
+	"github.com/firmeve/firmeve/kernel/contract"
 )
 
 type Provider struct {
@@ -14,7 +15,9 @@ func (p *Provider) Name() string {
 }
 
 func (p *Provider) Register() {
-	p.Bind(`logger`, New(p.Application), container.WithShare(true))
+	config := new(Configuration)
+	p.BindConfig(`logging`, config)
+	p.Bind(`logger`, New(config, p.Application.Resolve(`event`).(contract.Event)), container.WithShare(true))
 }
 
 func (p *Provider) Boot() {

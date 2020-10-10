@@ -6,10 +6,10 @@ database:
   connections:
     mysql:
       addr: "root:@(127.0.0.1)/test?charset=utf8mb4&parseTime=True&loc=Local"
-    pool:
-      max_idle: 100
-      max_connection: 50
-      max_lifetime: 60
+  pool:
+    max_idle: 100
+    max_connection: 50
+    max_lifetime: 60
   debug: false
   migration:
     path: "../../../testdata/migrations"

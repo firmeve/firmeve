@@ -10,9 +10,10 @@ import (
 
 type (
 	basicError struct {
-		err     error
+		prev    error
 		message string
 		stack   []uintptr
+		code    int
 		meta    map[string]interface{}
 	}
 )
@@ -21,47 +22,36 @@ func (b *basicError) Meta() map[string]interface{} {
 	return b.meta
 }
 
-func (b *basicError) SetMeta(key string, value interface{}) {
+func (b *basicError) SetMeta(key string, value interface{}) contract.Error {
 	b.meta[key] = value
+	return b
 }
 
 func (b *basicError) Error() string {
-	if b.err != nil {
-		return strings.Join([]string{b.message, b.err.Error()}, `: `)
-	}
-
 	return b.message
 }
 
+func (b *basicError) Code() int {
+	return b.code
+}
+
+func (b *basicError) SetCode(code int) contract.Error {
+	b.code = code
+	return b
+}
+
 func (b *basicError) Equal(err error) bool {
+	// TODO: 暂时使用此种方法，并非完全一致
 	return errors.Is(b, err)
 }
 
 func (b *basicError) Unwrap() error {
-	return b.err
+	return b.prev
 }
 
 func (b *basicError) String() string {
 	return b.Error()
 }
-
-//func (b *basicError) Render(status int, ctx contract.Context) error {
-//	v := map[string]interface{}{
-//		`status`:  status,
-//		`message`: b.Error(),
-//	}
-//
-//	if ctx.Firmeve().IsDevelopment() {
-//		v[`meta`] = b.meta
-//		v[`stack`] = b.StackString()
-//	}
-//	//
-//	//if protocol, ok := ctx.Protocol().(contract.HttpProtocol); ok {
-//	//	if protocol.IsContentType(contract.HttpMimeJson)
-//	//}
-//
-//	return ctx.Render(status, v)
-//}
 
 func (b *basicError) Stack() []uintptr {
 	return b.stack
@@ -82,45 +72,41 @@ func (b *basicError) StackString() string {
 	return strings.Join(stackString, "\n")
 }
 
+func (b *basicError) Prev() error {
+	return b.prev
+}
+
 func callers() []uintptr {
-	//pc := make([]uintptr, 0)
-	//n := runtime.Callers(2, pc)
-	//frames := runtime.CallersFrames(pc[:n])
-
-	//var pcs []uintptr
-	////pcs := make([]uintptr, 0)
-	//n := runtime.Callers(0, pcs)
-	//fmt.Println(n)
-	//return pcs[0:n]
-
 	const depth = 32
 	var pcs [depth]uintptr
 	n := runtime.Callers(3, pcs[:])
 	return pcs[0:n]
 }
 
-func Error(message string) *basicError {
+func Error(err interface{}) contract.Error {
+	var (
+		stacks  = callers()
+		message string
+		prev    error
+	)
+	// 其实和Exception一样，每个Error都会挂载上一个Error形成调用链条
+	switch v := err.(type) {
+	case contract.Error:
+		prev = v.(error)
+		stacks = append(v.Stack(), stacks...)
+		message = v.(error).Error()
+	case error:
+		prev = v
+		message = v.Error()
+	case string:
+		message = v
+	default:
+		message = fmt.Sprintf("%v", v)
+	}
+
 	return &basicError{
+		prev:    prev,
 		message: message,
-		stack:   callers(),
-		meta:    make(map[string]interface{}, 0),
-	}
-}
-
-func Errorf(format string, args ...interface{}) *basicError {
-	return Error(fmt.Sprintf(format, args...))
-}
-
-func ErrorWarp(err error) *basicError {
-	var stacks = make([]uintptr, 0)
-	if v, ok := err.(contract.ErrorStack); ok {
-		stacks = append(v.Stack(), callers()...)
-	} else {
-		stacks = callers()
-	}
-	return &basicError{
-		stack: stacks,
-		err:   err,
-		meta:  make(map[string]interface{}, 0),
+		stack:   stacks,
 	}
 }
