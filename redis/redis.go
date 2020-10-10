@@ -1,7 +1,7 @@
 package redis
 
 import (
-	redis2 "github.com/go-redis/redis"
+	redis2 "github.com/go-redis/redis/v8"
 )
 
 type (

@@ -1,6 +1,7 @@
 package redis
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"os"
@@ -8,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/go-redis/redis"
+	"github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -291,7 +292,7 @@ func TestRepository_Flush(t *testing.T) {
 		t.Fail()
 	}
 
-	strings, err := client.Keys(`*`).Result()
+	strings, err := client.Keys(context.Background(), `*`).Result()
 	if err != nil {
 		t.Fail()
 	}

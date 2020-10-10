@@ -3,7 +3,7 @@ package redis
 import (
 	"github.com/firmeve/firmeve/kernel/contract"
 	testing2 "github.com/firmeve/firmeve/testing"
-	redis2 "github.com/go-redis/redis"
+	redis2 "github.com/go-redis/redis/v8"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -24,7 +24,7 @@ func TestMain(m *testing.M) {
 }
 
 func TestRedis_Connection(t *testing.T) {
-	client := redis.Connection(`default`)
+	client := redis.Client(`default`)
 	assert.IsType(t, &redis2.Client{}, client)
 }
 
