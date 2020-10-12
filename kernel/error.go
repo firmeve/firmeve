@@ -103,18 +103,18 @@ func Error(params ...interface{}) contract.Error {
 	case contract.Error:
 		prev = v.(error)
 		stacks = append(v.Stack(), stacks...)
-		if message != `` {
+		if message == `` {
 			message = v.(error).Error()
 		}
 	case error:
 		prev = v
-		if message != `` {
+		if message == `` {
 			message = v.Error()
 		}
 	case string:
 		message = v
 	default:
-		if message != `` {
+		if message == `` {
 			message = fmt.Sprintf("%v", v)
 		}
 	}
