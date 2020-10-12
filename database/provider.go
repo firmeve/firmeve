@@ -2,6 +2,7 @@ package database
 
 import (
 	"github.com/firmeve/firmeve/kernel"
+	"gorm.io/gorm"
 )
 
 type Provider struct {
@@ -19,7 +20,12 @@ func (p *Provider) Register() {
 	p.Bind(`db`, database)
 	// 默认连接
 	p.Bind(`db.connection`, database.ConnectionDB(config.Default))
-	p.Bind(`db.connection.new`, database.ConnectionNewDB(config.Default))
+	// 每次返回一个新的连接函数
+	p.Bind(`db.connection.func`, func() func() *gorm.DB {
+		return func() *gorm.DB {
+			return database.ConnectionNewDB(config.Default)
+		}
+	})
 }
 
 func (p *Provider) Boot() {
