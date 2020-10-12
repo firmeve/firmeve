@@ -83,25 +83,40 @@ func callers() []uintptr {
 	return pcs[0:n]
 }
 
-func Error(err interface{}) contract.Error {
+func Error(params ...interface{}) contract.Error {
 	var (
+		err     interface{}
 		stacks  = callers()
 		message string
 		prev    error
 	)
+	paramsLen := len(params)
+	if paramsLen == 1 {
+		err = params[0]
+	} else if paramsLen == 2 {
+		message = params[0].(string)
+		err = params[1]
+	}
+
 	// 其实和Exception一样，每个Error都会挂载上一个Error形成调用链条
 	switch v := err.(type) {
 	case contract.Error:
 		prev = v.(error)
 		stacks = append(v.Stack(), stacks...)
-		message = v.(error).Error()
+		if message != `` {
+			message = v.(error).Error()
+		}
 	case error:
 		prev = v
-		message = v.Error()
+		if message != `` {
+			message = v.Error()
+		}
 	case string:
 		message = v
 	default:
-		message = fmt.Sprintf("%v", v)
+		if message != `` {
+			message = fmt.Sprintf("%v", v)
+		}
 	}
 
 	return &basicError{
