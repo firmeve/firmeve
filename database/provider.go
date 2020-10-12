@@ -19,6 +19,7 @@ func (p *Provider) Register() {
 	p.Bind(`db`, database)
 	// 默认连接
 	p.Bind(`db.connection`, database.ConnectionDB(config.Default))
+	p.Bind(`db.connection.new`, database.ConnectionNewDB(config.Default))
 }
 
 func (p *Provider) Boot() {

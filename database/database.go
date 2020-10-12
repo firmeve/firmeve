@@ -51,6 +51,10 @@ func (db *DB) ConnectionDB(conn string) *gorm.DB {
 	return db.Connection(conn).DB
 }
 
+func (db *DB) ConnectionNewDB(conn string) *gorm.DB {
+	return db.Connection(conn).DB.Session(&gorm.Session{WithConditions: false})
+}
+
 // 数据库连接
 func (db *DB) Connection(conn string) *connection {
 	if v, ok := db.connections[conn]; ok {
