@@ -1,7 +1,9 @@
 package context
 
 import (
+	"fmt"
 	"github.com/firmeve/firmeve/binding"
+	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/render"
 	"time"
@@ -21,18 +23,14 @@ type (
 	}
 )
 
-func NewContext(firmeve contract.Application, protocol contract.Protocol, handlers ...contract.ContextHandler) contract.Context {
+func NewContext(application contract.Application, protocol contract.Protocol, handlers ...contract.ContextHandler) contract.Context {
 	return &context{
-		application: firmeve,
+		application: application,
 		protocol:    protocol,
 		handlers:    handlers,
 		entries:     make(map[string]*contract.ContextEntity, 0),
 		index:       0,
 	}
-}
-
-func (c *context) Firmeve() contract.Application {
-	return c.application
 }
 
 func (c *context) Application() contract.Application {
@@ -43,7 +41,21 @@ func (c *context) Protocol() contract.Protocol {
 	return c.protocol
 }
 
-func (c *context) Error(status int, err interface{}) {
+func (c *context) Error(status int, params ...interface{}) {
+	paramsLen := len(params)
+	var (
+		err error
+	)
+	if paramsLen == 1 {
+		if v, ok := params[0].(error); ok {
+			err = v
+		} else {
+			err = kernel.Error(fmt.Printf("%v", params[0]))
+		}
+	} else { // 固定为2位参数,message,error
+		err = kernel.Error(params...)
+	}
+
 	// record logger
 	go c.Resolve(`logger`).(contract.Loggable).Error(
 		`http error`, "error", err)
