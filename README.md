@@ -4,9 +4,9 @@
 Firmeve = Firm + Believe
 ``` 
 
-Be firm in your will and believe in your ideals.(坚定自己的意志，相信自己的理想。)
+Be firm in your will and believe in your ideals.
 
-Those who have achieved nothing can always tell you that you can't make a big deal. If you have an ideal, you have to defend it.(那些一事无成的人总是告诉你，你也成不了大器，如果你有理想的话，就要去捍卫它。)
+Those who have achieved nothing can always tell you that you can't make a big deal. If you have an ideal, you have to defend it.
 
 [![Build Status](https://travis-ci.com/firmeve/firmeve.svg?branch=develop)](https://travis-ci.com/firmeve/firmeve)
 [![codecov](https://codecov.io/gh/firmeve/firmeve/branch/develop/graph/badge.svg)](https://codecov.io/gh/firmeve/firmeve)
