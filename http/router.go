@@ -100,6 +100,8 @@ func (r *Router) createRoute(method string, path string, handler contract.Contex
 		r.event.Dispatch(`http.route.matched`, ctx, r.routes[key])
 
 		ctx.Next()
+
+		context.ReleaseContext(ctx)
 	})
 
 	return r.routes[key]

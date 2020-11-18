@@ -6,6 +6,7 @@ import (
 	"github.com/firmeve/firmeve/kernel"
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/firmeve/firmeve/render"
+	"sync"
 	"time"
 )
 
@@ -23,14 +24,31 @@ type (
 	}
 )
 
+var pool = sync.Pool{
+	New: func() interface{} {
+		return new(context)
+	},
+}
+
 func NewContext(application contract.Application, protocol contract.Protocol, handlers ...contract.ContextHandler) contract.Context {
-	return &context{
-		application: application,
-		protocol:    protocol,
-		handlers:    handlers,
-		entries:     make(map[string]*contract.ContextEntity, 0),
-		index:       0,
-	}
+	c := pool.Get().(*context)
+	c.application = application
+	c.protocol = protocol
+	c.handlers = handlers
+	c.entries = make(map[string]*contract.ContextEntity, 0)
+	c.index = 0
+	return c
+	//return &context{
+	//	application: application,
+	//	protocol:    protocol,
+	//	handlers:    handlers,
+	//	entries:     make(map[string]*contract.ContextEntity, 0),
+	//	index:       0,
+	//}
+}
+
+func ReleaseContext(c contract.Context) {
+	pool.Put(c)
 }
 
 func (c *context) Application() contract.Application {
