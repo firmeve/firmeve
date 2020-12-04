@@ -71,3 +71,6 @@ view:
   #path: "../../../testdata/views"
   path: "./views"
   suffix: ".html"
+
+scheduler:
+  size: 10
