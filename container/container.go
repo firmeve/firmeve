@@ -239,6 +239,7 @@ func (c *baseContainer) resolveStruct2(reflectType reflect.Type, reflectValue2 r
 	return reflect2.InterfaceValue(reflectType, reflectValue)
 }
 
+// Init a zero value
 func (c *baseContainer) initZero(reflectType reflect.Type) reflect.Value {
 	kind := reflect2.KindElemType(reflectType)
 	if kind == reflect.Slice {
@@ -249,6 +250,8 @@ func (c *baseContainer) initZero(reflectType reflect.Type) reflect.Value {
 		return reflect.MakeMapWithSize(reflectType, 0)
 	} else if kind == reflect.Struct {
 		return reflect.New(reflect2.IndirectType(reflectType))
+	} else if kind == reflect.Chan {
+		return reflect.MakeChan(reflectType, 0)
 	} else if kind <= reflect.Complex128 || kind == reflect.String {
 		return reflect.Zero(reflectType)
 	}
