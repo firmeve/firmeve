@@ -9,14 +9,14 @@ import (
 )
 
 var (
-	redis *Redis
+	redis *redis2.Client
 	app   contract.Application
 )
 
 func TestMain(m *testing.M) {
 	// setup
 	app = testing2.ApplicationDefault(new(Provider))
-	redis = app.Resolve(`redis.client`).(*Redis)
+	redis = app.Resolve(`redis.client`).(*redis2.Client)
 
 	m.Run()
 
@@ -24,11 +24,9 @@ func TestMain(m *testing.M) {
 }
 
 func TestRedis_Connection(t *testing.T) {
-	client := redis.Client(`default`)
-	assert.IsType(t, &redis2.Client{}, client)
+	assert.IsType(t, &redis2.Client{}, app.Resolve(`redis.client`))
 }
 
 func TestRedis_Cluster(t *testing.T) {
-	client := redis.Cluster(`default`)
-	assert.IsType(t, &redis2.ClusterClient{}, client)
+	assert.IsType(t, &redis2.ClusterClient{}, app.Resolve(`redis.cluster`))
 }

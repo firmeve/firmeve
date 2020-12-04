@@ -17,6 +17,8 @@ func (p *Provider) Register() {
 	p.Config.Bind(`redis`, redisConfig)
 	redis := New(redisConfig)
 	p.Bind(`redis`, redis)
+	p.Bind(`redis.client`, redis.Client(`default`))
+	p.Bind(`redis.cluster`, redis.Cluster(`default`))
 }
 
 func (Provider) Boot() {

@@ -18,17 +18,17 @@ type (
 			DB       int    `json:"db" yaml:"db"`
 		} `json:"clients" yaml:"clients"`
 
-		Cluster struct {
+		Clusters map[string]struct {
 			Addrs []string `json:"addrs" yaml:"addrs"`
-		}
+		} `json:"clusters" yaml:"clusters"`
 	}
 )
 
 func New(config *Configuration) *Redis {
 	return &Redis{
 		config:   config,
-		clusters: make(map[string]*redis2.ClusterClient, 0),
-		clients:  make(map[string]*redis2.Client, 0),
+		clusters: make(map[string]*redis2.ClusterClient, 1),
+		clients:  make(map[string]*redis2.Client, 1),
 	}
 }
 
@@ -38,7 +38,7 @@ func (r *Redis) Cluster(cluster string) *redis2.ClusterClient {
 	}
 
 	client := redis2.NewClusterClient(&redis2.ClusterOptions{
-		Addrs: r.config.Cluster.Addrs,
+		Addrs: r.config.Clusters[cluster].Addrs,
 	})
 
 	r.clusters[cluster] = client
