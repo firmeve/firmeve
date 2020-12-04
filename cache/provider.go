@@ -23,7 +23,7 @@ func (p *Provider) Register() {
 	p.BindConfig(`cache`, config)
 
 	cache := New(config)
-	redisClient := p.Resolve(`redis`).(*redis.Redis).Client(config.Repositories[`redis`].Connection)
+	redisClient := p.Resolve(`redis`).(*redis2.Redis).Client(config.Repositories[`redis`].Connection)
 	//config.Default = redis
 	cache.Register(config.Default, redis.New(redisClient, config.Prefix))
 
