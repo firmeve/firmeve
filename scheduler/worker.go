@@ -9,20 +9,22 @@ import (
 
 type (
 	worker struct {
-		s       contract.Scheduler
-		message schedulerMessageChan
-		index   int32
-		stopped int32
-		wait    sync.WaitGroup
+		s          contract.Scheduler
+		message    schedulerMessageChan
+		index      int32
+		stopped    int32
+		wait       sync.WaitGroup
+		concurrent bool
 	}
 )
 
-func newWorker(s contract.Scheduler, index int32) contract.SchedulerWorker {
+func newWorker(s contract.Scheduler, index int32, concurrent bool) contract.SchedulerWorker {
 	return (&worker{
-		index:   index,
-		s:       s,
-		stopped: 0,
-		message: make(schedulerMessageChan, 0),
+		index:      index,
+		s:          s,
+		stopped:    0,
+		concurrent: concurrent,
+		message:    make(schedulerMessageChan, 0),
 	}).init()
 }
 
@@ -31,7 +33,14 @@ func (w *worker) init() *worker {
 	go func() {
 		defer w.wait.Done()
 		for v := range w.message {
-			w.handle(v)
+			// goroutine hosting
+			if w.concurrent {
+				go w.handle(v)
+			} else {
+				w.handle(v)
+			}
+			// Queue for the next round of processing
+			w.s.SetAvailableWorker(w.index)
 		}
 	}()
 
@@ -39,10 +48,15 @@ func (w *worker) init() *worker {
 }
 
 func (w *worker) handle(message *contract.SchedulerMessage) {
+	// Pre-operation
 	handler := w.s.Handler(message.Handler)
+	// If not found, discard
 	if handler == nil {
 		return
 	}
+	message.Worker = w.index
+
+	// check recover, error wrap
 	defer func() {
 		if err := recover(); err != nil {
 			if f, ok := handler.(contract.SchedulerFailed); ok {
@@ -62,13 +76,13 @@ func (w *worker) handle(message *contract.SchedulerMessage) {
 		}
 	}()
 
+	// Usually there will be a third-party package that will return an error,
+	// which only needs to be thrown in the handle, and there will be failed unified processing
 	if err := handler.Handle(message); err != nil {
 		if f, ok := handler.(contract.SchedulerFailed); ok {
 			f.Failed(err)
 		}
 	}
-
-	w.s.SetAvailableWorker(w.index)
 }
 
 func (w *worker) Input() chan<- *contract.SchedulerMessage {

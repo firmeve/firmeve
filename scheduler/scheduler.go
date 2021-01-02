@@ -13,6 +13,9 @@ type (
 	schedulerMessageChan chan *contract.SchedulerMessage
 	workerChan           chan int32
 
+	// The main function of the scheduler is to synchronously control N workers for concurrent processing to ensure that workers work uninterruptedly,
+	// mainly to prevent excessive competition for resources by goroutines
+	// Although it supports concurrent mode, it is not recommended. If you need concurrency, you can use goroutine mode.
 	scheduler struct {
 		workers         []contract.SchedulerWorker
 		workerNum       int32
@@ -23,11 +26,13 @@ type (
 		closeLock       sync.Mutex
 		wait            sync.WaitGroup
 		handlers        sync.Map
+		concurrent      bool
 	}
 
 	Configuration struct {
-		Available int32 `json:"available" yaml:"available"`
-		Worker    int32 `json:"worker" yaml:"worker"`
+		Available  int32 `json:"available" yaml:"available"`
+		Worker     int32 `json:"worker" yaml:"worker"`
+		Concurrent bool  `json:"concurrent" yaml:"concurrent"`
 	}
 )
 
@@ -42,11 +47,12 @@ func New(config *Configuration) contract.Scheduler {
 
 	return (&scheduler{
 		workers:         make([]contract.SchedulerWorker, initWorkersNum),
-		workerNum:       int32(initWorkersNum),
+		workerNum:       initWorkersNum,
 		workerChan:      make(workerChan, initWorkersNum),
 		availableWorker: availableWorker,
 		message:         make(schedulerMessageChan, 0),
 		stopped:         false,
+		concurrent:      config.Concurrent,
 	}).init()
 }
 
@@ -71,7 +77,7 @@ func (s *scheduler) init() *scheduler {
 func (s *scheduler) createWorkers() {
 	var i int32
 	for i = 0; i < s.workerNum; i++ {
-		s.workers[i] = newWorker(s, i)
+		s.workers[i] = newWorker(s, i, s.concurrent)
 		if i < s.availableWorker {
 			s.workerChan <- i
 		}

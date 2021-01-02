@@ -26,6 +26,7 @@ type (
 	}
 
 	SchedulerMessage struct {
+		Worker  int32
 		Handler string
 		Message interface{}
 	}

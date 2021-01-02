@@ -5,6 +5,7 @@ import (
 	"github.com/firmeve/firmeve/kernel/contract"
 	"sync"
 	"testing"
+	"time"
 )
 
 var s2 = New(&Configuration{
@@ -16,7 +17,8 @@ type handler struct {
 }
 
 func (h handler) Handle(message *contract.SchedulerMessage) error {
-	fmt.Println(message.Message)
+	time.Sleep(time.Second)
+	fmt.Println(message.Worker, message.Message)
 	return nil
 }
 
@@ -31,7 +33,7 @@ func TestNewScheduler(t *testing.T) {
 	})
 
 	for i := 0; i < 100; i++ {
-		if i == 80 {
+		if i == 90 {
 			s2.Close()
 			break
 		} else if i == 10 {
