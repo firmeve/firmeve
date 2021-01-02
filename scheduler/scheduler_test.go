@@ -1,55 +1,52 @@
 package scheduler
 
 import (
-	"context"
 	"fmt"
-	"math/rand"
+	"github.com/firmeve/firmeve/kernel/contract"
 	"sync"
 	"testing"
-	"time"
 )
 
-var wg sync.WaitGroup
+var s2 = New(&Configuration{
+	Available: 2,
+})
+var once2 = sync.Once{}
 
-func TestNew(t *testing.T) {
-	s := New(&Configuration{Size: 10})
-	s.RegisterHandler(`handler`, &TestHandler{})
-	s.Dispatch()
-	//time.Sleep(time.Second)
-	//s.Delivery(`h1`, `abc`)
-	for i := 1; i <= 100; i++ {
-		wg.Add(1)
-		go func() {
-			rand.Seed(time.Now().UnixNano())
-			s.Delivery(`handler`, rand.Int())
-			wg.Done()
-		}()
-	}
-	wg.Wait()
-	time.Sleep(time.Second * 120)
+type handler struct {
 }
 
-type TestHandler struct {
+func (h handler) Handle(message *contract.SchedulerMessage) error {
+	fmt.Println(message.Message)
+	return nil
 }
 
-func (h *TestHandler) Handle(ctx context.Context, data interface{}) {
-	for {
+func (h handler) Failed(err error) {
+	panic("implement me")
+}
 
-		select {
-		case <-ctx.Done():
-			if ctx.Err() != nil {
-				fmt.Println(ctx.Err())
-			}
-		default:
-			fmt.Println(data)
-			time.Sleep(time.Second * 3)
+func TestNewScheduler(t *testing.T) {
+	once2.Do(func() {
+		s2.RegisterHandler(`testing`, new(handler))
+		s2.Run()
+	})
+
+	for i := 0; i < 100; i++ {
+		if i == 80 {
+			s2.Close()
+			break
+		} else if i == 10 {
+			s2.Increment(3)
+		} else if i == 30 {
+			s2.Decrement(3)
+		} else if i == 45 {
+			s2.Decrement(1)
+		} else if i == 60 {
+			s2.Increment(2)
 		}
 
+		s2.Send(&contract.SchedulerMessage{
+			Message: fmt.Sprintf(`send message %d`, i),
+			Handler: `testing`,
+		})
 	}
-
-}
-
-func (h *TestHandler) ParentCtx() context.Context {
-	ctx, _ := context.WithTimeout(context.Background(), time.Second*2)
-	return ctx
 }

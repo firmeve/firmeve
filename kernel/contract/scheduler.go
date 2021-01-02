@@ -1,19 +1,32 @@
 package contract
 
-import "context"
-
 type (
-	SchedulerHandler interface {
-		Handle(ctx context.Context, data interface{})
-
-		ParentCtx() context.Context
+	Scheduler interface {
+		Send(message *SchedulerMessage) error
+		Run() error
+		Close() error
+		Decrement(workerNum int32)
+		Increment(workerNum int32)
+		SetAvailableWorker(index int32)
+		RegisterHandler(name string, handler SchedulerHandler)
+		Handler(name string) SchedulerHandler
 	}
 
-	Scheduler interface {
-		RegisterHandler(name string, handler SchedulerHandler)
+	SchedulerWorker interface {
+		Input() chan<- *SchedulerMessage
+		Close() error
+	}
 
-		Dispatch()
+	SchedulerHandler interface {
+		Handle(message *SchedulerMessage) error
+	}
 
-		Delivery(handler string, data interface{})
+	SchedulerFailed interface {
+		Failed(err error)
+	}
+
+	SchedulerMessage struct {
+		Handler string
+		Message interface{}
 	}
 )
