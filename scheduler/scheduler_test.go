@@ -5,19 +5,42 @@ import (
 	"github.com/firmeve/firmeve/kernel/contract"
 	"sync"
 	"testing"
-	"time"
 )
+
+var s1 = New(&Configuration{
+	Available: 50,
+})
+var once1 = sync.Once{}
 
 var s2 = New(&Configuration{
 	Available: 2,
 })
 var once2 = sync.Once{}
 
+func BenchmarkNew(b *testing.B) {
+	once1.Do(func() {
+		s1.RegisterHandler(`testing`, new(handler))
+		s1.Run()
+	})
+	b.StartTimer()
+	for i := 0; i < b.N; i++ {
+		if i == b.N-10 {
+			s1.Close()
+			break
+		}
+		s1.Send(&contract.SchedulerMessage{
+			Message: fmt.Sprintf(`send message %d`, i),
+			Handler: `testing`,
+		})
+	}
+	b.StopTimer()
+}
+
 type handler struct {
 }
 
 func (h handler) Handle(message *contract.SchedulerMessage) error {
-	time.Sleep(time.Second)
+	//time.Sleep(time.Second * 10)
 	fmt.Println(message.Worker, message.Message)
 	return nil
 }
