@@ -24,31 +24,27 @@ type (
 	}
 )
 
-var pool = sync.Pool{
+var pool = &sync.Pool{
 	New: func() interface{} {
 		return new(context)
 	},
 }
 
 func NewContext(application contract.Application, protocol contract.Protocol, handlers ...contract.ContextHandler) contract.Context {
-	c := pool.Get().(*context)
-	c.application = application
-	c.protocol = protocol
-	c.handlers = handlers
-	c.entries = make(map[string]*contract.ContextEntity, 0)
-	c.index = 0
-	return c
-	//return &context{
-	//	application: application,
-	//	protocol:    protocol,
-	//	handlers:    handlers,
-	//	entries:     make(map[string]*contract.ContextEntity, 0),
-	//	index:       0,
-	//}
+	ctx1, _ := application.PoolValue(`context`)
+	ctx := ctx1.(*context)
+	ctx.protocol = protocol
+	ctx.handlers = handlers
+	return ctx
 }
 
-func ReleaseContext(c contract.Context) {
-	pool.Put(c)
+func ReleaseContext(application contract.Application, c contract.Context) {
+	application.ReleasePool(`context`, func() interface{} {
+		ctx := c.(*context)
+		ctx.entries = make(map[string]*contract.ContextEntity, 0)
+		ctx.index = 0
+		return ctx
+	})
 }
 
 func (c *context) Application() contract.Application {

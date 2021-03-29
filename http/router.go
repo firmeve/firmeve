@@ -101,7 +101,8 @@ func (r *Router) createRoute(method string, path string, handler contract.Contex
 
 		ctx.Next()
 
-		context.ReleaseContext(ctx)
+		releaseHttp(r.Application, currentHttp)
+		context.ReleaseContext(r.Application, ctx)
 	})
 
 	return r.routes[key]

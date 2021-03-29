@@ -3,7 +3,6 @@ package cache
 import (
 	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/kataras/iris/core/errors"
-	"sync"
 	"time"
 )
 
@@ -24,7 +23,6 @@ type (
 )
 
 var (
-	mutex             sync.Mutex
 	ErrDriverNotFound = errors.New(`driver not found`)
 )
 
@@ -43,9 +41,6 @@ func (c *Cache) Driver(driver string) contract.CacheSerializable {
 		current contract.CacheSerializable
 		ok      bool
 	)
-
-	//mutex.Lock()
-	//defer mutex.Unlock()
 
 	if current, ok = c.repositories[driver]; ok {
 		return current

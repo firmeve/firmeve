@@ -10,6 +10,7 @@ const (
 type (
 	Application interface {
 		Container
+		Pool
 		SetMode(mode uint8)
 		Version() string
 		Mode() uint8
@@ -23,5 +24,15 @@ type (
 		HasProvider(name string) bool
 		GetProvider(name string) Provider
 		Reset()
+	}
+
+	PoolFunc func(application Application) interface{}
+
+	Pool interface {
+		RegisterPool(name string, poolNew PoolFunc) error
+
+		PoolValue(name string) (interface{}, bool)
+
+		ReleasePool(name string, value func() interface{})
 	}
 )

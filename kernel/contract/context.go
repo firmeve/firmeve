@@ -13,6 +13,14 @@ type (
 		Value interface{}
 	}
 
+	ContextPool interface {
+		New(application Application) Context
+
+		Get() Context
+
+		Release(Context)
+	}
+
 	Context interface {
 		context.Context
 

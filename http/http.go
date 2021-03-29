@@ -63,14 +63,21 @@ func NewWrapResponseWriter(responseWriter http.ResponseWriter) contract.HttpWrap
 }
 
 func NewHttp(application contract.Application, request *http.Request, responseWriter contract.HttpWrapResponseWriter) contract.HttpProtocol {
-	return &Http{
-		application:    application,
-		request:        request,
-		responseWriter: responseWriter,
-		params:         make([]httprouter.Param, 0),
-		route:          nil,
-		session:        nil,
-	}
+	v, _ := application.PoolValue(`http`)
+	h := v.(*Http)
+	h.request = request
+	h.responseWriter = responseWriter
+	return h
+}
+
+func releaseHttp(application contract.Application, hp contract.HttpProtocol) {
+	application.ReleasePool(`http`, func() interface{} {
+		http := hp.(*Http)
+		http.request = nil
+		http.responseWriter = nil
+		http.params = make([]httprouter.Param, 3)
+		return http
+	})
 }
 
 func (*Http) Name() string {

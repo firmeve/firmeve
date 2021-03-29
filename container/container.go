@@ -15,6 +15,7 @@ type (
 	baseContainer struct {
 		bindings  bindingType
 		instances instanceType
+		bindingLock sync.RWMutex
 	}
 
 	binding struct {
@@ -77,6 +78,8 @@ func (c *baseContainer) Bind(name string, prototype interface{}, options ...supp
 		bindingOption.share = false
 	}
 
+	c.bindingLock.Lock()
+	defer c.bindingLock.Unlock()
 	_, ok := c.bindings[name]
 	if !bindingOption.cover && ok {
 		panic(fmt.Errorf("binding object %s already exists", name))
@@ -108,6 +111,9 @@ func (c *baseContainer) Get(name string, params ...interface{}) interface{} {
 		panic(fmt.Errorf("object %s that does not exist", name))
 	}
 
+	c.bindingLock.RLock()
+	defer c.bindingLock.RUnlock()
+
 	binding := c.bindings[strings.ToLower(name)]
 	// 如果是单例
 	if v, ok := c.instances[binding.reflectType]; ok {
@@ -119,6 +125,9 @@ func (c *baseContainer) Get(name string, params ...interface{}) interface{} {
 
 // Determine whether the specified name object is included in the container
 func (c *baseContainer) Has(name string) bool {
+	c.bindingLock.RLock()
+	defer c.bindingLock.RUnlock()
+
 	if _, ok := c.bindings[strings.ToLower(name)]; ok {
 		return true
 	}
@@ -153,9 +162,8 @@ func (c *baseContainer) Make(abstract interface{}, params ...interface{}) interf
 
 // Remove a binding
 func (c *baseContainer) Remove(name string) {
-	var mutex sync.Mutex
-	mutex.Lock()
-	defer mutex.Unlock()
+	c.bindingLock.Lock()
+	defer c.bindingLock.Unlock()
 
 	name = strings.ToLower(name)
 
@@ -165,6 +173,9 @@ func (c *baseContainer) Remove(name string) {
 
 // Flush container
 func (c *baseContainer) Flush() {
+	c.bindingLock.Lock()
+	defer c.bindingLock.Unlock()
+
 	c.bindings = make(bindingType, 0)
 	c.instances = make(instanceType, 0)
 }

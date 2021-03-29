@@ -5,6 +5,7 @@ go 1.13
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/Microsoft/go-winio v0.4.14 // indirect
+	github.com/Shopify/goreferrer v0.0.0-20210305184658-1a4fe54f556d // indirect
 	github.com/containerd/containerd v1.3.4 // indirect
 	github.com/denisenkom/go-mssqldb v0.0.0-20200206145737-bbfc9a55622e // indirect
 	github.com/dgrijalva/jwt-go v3.2.0+incompatible
@@ -13,6 +14,7 @@ require (
 	github.com/docker/go-connections v0.4.0 // indirect
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/fatih/color v1.9.0
+	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fsnotify/fsnotify v1.4.9
 	github.com/go-playground/form/v4 v4.1.1
 	github.com/go-playground/locales v0.13.0
@@ -23,15 +25,22 @@ require (
 	github.com/golang-migrate/migrate v3.5.4+incompatible
 	github.com/golang/mock v1.4.3
 	github.com/gorilla/mux v1.7.4 // indirect
+	github.com/gorilla/schema v1.2.0 // indirect
 	github.com/gorilla/sessions v1.2.0
 	github.com/guregu/null v3.4.0+incompatible
+	github.com/iris-contrib/blackfriday v2.0.0+incompatible // indirect
+	github.com/iris-contrib/formBinder v5.0.0+incompatible // indirect
 	github.com/iris-contrib/go.uuid v2.0.0+incompatible // indirect
 	github.com/jinzhu/gorm v1.9.11
+	github.com/json-iterator/go v1.1.10 // indirect
 	github.com/julienschmidt/httprouter v1.3.0
+	github.com/kataras/golog v0.1.7 // indirect
 	github.com/kataras/iris v11.1.1+incompatible
+	github.com/klauspost/compress v1.11.13 // indirect
 	github.com/lib/pq v1.4.0 // indirect
 	github.com/magiconair/properties v1.8.1
 	github.com/mattn/go-colorable v0.1.6 // indirect
+	github.com/microcosm-cc/bluemonday v1.0.5 // indirect
 	github.com/morikuni/aec v1.0.0 // indirect
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/opencontainers/image-spec v1.0.1 // indirect

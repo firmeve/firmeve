@@ -3,7 +3,9 @@ package http
 import (
 	"github.com/firmeve/firmeve/container"
 	"github.com/firmeve/firmeve/kernel"
+	"github.com/firmeve/firmeve/kernel/contract"
 	"github.com/gorilla/sessions"
+	"github.com/julienschmidt/httprouter"
 )
 
 type Provider struct {
@@ -15,6 +17,13 @@ func (p *Provider) Name() string {
 }
 
 func (p *Provider) Register() {
+	p.Application.RegisterPool(`http`, func(application contract.Application) interface{} {
+		return &Http{
+			application: application,
+			params:      make([]httprouter.Param, 3),
+		}
+	})
+
 	p.Application.Bind(`http.router`, New(p.Application), container.WithShare(true))
 
 	// session

@@ -41,7 +41,7 @@ func (b *basicError) SetCode(code int) contract.Error {
 }
 
 func (b *basicError) Equal(err error) bool {
-	// TODO: 暂时使用此种方法，并非完全一致
+	// TODO: Temporarily use this method, not exactly the same
 	return errors.Is(b, err)
 }
 
@@ -83,7 +83,7 @@ func callers() []uintptr {
 	return pcs[0:n]
 }
 
-func Error(params ...interface{}) contract.Error {
+func Error(params ...interface{}) error {
 	var (
 		err     interface{}
 		stacks  = callers()
@@ -98,7 +98,7 @@ func Error(params ...interface{}) contract.Error {
 		err = params[1]
 	}
 
-	// 其实和Exception一样，每个Error都会挂载上一个Error形成调用链条
+	// In fact, like Exception, each Error will mount an Error to form a call chain
 	switch v := err.(type) {
 	case contract.Error:
 		prev = v.(error)

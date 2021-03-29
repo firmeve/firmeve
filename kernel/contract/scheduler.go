@@ -6,7 +6,7 @@ type (
 		Run() error
 		Close() error
 		Decrement(workerNum int32)
-		Increment(workerNum int32)
+		Increment(workerNum int32) error
 		RegisterHandler(name string, handler SchedulerHandler)
 	}
 

@@ -14,14 +14,13 @@ const (
 type (
 	Application struct {
 		contract.Container
-		providers map[string]contract.Provider
-		booted    bool
-		mode      uint8
+		providers     map[string]contract.Provider
+		booted        bool
+		mode          uint8
+		registerMutex sync.Mutex
+		pools         map[string]*sync.Pool
+		poolLock      sync.RWMutex
 	}
-)
-
-var (
-	registerMutex sync.Mutex
 )
 
 func New() contract.Application {
@@ -30,7 +29,8 @@ func New() contract.Application {
 		providers: make(map[string]contract.Provider, 0),
 		booted:    false,
 		// default production mode
-		mode: contract.ModeProduction,
+		mode:  contract.ModeProduction,
+		pools: make(map[string]*sync.Pool, 3),
 	}
 }
 
@@ -120,7 +120,38 @@ func (a *Application) Reset() {
 
 // Add a service provider to providers map
 func (a *Application) registerProvider(name string, provider contract.Provider) {
-	registerMutex.Lock()
+	a.registerMutex.Lock()
 	a.providers[name] = a.Make(provider).(contract.Provider)
-	registerMutex.Unlock()
+	a.registerMutex.Unlock()
+}
+
+func (a *Application) RegisterPool(name string, poolNew contract.PoolFunc) error {
+	a.poolLock.Lock()
+	if _, ok := a.pools[name]; ok {
+		return fmt.Errorf(`the pool name:%s already exists`, name)
+	}
+	a.pools[name] = &sync.Pool{
+		New: func() interface{} {
+			return poolNew(a)
+		},
+	}
+	a.poolLock.Unlock()
+	return nil
+}
+
+func (a *Application) PoolValue(name string) (interface{}, bool) {
+	a.poolLock.RLock()
+	defer a.poolLock.RUnlock()
+
+	if v, ok := a.pools[name]; ok {
+		return v.Get(), ok
+	}
+
+	return nil, false
+}
+
+func (a *Application) ReleasePool(name string, value func() interface{}) {
+	a.poolLock.Lock()
+	a.pools[name].Put(value())
+	a.poolLock.Unlock()
 }

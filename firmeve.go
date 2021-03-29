@@ -1,6 +1,7 @@
 package firmeve
 
 import (
+	"github.com/firmeve/firmeve/context"
 	"github.com/firmeve/firmeve/event"
 	"github.com/firmeve/firmeve/http"
 	"github.com/firmeve/firmeve/kernel"
@@ -11,6 +12,7 @@ import (
 
 var (
 	initProviders = []contract.Provider{
+		new(context.Provider),
 		new(event.Provider),
 		new(logging.Provider),
 	}
