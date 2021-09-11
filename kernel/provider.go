@@ -20,6 +20,7 @@ func (p *BaseProvider) Resolve(abstract interface{}, params ...interface{}) inte
 	return p.Application.Make(abstract, params...)
 }
 
-func (p *BaseProvider) BindConfig(key string, object interface{}) {
-	p.Application.Make(`config`).(*Config).Bind(key, object)
+func (p *BaseProvider) BindConfig(key string, object interface{}) error {
+	// Application.Make(`config`).(*Config)
+	return p.Config.Bind(key, object)
 }

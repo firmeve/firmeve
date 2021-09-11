@@ -14,8 +14,8 @@ func (p Provider) Name() string {
 }
 
 func (p *Provider) Register() {
-	var config = new(Configuration)
-	p.Config.BindItem(`storage`, config)
+	var config *Configuration
+	p.BindConfig(`storage`, &config)
 	storage := New(config)
 	storage.RegisterDisk(disk.QiNiuDisk, disk.NewQiNiu(config.QiNiu))
 	p.Bind(`storage`, storage)

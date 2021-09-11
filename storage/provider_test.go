@@ -1,18 +1,20 @@
 package storage
 
-import (
-	"context"
-	"github.com/firmeve/firmeve/kernel/contract"
-	"github.com/stretchr/testify/assert"
-	"testing"
-	//testing2 "zixun/pkg/testing"
-)
-
+//import (
+//	"context"
+//	"github.com/firmeve/firmeve/kernel/contract"
+//	testing2 "github.com/firmeve/firmeve/testing"
+//	"github.com/stretchr/testify/assert"
+//	"testing"
+//)
+//
 //func TestProvider_Register(t *testing.T) {
 //	//container := container2.New()
 //	//container
 //
-//	provider := testing2.DefaultContainer.Make(new(Provider)).(*Provider)
+//	testing2.ApplicationDefault(new(Provider))
+//
+//	provider := testing2.DefaultContainer.Make().(*Provider)
 //	provider.Register()
 //	assert.NotNil(t, provider.Container.Get(`storage`))
 //	assert.NotNil(t, provider.Container.Get(`storage`).(*Storage).Disk(Default))
