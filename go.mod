@@ -53,7 +53,7 @@ require (
 	golang.org/x/crypto v0.0.0-20200420201142-3c4aac89819a // indirect
 	golang.org/x/lint v0.0.0-20200302205851-738671d3881b // indirect
 	golang.org/x/net v0.0.0-20200520004742-59133d7f0dd7
-	golang.org/x/sys v0.0.0-20200916030750-2334cc1a136f // indirect
+	golang.org/x/sys v0.1.0 // indirect
 	golang.org/x/time v0.0.0-20200416051211-89c76fbcd5d1 // indirect
 	golang.org/x/tools v0.0.0-20200422022333-3d57cf2e726e // indirect
 	google.golang.org/genproto v0.0.0-20200420144010-e5e8543f8aeb // indirect
